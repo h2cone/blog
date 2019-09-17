@@ -1,0 +1,4 @@
+[submodule "public"]
+	path = public
+	url = git@github.com:h2cone/h2cone.github.io.git
+	branch = master

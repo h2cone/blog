@@ -1,0 +1,9 @@
+# Created by .ignore support plugin (hsz.mobi)
+.idea/
+public
+/public
+node_modules
+**/node_modules/**/*
+.DS_Store
+.vscode
+yarn.lock
