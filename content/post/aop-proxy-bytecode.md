@@ -41,6 +41,8 @@ Python, JavaScript, PHP, Ruby 等动态语言们, 竟然能在运行时对类/�
 
 当我们写完一个 Java 程序, 通过 Java 编译器编译后输出包含 Java 字节码的 Class 文件, 随后启动 Java 虚拟机 (JVM, 本文以 HotSpot 为例), Java 运行时环境 (JRE) 通过类加载器 (Class Loader) 加载类到 JVM 运行时的方法区, 方法区储存着类的数据, 比如运行时的常量池 (Run-Time Constant Pool) 和方法代码等, 应用程序也能利用类加载器动态加载类. 因此, 如果在运行时修改类又或者在运行时生成类并动态加载到方法区, Java 运行时操作类显然是可能的.
 
+![java_class_from_to](/img/java_class_from_to.png)
+
 一番搜索后, 果然其中一些想法早已实现在 JDK 里. JDK 动态代理不仅能够在运行时生成类, 还能拦截方法调用, 接下来用简单的代码详细说明.
 
 我们有一个简单的接口和接口实现类
