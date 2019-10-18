@@ -17,7 +17,7 @@ categories: []
 
 AOP (Aspect-oriented programming) 是对横向的重用, 非常符合 DRY 和 SoC 的原则. 直观上, 代码总是从上往下执行, 不妨称之为纵向, OOP (Object-oriented Programming) 的继承也可看作是纵向, 相对则是横向, 从横跨多个类的角度来看, 横向有着许许多多的统一逻辑可以切入, 比如**安全检查, 异常处理, 日志输出, 事务管理, 追踪, 监控**等等, 这些统一逻辑能够被抽象成模块, 重用它们甚至不需要显式调用或只需要编写简单的元数据进行声明, 一次编写, 到处执行, Java 程序员们已经体验过不少 Spring AOP 的魔术.
 
-AOP 能够使前文所述的统一逻辑模块化, 这些统一逻辑可称之为横切关注点 (crosscutting concerns), 切面 (Aspect) 则作为模块, 因此译为切面导向编程. 切面的作用效果彷佛是往程序的执行点注入了新的代码, 这些执行点被称之为接入点 (Join Point), 比如方法调用的前后. 接入点的集合称之为切入点 (Pointcut), 比如满足条件的一组方法. 注入的代码称之为建议 (Advice), 比如在方法调用前后输出日志. 其中代码注入的术语是编织 (Weaving), 既然把编织工作交给库或框架, 那么可能是在**编译时编织**或**运行时编织**, 还可能在**编译后编织 (Post-compile weaving)** 或**加载时编织 (Load-time weaving)**.
+AOP 能够使前文所述的统一逻辑模块化, 这些统一逻辑可称之为横切关注点 (crosscutting concerns), 切面 (Aspect) 则作为模块, 因此译为切面导向编程. 切面的作用效果彷佛是往程序的执行点注入了新的代码, 这些执行点被称之为接入点 (Join Point), 比如方法调用的前后. 接入点的集合称之为切入点 (Pointcut), 比如满足条件的一组方法. 注入的代码称之为建议 (Advice), 比如在方法调用前后输出日志. 其中代码注入的术语是编织 (Weaving), 既然把编织工作交给库或框架, 那么可能是在**编译时编织 (Compile-time weaving)** 或**运行时编织 (Run-Time weaving)**, 还可能在**编译后编织 (Post-compile weaving)** 或**加载时编织 (Load-time weaving)**.
 
 虽说如此, 那属于 Spring 核心的 Spring AOP 的魔术是怎么做到的呢?
 
@@ -272,7 +272,7 @@ proxy class loader: sun.misc.Launcher$AppClassLoader@18b4aac2
 System Class Loader -> Extension Class Loader -> Bootstrap Class Loader
 ```
 
-其中没有双亲的 Bootstrap Class Loader 从 `JRE/lib/rt.jar` 加载类, 它的孩子 Extension Class Loader 从 `JRE/lib/ext` 或 `java.ext.dirs` 加载类, 它的子孙 `System Class Loader` 从 `CLASSPATH`, `-classpath`, `-cp`, `Mainfest` 加载类, 不仅如此, 类加载机制使用双亲委派模型处理类加载请求, 先将请求委派给父母, 若父母不能完成加载, 则退回由孩子加载, 这么做的好处之一是防止同一类被加载多次. 当然, 如果有需要自定义类加载器, 则需要编写类继承 `java.lang.ClassLoader` 并重写相应的方法.
+其中没有双亲的 Bootstrap Class Loader 从 `JRE/lib/rt.jar` 加载类, 它的孩子 Extension Class Loader 从 `JRE/lib/ext` 或 `java.ext.dirs` 加载类, 它的子孙 `System Class Loader` 从 `CLASSPATH`, `-classpath`, `-cp`, `Mainfest` 加载类, 不仅如此, 类加载机制使用**双亲委派**模型处理类加载请求, 先将请求委派给父母, 若父母不能完成加载, 则退回由孩子加载, 且防止同一类被加载多次. 当然, 如果有需要自定义类加载器, 则需要编写类继承 `java.lang.ClassLoader` 并重写相应的方法.
 
 ## 后记
 
