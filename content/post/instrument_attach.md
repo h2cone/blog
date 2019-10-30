@@ -35,7 +35,7 @@ Oracle JDK 里有一个名为 `java.lang.instrument` 的包：
 
 ### 体验
 
-如何以**非侵入式** 测量 Java 方法执行耗时？你可能立马想到了 AOP 库或框架，比如 [JDK 动态代理](https://docs.oracle.com/javase/8/docs/technotes/guides/reflection/proxy.html)、[CGLIB](https://github.com/cglib/cglib)、[ASM](https://asm.ow2.io)、[javassist](https://github.com/jboss-javassist/javassist)......通过操作字节码在方法或代码块执行前后插入计时代码，但却极有可能需要手动更改原来的程序代码，例如添加依赖项以及新增切面类等等，既然如此，那就请 Java agent 帮忙吧。
+如何以**非侵入式**测量 Java 方法执行耗时？你可能立马想到了 AOP 库或框架，比如 [JDK 动态代理](https://docs.oracle.com/javase/8/docs/technotes/guides/reflection/proxy.html)、[CGLIB](https://github.com/cglib/cglib)、[ASM](https://asm.ow2.io)、[javassist](https://github.com/jboss-javassist/javassist)......通过操作字节码在方法或代码块执行前后插入计时代码，但却极有可能需要手动更改原来的程序代码，例如添加依赖项以及新增切面类等等，既然如此，那就请 Java agent 帮忙吧。
 
 假设有一个 Cat 类，它有一些耗时方法，如下：
 
@@ -122,7 +122,7 @@ Can-Redefine-Classes: true
 Can-Retransform-Classes: true
 ```
 
-再次，利用 Maven 插件构建 agent Jar 文件：
+再次，利用 Maven 插件构建 agent jar 文件：
 
 ```xml
 <plugin>
@@ -149,7 +149,7 @@ Can-Retransform-Classes: true
 </plugin>
 ```
 
-然后，给 Cat 类编写简单的测试用的主类：
+然后，给 Cat 类编写测试用的主类：
 
 ```java
 public class CatMain {
@@ -160,7 +160,7 @@ public class CatMain {
 }
 ```
 
-并把两者构建成可执行的名为 app 的 Jar 文件：
+并把两者构建成可执行且名为 app 的 jar 文件：
 
 ```xml
 <plugin>
@@ -193,13 +193,13 @@ public class CatMain {
 -javaagent:jarpath[=options]
 ```
 
-`jarpath` 是 agent 的路径，可选的 `options` 能传递给 agent 类的 `premain` 方法，这里传递 Cat 类的命名： `io/h2cone/inst/app/Cat`，表示我们要测量它的方法执行时间：
+`jarpath` 是 agent jar 文件的路径，可选的 `options` 能传递给 agent 类的 `premain` 方法，这里传递 Cat 类的命名： `io/h2cone/inst/app/Cat`，表示我们要测量它的方法执行时间：
 
 ```shell
 java -javaagent:agent-jar-with-dependencies.jar=io/h2cone/inst/app/Cat -jar app.jar
 ```
 
-结果表明，不仅 Cat 类的 run 方法正常执行，而且输出了执行时间：
+结果表明，不仅 Cat 类的 run 方法正常执行，而且输出了该方法的执行时间：
 
 ```shell
 Cat is running
@@ -264,7 +264,7 @@ public class OwnerAgent {
 }
 ```
 
-回想前文所说的获取 `Instrumentation` 实例的两种方式，当把 Java agent 附加到 JVM 时，Instrumentation 实例将传递到 agent 类的 `agentmain` 方法，也是就说 `agentmain` 将会被调用。
+回想前文所说的获取 `Instrumentation` 实例的两种方式，当把 Java agent 附加到 JVM 时，`Instrumentation` 实例将传递到 agent 类的 `agentmain` 方法，也是就说 `agentmain` 将会被调用。
 
 不忘编写 `MANIFEST.MF` 文件：
 
@@ -278,7 +278,7 @@ Can-Retransform-Classes: true
 
 既声明 `Agent-Class` 也声明 `Premain-Class`，`OwnerAgent` 类同时满足两种方式所要求的方法签名。
 
-与上文相似，打包好 `agent.jar` 后，方便起见，直接用 IDE 启动 `DogMain`，并从控制台读取 JVM 的 PID，万事俱备，首先依附到 JVM，然后动态加载 agent 到 JVM，最后分离：
+与上文相似，打包好 `agent.jar` 后，方便起见，直接用 IDE 启动 `DogMain`，从控制台读取目标 JVM 的 PID，万事俱备，首先依附到 JVM，然后动态加载 agent 到 JVM，最后分离：
 
 ```java
 @Test
