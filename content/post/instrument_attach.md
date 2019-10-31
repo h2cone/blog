@@ -23,7 +23,7 @@ Oracle JDK 里有一个名为 `java.lang.instrument` 的包：
 
 > Provides services that allow Java programming language agents to instrument programs running on the JVM. The mechanism for instrumentation is modification of the byte-codes of methods. [0]
 
-从它的简介，我们可以确认的是 instrumentation 的机制是修改 Java 字节码，而且我们已经知道类文件包含字节码。不过等等，instrumentation 和 instrument 都是什么意思？在这里的 instrument，我暂时还找不到恰到好处的汉译，作动词时意为“给......装测量仪器”或者“仪器化”，结合简介，此包允许 Java agent 给运行在 JVM 上的程序装测量仪器。Java agent 又是什么？它可以作为 Java 程序的探针，它本质上是一个 Jar 文件，它利用 Instrumentation 来更改已加载到 JVM 的类，例如往原类插入用于探测或追踪的代码，即所谓的埋点，它的底层是 [JVMTI (Java Virtual Machine Tool Interface)](https://docs.oracle.com/javase/8/docs/platform/jvmti/jvmti.html)。
+从它的简介，我们可以确认的是 instrumentation 的机制是修改 Java 字节码，而且我们已经知道类文件包含字节码。不过等等，instrumentation 和 instrument 都是什么意思？在这里的 instrument，我暂时还找不到恰到好处的汉译，作动词时意为“给......装测量仪器”或者“仪器化”，结合简介，此包允许 Java agent 给运行在 JVM 上的程序装测量仪器。Java agent 又是什么？它可以作为 Java 程序的探针，它本质上是一个 Jar 文件，它利用 Instrumentation 来更改已加载到 JVM 的类，例如往原类插入用于探测或追踪的代码，即所谓的埋点，它的底层使用了 [JVMTI (Java Virtual Machine Tool Interface)](https://docs.oracle.com/javase/8/docs/platform/jvmti/jvmti.html)。
 
 > In the context of computer programming, instrumentation refers to an ability to monitor or measure the level of a product's performance, to diagnose errors, and to write trace information. [1]
 
