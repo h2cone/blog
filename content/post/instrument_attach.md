@@ -206,7 +206,7 @@ Cat is running
 io.h2cone.inst.app.Cat.run(): 73993800 ns
 ```
 
-完整代码请看 [inst-agent](https://github.com/h2cone/java-examples/tree/master/inst-agent) 和 [inst-app](https://github.com/h2cone/java-examples/tree/master/inst-app)。
+完整代码已发布，请参考 [inst-agent](https://github.com/h2cone/java-examples/tree/master/inst-agent) 和 [inst-app](https://github.com/h2cone/java-examples/tree/master/inst-app)。
 
 ## Attach
 
@@ -306,7 +306,7 @@ Woof Woof
 
 `OwnerAgent` 类的 `agentmain` 方法被调用，`DogMain` 的 `main` 方法也正常执行。
 
-完整代码请看 [attach-agent](https://github.com/h2cone/java-examples/tree/master/attach-agent) 和 [attach-app](https://github.com/h2cone/java-examples/tree/master/attach-app)。
+完整代码已发布，请参考 [attach-agent](https://github.com/h2cone/java-examples/tree/master/attach-agent) 和 [attach-app](https://github.com/h2cone/java-examples/tree/master/attach-app)。
 
 ## 写在后面
 
