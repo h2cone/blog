@@ -21,11 +21,11 @@ AOP 能够使前文所述的统一逻辑模块化, 这些统一逻辑可称之�
 
 虽说如此, 那属于 Spring 核心的 Spring AOP 的魔术是怎么做到的呢?
 
-喧闹中, 听见了一句悄悄话
+喧闹中, 听见了一句悄悄话:
 
 > Spring AOP is implemented by using runtime proxies.
 
-另一句悄悄话
+另一句悄悄话:
 
 > In the Spring Framework, an AOP proxy is a JDK dynamic proxy or a CGLIB proxy.
 
@@ -45,7 +45,7 @@ Python, JavaScript, PHP, Ruby 等动态语言们, 竟然能在运行时对类/�
 
 一番搜索后, 果然其中一些想法早已实现在 JDK 里. JDK 动态代理不仅能够在运行时生成类, 还能拦截方法调用, 接下来用简单的代码详细说明.
 
-我们有一个简单的接口和接口实现类
+我们有一个简单的接口和接口实现类:
 
 ```java
 public interface PersonService {
@@ -65,7 +65,7 @@ public class SimplePersonService implements PersonService {
 }
 ```
 
-感谢多态, 我们可以使用接口 say hello
+感谢多态, 我们可以使用接口 say hello:
 
 ```java
 @Test
@@ -76,7 +76,7 @@ public void helloWorld() {
 }
 ```
 
-可是, 如果我们需要在 `sayHello("World")` 调用前后添加一些逻辑, 比如
+可是, 如果我们需要在 `sayHello("World")` 调用前后添加一些逻辑, 比如:
 
 ```java
 System.out.println("之前做点什么");
@@ -137,7 +137,7 @@ static class PersonServiceHandler implements InvocationHandler {
 }
 ```
 
-上面这段代码通过了测试并输出了以下内容
+上面这段代码通过了测试并输出了以下内容:
 
 ```shell
 proxy class: class com.sun.proxy.$Proxy4
@@ -148,11 +148,11 @@ Hello, World
 After invoke
 ```
 
-生成的代理类名叫 `com.sun.proxy.$Proxy4`, 官方文档对代理类的定义是
+生成的代理类名叫 `com.sun.proxy.$Proxy4`, 官方文档对代理类的定义是:
 
 > A dynamic proxy class is a class that implements a list of interfaces specified at runtime such that a method invocation through one of the interfaces on an instance of the class will be encoded and dispatched to another object through a uniform interface
 
-同时注意到了 `java.lang.reflect.Proxy#newProxyInstance` 方法参数
+同时注意到了 `java.lang.reflect.Proxy#newProxyInstance` 方法参数:
 
 ```javadoc
 loader – the class loader to define the proxy class
@@ -166,7 +166,7 @@ h – the invocation handler to dispatch method invocations to
 
 到了 CGLIB 的用武之地. CGLIB 其实是 (Code Generation Library) 的简称, 译作代码生成库, 但这会让人困惑, 难道是生成 Java 源代码? 并不是, 它的真名是 Java 字节码生成库. Java 字节码 (Java bytecode) 看起来是怎么样子的?
 
-对于上文的代码, 当我们用 `javac` 编译源代码成功会输出 `PersonService.class` 和 `SimplePersonService.class` 等文件. 我们用编辑器看看其中一个文件的内容
+对于上文的代码, 当我们用 `javac` 编译源代码成功会输出 `PersonService.class` 和 `SimplePersonService.class` 等文件. 我们用编辑器看看其中一个文件的内容:
 
 ```text
 cafe babe 0000 0034 0009 0700 0707 0008
@@ -187,11 +187,11 @@ cafe babe 0000 0034 0009 0700 0707 0008
 
 不妨先试试从 Class 文件逆向到 Java 文件, 利用反汇编命令行工具, 例如敲下 `javap -v SimplePersonService.class`, 你将得到 Class 文件格式 (The class File Format) 的直观认识, 但是, 操作 Java 字节码需要透彻理解 Java 虚拟机规范, 比如 JVM 的指令集和 JVM 内幕, ASM 的出现使之成为可能, ASM 是一个 Java 字节码操作和分析框架, 可用于修改已存在类或者动态生成类, 程序员们不满足于此, 利用 ASM 封装了更高层的 Java API, 最终出现了 CGLIB.
 
-我们来看看 CGLIB 仓库的维基的一段描述
+我们来看看 CGLIB 仓库的维基的一段描述:
 
 > cglib is a powerful, high performance and quality Code Generation Library, It is used to extend JAVA classes and implements interfaces at runtime
 
-无需接口动态生成代理类不是不可能的, 因为代理类可以继承被代理类. 接下来体验一下 CGLIB, 我们使用抽象类代替接口
+无需接口动态生成代理类不是不可能的, 因为代理类可以继承被代理类. 接下来体验一下 CGLIB, 我们使用抽象类代替接口:
 
 ```java
 public abstract class PersonService {
@@ -202,7 +202,7 @@ public abstract class PersonService {
 }
 ```
 
-然后, 用 CGLIB 的方式 say hello
+然后, 用 CGLIB 的方式 say hello:
 
 ```java
 @Test
@@ -239,7 +239,7 @@ static class PersonServiceInterceptor implements MethodInterceptor {
 }
 ```
 
-输出结果如下
+输出结果如下:
 
 ```shell
 obj class: class io.h2cone.proxy.cglib.PersonService$$EnhancerByCGLIB$$64e53be2
@@ -253,9 +253,11 @@ After invoke
 
 这种方式的代理类名称是 `obj calss` 对应的值, 顾名思义, 它是 `PersonService` 的增强类. 在生成代理类之前, `enhancer` 设置了基类 `PersonService`, 由此生成的代理类自然就继承了被代理类 `PersonService`, 它们是孩子与父母的关系. CGLIB 与 JDK 动态代理一样都能拦截方法调用, 替被拦截方法做一些它做不到的事情.
 
+完整代码已发布, 请参考 [proxy](https://github.com/h2cone/java-examples/tree/master/proxy).
+
 综上所述, **JDK 动态代理只能通过接口生成代理类, 代理类与被代理类是兄弟姐妹, 而 CGLIB 还能通过基类生成代理类, 代理类是被代理类的子类.** 除了能力上的区别, 在性能上, 似乎普遍认为 CGLIB 要快于 JDK 动态代理. 前文提到了 Spring AOP 使用 JDK 动态代理或 CGLIB 在运行时生成代理类, 那么 Spring AOP 在什么情况下采用 JDK 动态代理? 又是在什么情况下次采用 CGLIB? 如结论所说, 如果被代理类或目标类实现了一个或多个接口, 那么 Spring AOP 将采用 JDK 动态代理生成一个实现每个接口的代理类. 如果被代理类或目标类没有实现接口, 那么 Spring AOP 将采用 CGLIB 动态生成代理类, 它是被代理类或目标类的子类. 当然, Spring AOP 很大可能也提供了强制采用其中某种方式的方法.
 
-虽然动态生成了代理类, 但是如果不能把代理类加载到 JVM 方法区, 它就不能像其它正常类一样产生 `java.lang.Class` 的实例, 也就不会有后续的动态性. 回头看一下 JDK 动态代理的 `newProxyInstance` 方法的首要参数
+虽然动态生成了代理类, 但是如果不能把代理类加载到 JVM 方法区, 它就不能像其它正常类一样产生 `java.lang.Class` 的实例, 也就不会有后续的动态性. 回头看一下 JDK 动态代理的 `newProxyInstance` 方法的首要参数:
 
 ```javadoc
 loader – the class loader to define the proxy class
@@ -268,7 +270,7 @@ target class loader: sun.misc.Launcher$AppClassLoader@18b4aac2
 proxy class loader: sun.misc.Launcher$AppClassLoader@18b4aac2
 ```
 
-`AppClassLoader` 是应用程序类加载器, 又名为系统类加载器 (System Class Loader), 它所在的家族大概长这样子
+`AppClassLoader` 是应用程序类加载器, 又名为系统类加载器 (System Class Loader), 它所在的家族大概长这样子:
 
 ```text
 System Class Loader -> Extension Class Loader -> Bootstrap Class Loader
@@ -278,7 +280,7 @@ System Class Loader -> Extension Class Loader -> Bootstrap Class Loader
 
 ## 后记
 
-在 Spring AOP 的使用过程中, 还发现一个叫做 AspectJ 的家伙. 在编译时和运行时之间, 有编译后和加载时, 它就在加载时动手脚...
+在 Spring AOP 的使用过程中, 还发现一个叫做 AspectJ 的家伙. 在编译时和运行时之间是编译后和加载时, 它就在加载时动手脚...
 
 ## 参考
 
