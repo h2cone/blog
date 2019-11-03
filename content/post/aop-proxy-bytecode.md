@@ -68,12 +68,12 @@ public class SimplePersonService implements PersonService {
 感谢多态, 我们可以使用接口 say hello
 
 ```java
-    @Test
-    public void helloWorld() {
-        PersonService service = new SimplePersonService();
-        String result = service.sayHello("World");
-        Assert.assertEquals("Hello, World", result);
-    }
+@Test
+public void helloWorld() {
+    PersonService service = new SimplePersonService();
+    String result = service.sayHello("World");
+    Assert.assertEquals("Hello, World", result);
+}
 ```
 
 可是, 如果我们需要在 `sayHello("World")` 调用前后添加一些逻辑, 比如
@@ -87,59 +87,59 @@ System.out.println("之后做点什么");
 插入一两处也许还能接受, 如果 `sayHello(...)` 遍布各处或不便改动其上下文代码, 为了减少代码冗余和分离关注点, 试试 JDK 动态代理吧.
 
 ```java
-    @Test
-    public void sayHello() {
-        // 创建目标实例 (被代理实例, 可选)
-        SimplePersonService target = new SimplePersonService();
+@Test
+public void sayHello() {
+    // 创建目标实例 (被代理实例, 可选)
+    SimplePersonService target = new SimplePersonService();
 
-        // 生成代理类, 创建代理实例
-        PersonService proxy = (PersonService) Proxy.newProxyInstance(target.getClass().getClassLoader(),
-                target.getClass().getInterfaces(),
-                new PersonServiceHandler(target));
+    // 生成代理类, 创建代理实例
+    PersonService proxy = (PersonService) Proxy.newProxyInstance(target.getClass().getClassLoader(),
+            target.getClass().getInterfaces(),
+            new PersonServiceHandler(target));
 
-        String result = proxy.sayHello("World");
-        Assert.assertEquals("Hello, World", result);
-    }
+    String result = proxy.sayHello("World");
+    Assert.assertEquals("Hello, World", result);
+}
 
+/**
+    *  拦截 PersonService 方法调用的处理器
+    */
+static class PersonServiceHandler implements InvocationHandler {
     /**
-     *  拦截 PersonService 方法调用的处理器
-     */
-    static class PersonServiceHandler implements InvocationHandler {
-        /**
-         * 目标实例 (被代理实例)
-         */
-        Object target;
+        * 目标实例 (被代理实例)
+        */
+    Object target;
 
-        PersonServiceHandler() {
-        }
-
-        PersonServiceHandler(Object target) {
-            this.target = target;
-        }
-
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            System.out.printf("proxy class: %s\n", proxy.getClass());
-            System.out.printf("method: %s\n", method);
-            System.out.printf("args: %s\n", Arrays.toString(args));
-
-            if (target != null) {
-                System.out.println("Before invoke"); // 调用前, 添加逻辑
-
-                Object result = method.invoke(target, args);
-                System.out.println(result);
-
-                System.out.println("After invoke"); // 调用后, 添加逻辑
-                return result;
-            }
-            return null;
-        }
+    PersonServiceHandler() {
     }
+
+    PersonServiceHandler(Object target) {
+        this.target = target;
+    }
+
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        System.out.printf("proxy class: %s\n", proxy.getClass());
+        System.out.printf("method: %s\n", method);
+        System.out.printf("args: %s\n", Arrays.toString(args));
+
+        if (target != null) {
+            System.out.println("Before invoke"); // 调用前, 添加逻辑
+
+            Object result = method.invoke(target, args);
+            System.out.println(result);
+
+            System.out.println("After invoke"); // 调用后, 添加逻辑
+            return result;
+        }
+        return null;
+    }
+}
 ```
 
 上面这段代码通过了测试并输出了以下内容
 
-```console
+```shell
 proxy class: class com.sun.proxy.$Proxy4
 method: public abstract java.lang.String io.h2cone.proxy.jdk.PersonService.sayHello(java.lang.String)
 args: [World]
@@ -168,7 +168,7 @@ h – the invocation handler to dispatch method invocations to
 
 对于上文的代码, 当我们用 `javac` 编译源代码成功会输出 `PersonService.class` 和 `SimplePersonService.class` 等文件. 我们用编辑器看看其中一个文件的内容
 
-```class
+```text
 cafe babe 0000 0034 0009 0700 0707 0008
 0100 0873 6179 4865 6c6c 6f01 0026 284c
 6a61 7661 2f6c 616e 672f 5374 7269 6e67
@@ -205,38 +205,38 @@ public abstract class PersonService {
 然后, 用 CGLIB 的方式 say hello
 
 ```java
-    @Test
-    public void sayHello() {
-        Enhancer enhancer = new Enhancer();
-        enhancer.setSuperclass(PersonService.class);    // 设置基类
-        enhancer.setCallback(new PersonServiceInterceptor());   // 设置方法调用拦截器
-        PersonService service = (PersonService) enhancer.create();  // 生成代理类, 创建代理实例
+@Test
+public void sayHello() {
+    Enhancer enhancer = new Enhancer();
+    enhancer.setSuperclass(PersonService.class);    // 设置基类
+    enhancer.setCallback(new PersonServiceInterceptor());   // 设置方法调用拦截器
+    PersonService service = (PersonService) enhancer.create();  // 生成代理类, 创建代理实例
 
-        String result = service.sayHello("World");
-        Assert.assertEquals("Hello, World", result);
+    String result = service.sayHello("World");
+    Assert.assertEquals("Hello, World", result);
+}
+
+/**
+    *  PersonService 方法调用拦截器
+    */
+static class PersonServiceInterceptor implements MethodInterceptor {
+
+    @Override
+    public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
+        System.out.printf("obj class: %s\n", obj.getClass());
+        System.out.printf("method: %s\n", method);
+        System.out.printf("args: %s\n", Arrays.toString(args));
+        System.out.printf("method proxy: %s\n", proxy);
+
+        System.out.println("Before invoke"); // 调用前, 添加逻辑
+
+        Object result = proxy.invokeSuper(obj, args);
+        System.out.println(result);
+
+        System.out.println("After invoke"); // 调用后, 添加逻辑
+        return result;
     }
-
-    /**
-     *  PersonService 方法调用拦截器
-     */
-    static class PersonServiceInterceptor implements MethodInterceptor {
-
-        @Override
-        public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
-            System.out.printf("obj class: %s\n", obj.getClass());
-            System.out.printf("method: %s\n", method);
-            System.out.printf("args: %s\n", Arrays.toString(args));
-            System.out.printf("method proxy: %s\n", proxy);
-
-            System.out.println("Before invoke"); // 调用前, 添加逻辑
-
-            Object result = proxy.invokeSuper(obj, args);
-            System.out.println(result);
-
-            System.out.println("After invoke"); // 调用后, 添加逻辑
-            return result;
-        }
-    }
+}
 ```
 
 输出结果如下
@@ -263,7 +263,7 @@ loader – the class loader to define the proxy class
 
 它是一个用于定义代理类的类加载器, 我们传递了被代理类的类加载器, 因而被代理类和代理类的类加载器是相同的.
 
-```console
+```shell
 target class loader: sun.misc.Launcher$AppClassLoader@18b4aac2
 proxy class loader: sun.misc.Launcher$AppClassLoader@18b4aac2
 ```
