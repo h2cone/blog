@@ -280,7 +280,7 @@ System Class Loader -> Extension Class Loader -> Bootstrap Class Loader
 
 ## 后记
 
-在 Spring AOP 的使用过程中, 还发现一个叫做 AspectJ 的家伙. 在编译时和运行时之间是编译后和加载时, 它就在加载时动手脚...
+在 Spring AOP 的使用过程中, 还发现一个叫做 AspectJ 的家伙. 在编译时和运行时之间是编译后和加载时, 它就在加载时做手脚...
 
 ## 参考
 
