@@ -39,7 +39,7 @@ AOP 能够使前文所述的统一逻辑模块化, 这些统一逻辑可称之�
 
 Python, JavaScript, PHP, Ruby 等动态语言们, 竟然能在运行时对类/属性/方法/函数进行操作, 作为静态语言的 Java 在不重启 JVM 的前提下, 是否也可以在运行时操作类?
 
-当我们写完一个 Java 程序, 通过 Java 编译器编译后输出包含 Java 字节码的 Class 文件, 随后启动 Java 虚拟机 (JVM, 本文以 HotSpot 为例), Java 运行时环境 (JRE) 通过类加载器 (Class Loader) 加载类到 JVM 运行时的方法区, 方法区储存着类的数据, 比如运行时的常量池 (Run-Time Constant Pool) 和方法代码等, 应用程序也能利用类加载器动态加载类. 因此, 如果在运行时修改类又或者在运行时生成类并动态加载到方法区, Java 运行时操作类显然是可能的.
+当我们写完一个 Java 程序, 通过 Java 编译器编译后输出包含 Java 字节码的 Class 文件, 随后启动 Java 虚拟机 (简称 JVM, 本文以 HotSpot 为例), Java 运行时环境 (JRE) 通过类加载器 (ClassLoader) 加载类到 JVM 运行时的方法区, 方法区储存着类的数据, 比如运行时的常量池 (Run-Time Constant Pool) 和方法代码等, 之后, 类被实例化或对象被创建... Java 支持运行时修改类或者运行时生成类并动态加载到方法区?
 
 ![java_class_from_to](/img/java_class_from_to.png)
 
@@ -257,7 +257,7 @@ After invoke
 
 综上所述, **JDK 动态代理只能通过接口生成代理类, 代理类与被代理类是兄弟姐妹, 而 CGLIB 还能通过基类生成代理类, 代理类是被代理类的子类.** 除了能力上的区别, 在性能上, 似乎普遍认为 CGLIB 要快于 JDK 动态代理. 前文提到了 Spring AOP 使用 JDK 动态代理或 CGLIB 在运行时生成代理类, 那么 Spring AOP 在什么情况下采用 JDK 动态代理? 又是在什么情况下次采用 CGLIB? 如结论所说, 如果被代理类或目标类实现了一个或多个接口, 那么 Spring AOP 将采用 JDK 动态代理生成一个实现每个接口的代理类. 如果被代理类或目标类没有实现接口, 那么 Spring AOP 将采用 CGLIB 动态生成代理类, 它是被代理类或目标类的子类. 当然, Spring AOP 很大可能也提供了强制采用其中某种方式的方法.
 
-虽然动态生成了代理类, 但是如果不能把代理类加载到 JVM 方法区, 它就不能像其它正常类一样产生 `java.lang.Class` 的实例, 也就不会有后续的动态性. 回头看一下 JDK 动态代理的 `newProxyInstance` 方法的首要参数:
+虽然动态生成了代理类, 但是如果不把代理类加载到 JVM 方法区, 也就不能创建它的实例. 回头看一下 JDK 动态代理的 `newProxyInstance` 方法的首要参数:
 
 ```javadoc
 loader – the class loader to define the proxy class
