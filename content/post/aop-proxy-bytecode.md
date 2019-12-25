@@ -102,12 +102,12 @@ public void sayHello() {
 }
 
 /**
-    *  拦截 PersonService 方法调用的处理器
-    */
+ * 拦截 PersonService 方法调用的处理器
+ */
 static class PersonServiceHandler implements InvocationHandler {
     /**
-        * 目标实例 (被代理实例)
-        */
+     * 目标实例 (被代理实例)
+     */
     Object target;
 
     PersonServiceHandler() {
@@ -217,8 +217,8 @@ public void sayHello() {
 }
 
 /**
-    *  PersonService 方法调用拦截器
-    */
+ * PersonService 方法调用拦截器
+ */
 static class PersonServiceInterceptor implements MethodInterceptor {
 
     @Override
