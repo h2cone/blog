@@ -191,7 +191,9 @@ public class Foobar {
 
 若使用 IntelliJ IDEA，依次点击 `Build > Rebuild Project`，成功后可以在底部的 `Messages` 看到 `process` 方法被调用从而输出了 `Inspect` 注解的名称：
 
-![annotation-processor-demo_rebuild.png](/img/annotation-processor-demo_rebuild.png)
+```text
+Information:java: io.h2cone.annotation.processor.Inspect
+```
 
 ## 参考资料
 
