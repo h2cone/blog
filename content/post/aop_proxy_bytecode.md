@@ -272,9 +272,7 @@ proxy class loader: sun.misc.Launcher$AppClassLoader@18b4aac2
 
 `AppClassLoader` 是应用程序类加载器, 又名为系统类加载器 (System Class Loader), 它所在的家族大概长这样子:
 
-```text
-System Class Loader -> Extension Class Loader -> Bootstrap Class Loader
-```
+![ClassLoaderFamily](/img/ClassLoaderFamily.png)
 
 其中没有双亲的 Bootstrap Class Loader 从 `JRE/lib/rt.jar` 加载类, 它的孩子 Extension Class Loader 从 `JRE/lib/ext` 或 `java.ext.dirs` 加载类, 它的子孙 `System Class Loader` 从 `CLASSPATH`, `-classpath`, `-cp`, `Mainfest` 加载类, 不仅如此, 类加载机制使用**双亲委派**模型处理类加载请求, 先将请求委派给父母, 若父母不能完成加载, 则退回由孩子加载, 且防止同一类被加载多次. 当然, 如果有需要自定义类加载器, 则需要编写类继承 `java.lang.ClassLoader` 并重写相应的方法.
 

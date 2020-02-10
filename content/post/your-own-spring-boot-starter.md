@@ -154,7 +154,7 @@ io.h2cone.springfox.swagger2.spring.boot.autoconfigure.SpringFoxSwagger2AutoConf
 
 ![search_spring_factories](/img/search_spring_factories.png)
 
-进去阅读一下 `org.springframework.core.io.support.SpringFactoriesLoader` 的源码和 Javadoc，再利用 IntelliJ IDEA CE 代码分析能力从 `loadFactories` 和 `loadFactoryNames` 两个公共方法发现`org.springframework.boot.autoconfigure.AutoConfigurationImportSelector` 声明调用了这个两个方法。再来看看 `AutoConfigurationImportSelector` 的简介：
+进去阅读一下 `org.springframework.core.io.support.SpringFactoriesLoader` 的源码和 Javadoc，再利用 IntelliJ IDEA CE 代码分析能力得知 `loadFactories` 和 `loadFactoryNames` 这两个公共方法被 `org.springframework.boot.autoconfigure.AutoConfigurationImportSelector` 使用了。再来看看 `AutoConfigurationImportSelector` 的简介：
 
 ```java
 /**

@@ -176,7 +176,7 @@ public class InterceptorChain {
 }
 ```
 
-难道这就是 `责任链模式 (Chain-of-responsibility pattern)`？注意 `pluginAll` 方法，终于还是回到了 `Interceptor`:
+难道这就是**Chain-of-responsibility pattern**？注意 `pluginAll` 方法，终于还是回到了 `Interceptor`:
 
 ```java
 public interface Interceptor {
@@ -256,7 +256,7 @@ public class Plugin implements InvocationHandler {
 
 ![usages_of_pluginAll](/img/usages_of_pluginAll.png)
 
-逆向搜索，总将去到“打开会话”。
+从终点出发，回到了起点。
 
 ## 尾声
 

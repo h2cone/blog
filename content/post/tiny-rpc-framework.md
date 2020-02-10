@@ -15,7 +15,7 @@ categories: []
 
 RPC 就是远程过程调用, 分布在不同机器上的进程能够调用对方的函数或方法, RPC 框架的远程调用常常伪装成本地调用, 但是本地调用一般只发生在同一机器的同一进程, 执行效率比前者高, 却不能跨机器交换数据. 在微服务架构中, 服务或进程之间的通信不可避免, 常见的 HTTP Request/Response 可以认为是 RPC, 它的优势是几乎所有编程语言都支持, REST 依然很流行, 但是 HTTP 不是一个精简的协议, 而且序列化协议往往使用文本协议, 比如 JSON 或 XML, 如果对服务的吞吐率敏感, 自定义 TCP 协议或序列化协议的 RPC 也许更适合后端的进程通信, 谷歌的 gRPC 就是基于 HTTP/2 的 RPC, 还采用了二进制编码的 Protocol Buffers 作为序列化协议.
 
-Java 界主流的 [RPC](https://en.wikipedia.org/wiki/Remote_procedure_call) 框架绝大部分是基于 [Netty](https://netty.io/) 的, 比如谷歌开源的 grpc-java 以及起源于阿里巴巴的 Apache Dubbo. 官方解释说 Netty 是一个**异步**的**事件驱动**网络应用程序框架, 用于快速开发可维护的**高性能**协议服务器端和客户端, 它很受欢迎, 据说 ElasticSearch, Cassandra, Flink 以及 Spark 都采用了 Netty, 不得不提 [Vert.x](https://vertx.io/) 也是基于 Netty 的, 这篇文章能够完成，或者说这个小框架不至于夭折是因为选择了 Netty.
+Java 界主流的 [RPC](https://en.wikipedia.org/wiki/Remote_procedure_call) 框架绝大部分是基于 [Netty](https://netty.io/) 的, 比如谷歌开源的 grpc-java 以及起源于阿里巴巴的 Apache Dubbo. 官方解释说 Netty 是一个**异步**的**事件驱动**网络应用程序框架, 用于快速开发可维护的**高性能**协议服务器端和客户端, 它很受欢迎, 据说 Elasticsearch, Cassandra, Flink 以及 Spark 都采用了 Netty, 不得不提 [Vert.x](https://vertx.io/) 也是基于 Netty 的, 这篇文章能够完成，或者说这个小框架不至于夭折是因为选择了 Netty.
 
 Netty 高性能的原因之一使用了 Java NIO, 传统的 Java IO 是阻塞 IO, 一般对应着 Unix 网络编程五种 IO 模型中的 blocking IO, 一个连接 (Socket) 由一个线程处理, 线程数随着连接数增加而增加, 当线程数足够多, 线程并不便宜, 不仅占用大量的空间, 在高负载下操作系统内核需要花费大量的时间在线程调度上, 也许可以读写的 Socket 占少数, 大量的线程处于等待数据的状态, 吞吐率自然不高. 一种缓解办法是采用线程池, 比如 Tomcat 就是这么做的, 处理完请求后归还线程池, 还可以使用 Nginx 负载均衡并水平扩展 Tomcat 以此应对高并发场景，更好的办法也许是使用 Java NIO, 对应着 Unix 网络编程五种 IO 模型中的 non-blocking IO 或 IO multiplexing (Nginx 就采用了 IO 多路复用), 致力于用更少的线程处理更多的连接, Java NIO 有三个重要概念, 分别是 Channel, Buffer, Selector,  Channel 是一个双向的数据读写的通道, 可用来表示 Socket, 数据读写经过 Buffer, Selector 用以监听或轮询多个 Channel, 但是 Java NIO 编程过于复杂, 因此出现了高效且可靠的 Netty.
 
@@ -232,15 +232,11 @@ Client 和 Server 的数据传输协议, 这里以 JSON 序列化和反序列化
 
 Client 请求 Server:
 
-```text
-RPC Client --message--> Request Encoder --bytes--> Request Decoder --message--> RPC Server
-```
+![client2server](/img/client2server.png)
 
 Server 响应 Client:
 
-```text
-RPC Server --message--> Response Encoder --bytes--> Response Decoder --message--> RPC Client
-```
+![server2client](/img/server2client.png)
 
 这些编码器和解码器通过 `ServerBootstrap` 和 `Bootstrap` 设置 Channel 处理器 (`RpcServerChannelInitializer` 和 `RpcClientChannelInitializer`) 进行添加.
 
