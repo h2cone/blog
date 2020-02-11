@@ -82,150 +82,150 @@ Netty 高性能的原因之一使用了 Java NIO, 传统的 Java IO 是阻塞 IO
 Server 正常启动:
 
 ```java
-    public void start() {
-        int port = service.getPort();
-        if (port <= 0) {
-            port = Integer.parseInt(System.getProperty("port", "8080"));
-        }
-        if (bossGroup == null && workerGroup == null) {
-            bossGroup = new NioEventLoopGroup();
-            workerGroup = new NioEventLoopGroup();
-            try {
-                // Server 设置
-                ServerBootstrap bootstrap = new ServerBootstrap();
-                bootstrap.group(bossGroup, workerGroup)
-                        .channel(NioServerSocketChannel.class)
-                        .handler(new LoggingHandler(LogLevel.INFO))
-                        .childHandler(new RpcServerChannelInitializer(executors))
-                        .option(ChannelOption.SO_BACKLOG, 128)
-                        .childOption(ChannelOption.SO_KEEPALIVE, true);
+public void start() {
+    int port = service.getPort();
+    if (port <= 0) {
+        port = Integer.parseInt(System.getProperty("port", "8080"));
+    }
+    if (bossGroup == null && workerGroup == null) {
+        bossGroup = new NioEventLoopGroup();
+        workerGroup = new NioEventLoopGroup();
+        try {
+            // Server 设置
+            ServerBootstrap bootstrap = new ServerBootstrap();
+            bootstrap.group(bossGroup, workerGroup)
+                    .channel(NioServerSocketChannel.class)
+                    .handler(new LoggingHandler(LogLevel.INFO))
+                    .childHandler(new RpcServerChannelInitializer(executors))
+                    .option(ChannelOption.SO_BACKLOG, 128)
+                    .childOption(ChannelOption.SO_KEEPALIVE, true);
 
-                // 遍历网卡获取第一个非回环地址, 端口则由使用者配置
-                InetAddress address = InetUtils.getFirstNonLoopbackAddress();
-                service.setHost(null == address ? "127.0.0.1" : address.getHostAddress());
+            // 遍历网卡获取第一个非回环地址, 端口则由使用者配置
+            InetAddress address = InetUtils.getFirstNonLoopbackAddress();
+            service.setHost(null == address ? "127.0.0.1" : address.getHostAddress());
 
-                // 服务注册
-                registry.register(service);
+            // 服务注册
+            registry.register(service);
 
-                // 绑定地址和端口并启动后开始接受连接, 直到连接关闭
-                ChannelFuture future = bootstrap.bind(address, port).sync();
-                future.channel().closeFuture().sync();
-            } catch (InterruptedException e) {
-                log.error("Server failed to start", e);
-            } finally {
-                shutdown();
-            }
+            // 绑定地址和端口并启动后开始接受连接, 直到连接关闭
+            ChannelFuture future = bootstrap.bind(address, port).sync();
+            future.channel().closeFuture().sync();
+        } catch (InterruptedException e) {
+            log.error("Server failed to start", e);
+        } finally {
+            shutdown();
         }
     }
+}
 ```
 
 Client 主动连接 Server:
 
 ```java
-    private Channel connect(String host, int port) {
-        try {
-            // Client 设置
-            Bootstrap bootstrap = new Bootstrap();
-            bootstrap.group(workerGroup)
-                    .channel(NioSocketChannel.class)
-                    .handler(initializer.encoder(encoder)
-                            .decoder(new ResponseDecoder())
-                            .handler(handler))
-                    .option(ChannelOption.SO_KEEPALIVE, true);
-            // 等待连接完成
-            return bootstrap.connect(host, port).sync().channel();
-        } catch (InterruptedException e) {
-            log.error("Failed to connect " + host + ":" + port, e);
-            return null;
-        }
+private Channel connect(String host, int port) {
+    try {
+        // Client 设置
+        Bootstrap bootstrap = new Bootstrap();
+        bootstrap.group(workerGroup)
+                .channel(NioSocketChannel.class)
+                .handler(initializer.encoder(encoder)
+                        .decoder(new ResponseDecoder())
+                        .handler(handler))
+                .option(ChannelOption.SO_KEEPALIVE, true);
+        // 等待连接完成
+        return bootstrap.connect(host, port).sync().channel();
+    } catch (InterruptedException e) {
+        log.error("Failed to connect " + host + ":" + port, e);
+        return null;
     }
+}
 ```
 
 Client 请求 Server:
 
 ```java
-    public Response sendRequest(Request request, Channel channel) {
-        // 把请求数据写入通道
-        channel.writeAndFlush(request);
-        Long id = request.getId();
-        // 如果当前请求没有对应的响应
-        responses.putIfAbsent(id, new LinkedBlockingQueue<>(1));
-        Response response;
-        try {
-            // 通过 ID 获取响应, 阻塞除非获取完成或已超时
-            response = responses.get(id).poll(timeout, timeUnit);
-            if (response == null) {
-                channel.close().sync();
-                response = Response.notOk("cause: timeout");
-            }
-        } catch (InterruptedException e) {
-            log.error("Send request failed", e);
-            response = Response.notOk("cause: " + e);
-        } finally {
-            responses.remove(id);
+public Response sendRequest(Request request, Channel channel) {
+    // 把请求数据写入通道
+    channel.writeAndFlush(request);
+    Long id = request.getId();
+    // 如果当前请求没有对应的响应
+    responses.putIfAbsent(id, new LinkedBlockingQueue<>(1));
+    Response response;
+    try {
+        // 通过 ID 获取响应, 阻塞除非获取完成或已超时
+        response = responses.get(id).poll(timeout, timeUnit);
+        if (response == null) {
+            channel.close().sync();
+            response = Response.notOk("cause: timeout");
         }
-        return response;
+    } catch (InterruptedException e) {
+        log.error("Send request failed", e);
+        response = Response.notOk("cause: " + e);
+    } finally {
+        responses.remove(id);
     }
+    return response;
+}
 ```
 
 Client 获取响应完成前:
 
 ```java
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        Response response = (Response) msg;
-        // 获取响应并保存
-        BlockingQueue<Response> queue = responses.get(response.getId());
-        if (queue != null) {
-            queue.add(response);
-        }
+@Override
+public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    Response response = (Response) msg;
+    // 获取响应并保存
+    BlockingQueue<Response> queue = responses.get(response.getId());
+    if (queue != null) {
+        queue.add(response);
     }
+}
 ```
 
 Server 响应 Client:
 
 ```java
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        Request request = (Request) msg;
-        // 创建响应
-        Response response = createResponse(request);
-        response.setId(request.getId());
-        ctx.writeAndFlush(response);
+@Override
+public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    Request request = (Request) msg;
+    // 创建响应
+    Response response = createResponse(request);
+    response.setId(request.getId());
+    ctx.writeAndFlush(response);
+}
+
+private Response createResponse(Request request) {
+    // 获取被 Client 调用的目标
+    ServerExecutor executor = executors.get(request.getSimpleClassName());
+    if (executor == null) {
+        return Response.notOk("Executor not found: " + request.getSimpleClassName());
     }
+    Class clazz = executor.getClazz();
+    Object instance = executor.getInstance();
 
-    private Response createResponse(Request request) {
-        // 获取被 Client 调用的目标
-        ServerExecutor executor = executors.get(request.getSimpleClassName());
-        if (executor == null) {
-            return Response.notOk("Executor not found: " + request.getSimpleClassName());
+    Response response;
+    try {
+        // 获取目标方法
+        Method method = clazz.getDeclaredMethod(request.getMethodName(), request.getParamTypes());
+        // 目标方法调用
+        response = (Response) method.invoke(instance, request.getArgs());
+
+        Type genericReturnType = method.getGenericReturnType();
+        if (genericReturnType instanceof ParameterizedType) {
+            Type[] types = ((ParameterizedType) genericReturnType).getActualTypeArguments();
+            response.setTypeParamTypeName(types[0].getTypeName());
+        } else {
+            String msg = "Generic return type not a parameterized type";
+            log.error(msg);
+            response = Response.notOk("cause: " + msg);
         }
-        Class clazz = executor.getClazz();
-        Object instance = executor.getInstance();
-
-        Response response;
-        try {
-            // 获取目标方法
-            Method method = clazz.getDeclaredMethod(request.getMethodName(), request.getParamTypes());
-            // 目标方法调用
-            response = (Response) method.invoke(instance, request.getArgs());
-
-            Type genericReturnType = method.getGenericReturnType();
-            if (genericReturnType instanceof ParameterizedType) {
-                Type[] types = ((ParameterizedType) genericReturnType).getActualTypeArguments();
-                response.setTypeParamTypeName(types[0].getTypeName());
-            } else {
-                String msg = "Generic return type not a parameterized type";
-                log.error(msg);
-                response = Response.notOk("cause: " + msg);
-            }
-        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException
-                | InvocationTargetException | ClassCastException e) {
-            log.error("Failed to invoke: " + request, e);
-            response = Response.notOk("cause: " + e);
-        }
-        return response;
+    } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException
+            | InvocationTargetException | ClassCastException e) {
+        log.error("Failed to invoke: " + request, e);
+        response = Response.notOk("cause: " + e);
     }
+    return response;
+}
 ```
 
 Client 和 Server 的数据传输协议, 这里以 JSON 序列化和反序列化为例.
@@ -254,7 +254,7 @@ public interface ServiceRegistry {
 
 使用 [Consul](https://www.consul.io/) 作为注册中心, 利用了 Agent API.
 
-了解更多, 推荐一下文章:
+了解更多, 推荐以下文章:
 
 - [使用Consul做服务发现的若干姿势](http://blog.didispace.com/consul-service-discovery-exp/)
 
@@ -298,17 +298,17 @@ public class User {
 配置:
 
 ```java
-    public static void main(String[] args) {
-        SpringApplication.run(RpcServerApplication.class, args);
+public static void main(String[] args) {
+    SpringApplication.run(RpcServerApplication.class, args);
 
-        ConsulService service = new ConsulService();
-        service.setName("rpc-server").setPort(8080);
-        ConsulRegistry registry = new ConsulRegistry("127.0.0.1", 8500);
-        String executorsPkg = "io.h2cone.rpcserver.service";
+    ConsulService service = new ConsulService();
+    service.setName("rpc-server").setPort(8080);
+    ConsulRegistry registry = new ConsulRegistry("127.0.0.1", 8500);
+    String executorsPkg = "io.h2cone.rpcserver.service";
 
-        RpcServer server = new RpcServer(service, registry, executorsPkg);
-        server.start();
-    }
+    RpcServer server = new RpcServer(service, registry, executorsPkg);
+    server.start();
+}
 ```
 
 ### 调用者
