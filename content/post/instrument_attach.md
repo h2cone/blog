@@ -35,7 +35,7 @@ Oracle JDK 里有一个名为 `java.lang.instrument` 的包：
 
 ### 体验
 
-如何以**非侵入式**测量 Java 方法执行耗时？你可能立马想到了 AOP 库或框架，比如 [JDK 动态代理](https://docs.oracle.com/javase/8/docs/technotes/guides/reflection/proxy.html)、[CGLIB](https://github.com/cglib/cglib)、[ASM](https://asm.ow2.io)、[javassist](https://github.com/jboss-javassist/javassist)......通过操作字节码在方法或代码块执行前后插入计时代码，但却极有可能需要手动更改原来的程序代码，例如添加依赖项以及新增切面类等等，既然如此，那就请 Java agent 帮忙吧。
+如何以**非侵入式**测量 Java 方法执行耗时？你可能立马想到了 AOP 库或框架，比如 [JDK 动态代理](https://docs.oracle.com/javase/8/docs/technotes/guides/reflection/proxy.html)、[cglib](https://github.com/cglib/cglib)、[ASM](https://asm.ow2.io)、[javassist](https://github.com/jboss-javassist/javassist)、[byte-buddy](https://github.com/raphw/byte-buddy)......通过操作字节码在方法或代码块执行前后插入计时代码，但却极有可能需要手动更改原来的程序代码，例如添加依赖项以及新增切面类等等，既然如此，那就请 Java agent 帮忙吧。
 
 假设有一个 Cat 类，它有一些耗时方法，如下：
 
