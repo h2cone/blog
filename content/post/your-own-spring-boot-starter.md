@@ -152,7 +152,7 @@ io.h2cone.springfox.swagger2.spring.boot.autoconfigure.SpringFoxSwagger2AutoConf
 - springfox-swagger2-spring-boot-starter
 - springfox-swagger2-spring-boot-sample
 
-职责分别是自动配置、包装、示例，依赖关系就像 [x-spring-boot](https://github.com/h2cone/x-spring-boot) 一样单纯。利用 Spring Boot 的自动配置特性，我们还可以提前创建好一组复杂单例，注册为 Spring Bean，通过依赖注入来使用......
+职责分别是自动配置、包装、示例，依赖关系就像 [x-spring-boot](https://github.com/h2cone/x-spring-boot) 一样单纯。利用 Spring Boot 的自动配置特性，我们还可以提前创建好一组复杂单例，注册为 Spring Bean，通过 YML 配置和依赖注入来使用......
 
 ## 走马观花
 
