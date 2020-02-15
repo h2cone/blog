@@ -140,13 +140,19 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 io.h2cone.springfox.swagger2.spring.boot.autoconfigure.SpringFoxSwagger2AutoConfig
 ```
 
-若有多个，则用逗号隔开，若需换行，则用反斜杠。以上代码来源于 [springfox-swagger2-spring-boot](https://github.com/h2cone/springfox-swagger2-spring-boot)，其中有如下三个模块:
+若有多个，则用逗号隔开，若需换行，则用反斜杠。值得注意的是，官方文档有一个小提示：
+
+> Auto-configurations must be loaded that way only. Make sure that they are defined in a specific package space and that they are never the target of component scanning. Furthermore, auto-configuration classes should not enable component scanning to find additional components. Specific @Imports should be used instead.
+
+特别是第三句，自动配置类不应启用组件扫描（例如 `@ComponentScan`）以查找其他组件，应该使用指定的 `@Imports` 代替。一般情况下，自动配置类只能间接启用组件扫描，在自动配置类上声明导入了一些配置类（`@Configuration`），利用这些配置类可以启动组件扫描，查找标注了 `@Component`、`@Controller`、`@Repository`、`@Service`、`@Aspect` 等注解的类。除非，自定义注解、扫描、处理。
+
+以上代码来源于 [springfox-swagger2-spring-boot](https://github.com/h2cone/springfox-swagger2-spring-boot)，其中有如下三个模块:
 
 - springfox-swagger2-spring-boot-autoconfigure
 - springfox-swagger2-spring-boot-starter
 - springfox-swagger2-spring-boot-sample
 
-职责分别是自动配置、包装、示例，依赖关系就像 [x-spring-boot](https://github.com/h2cone/x-spring-boot) 一样单纯。利用 Spring Boot 的自动配置特性，我们还可以提前创建好一些复杂单例，注册为 Spring Bean，通过依赖注入来使用......
+职责分别是自动配置、包装、示例，依赖关系就像 [x-spring-boot](https://github.com/h2cone/x-spring-boot) 一样单纯。利用 Spring Boot 的自动配置特性，我们还可以提前创建好一组复杂单例，注册为 Spring Bean，通过依赖注入来使用......
 
 ## 走马观花
 
@@ -204,6 +210,12 @@ public @interface SpringBootApplication {
 
 ## 推荐阅读
 
-[Creating Your Own Auto-configuration / Starter](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-developing-auto-configuration.html)
+[Creating Your Own Auto-configuration](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-developing-auto-configuration.html)
+
+[spring-boot-master-auto-configuration](https://github.com/snicoll/spring-boot-master-auto-configuration)
 
 [mybatis/spring-boot-starter](https://github.com/mybatis/spring-boot-starter)
+
+[dubbo-spring-boot-autoconfigure](https://github.com/apache/dubbo-spring-boot-project/tree/master/dubbo-spring-boot-autoconfigure)
+
+[grpc-spring-boot-starter](https://github.com/LogNet/grpc-spring-boot-starter)
