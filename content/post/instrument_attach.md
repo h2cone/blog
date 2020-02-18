@@ -337,3 +337,5 @@ Woof Woof
 [Java动态追踪技术探究](https://tech.meituan.com/2019/02/28/java-dynamic-trace.html)
 
 [JVM 源码分析之 javaagent 原理完全解读](https://www.infoq.cn/article/javaagent-illustrated)
+
+[Java神器BTrace，从入门到熟练小工的手册](https://mp.weixin.qq.com/s/4bZ6iSvpqPsjdvkSoFVhrg)
