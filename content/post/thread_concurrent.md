@@ -189,10 +189,10 @@ Fork/Join 框架是 `ExecutorService` 接口的实现，它是为了可以分而
 
 ```
 if 我的工作量足够小
-  直接做
+    直接做工作
 else
-  将我的工作分为两个片段
-  调用两个片段并等待结果
+    将我的工作分为两个片段
+    调用两个片段并等待结果
 ```
 
 分而治之，通常把一个足够大的工作任务递归分解为两个或多个相同或相识的子任务。
@@ -214,7 +214,7 @@ public class BigTask extends RecursiveAction {
     @Override
     protected void compute() {
         if (len < threshold) {
-            // do the work directly
+            // 直接操作 src
         } else {
             int split = len / 2;
             invokeAll(new BigTask(src, start, split),
@@ -235,9 +235,9 @@ ForkJoinPool pool = new ForkJoinPool();
 pool.invoke(task);
 ```
 
-一个工作线程调用了 `compute` 方法，先判断当前 src 的长度是否小于阈值（threshold），若是则认为这个任务足够小，单线程很快就能完成对 src 的操作，否者就认为这个任务足够大，需要分工，于是先把 src 分成两个片段，然后调用 `invokeAll` 方法，其它工作线程去执行这两个子任务，又调用了 `compute` 方法......在多处理器计算机系统中，因为支持多线程并行计算，所以这类程序通常运行得很快。
+一个工作线程调用了 `compute` 方法，先判断当前 src 的长度是否小于阈值（threshold），若是则认为这个任务足够小，单线程很快就能完成对 src 的操作，否者就认为这个任务足够大，需要分工，于是先把 src 分成两个片段，然后调用 `invokeAll` 方法，其它工作线程去执行这两个子任务，又调用了 `compute` 方法......在多处理器计算机系统中，因为支持多线程并行，所以这类程序通常运行得很快。
 
-JDK 的 [java.util.Arrays](https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html) 和 [java.util.streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) 已经提供了许多高效的并行化方法。
+JDK 的 [java.util.Arrays](https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html) 和 [java.util.streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) 已经提供了许多操作聚合类型的并行化方法。
 
 ### 非线程安全
 
