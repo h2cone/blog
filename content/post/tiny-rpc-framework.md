@@ -43,7 +43,7 @@ Netty 高性能的原因之一使用了 Java NIO, 传统的 Java IO 是阻塞 IO
 
 好, 开始动手, 先对 [Netty 用户指南](https://netty.io/wiki/user-guide-for-4.x.html) 的示例代码动手, 原来编写 Client 和 Server 是轻松愉快的, 然后编写迷你 RPC 框架的核心:
 
-```shell
+```
 └── rpcnetty
     ├── Request.java
     ├── Response.java
@@ -381,3 +381,5 @@ future.whenComplete((response, e) -> {
 ## 起源
 
 完整代码已发布, 请参考 [rpc-spring-boot](https://github.com/h2cone/rpc-spring-boot).
+
+> 本文首发于 https://h2cone.github.io

@@ -115,7 +115,7 @@ public class ElapsedTimeTransformer implements ClassFileTransformer {
 
 其次，新建 `MANIFEST.MF` 文件编写一些键值对告诉 JVM 这个 agent 类在哪里以及是否允许重定义类或重转换类：
 
-```MF
+```
 Manifest-Version: 1.0
 Premain-Class: io.h2cone.trace.agent.ElapsedTimeAgent
 Can-Redefine-Classes: true
@@ -201,7 +201,7 @@ java -javaagent:agent-jar-with-dependencies.jar=io/h2cone/inst/app/Cat -jar app.
 
 结果表明，不仅 Cat 类的 run 方法正常执行，而且输出了该方法的执行时间：
 
-```shell
+```
 Cat is running
 io.h2cone.inst.app.Cat.run(): 73993800 ns
 ```
@@ -240,7 +240,7 @@ public class DogMain {
 
 这个程序跑起来后 20 秒内输出：
 
-```shell
+```
 managed bean name: 5424@borvino
 Woof Woof
 ```
@@ -268,7 +268,7 @@ public class OwnerAgent {
 
 不忘编写 `MANIFEST.MF` 文件：
 
-```MF
+```
 Manifest-Version: 1.0
 Premain-Class: io.h2cone.attach.agent.OwnerAgent
 Agent-Class: io.h2cone.attach.agent.OwnerAgent
@@ -295,7 +295,7 @@ public void attach() throws IOException, AttachNotSupportedException, AgentLoadE
 
 试验结果：
 
-```shell
+```
 managed bean name: 5424@borvino
 Woof Woof
 agentmain agentArgs: Hello, Dog
@@ -311,6 +311,8 @@ Woof Woof
 ## 写在后面
 
 微服务架构下，进程间的联系错综复杂，客户端的请求到了服务器端后可能形成了复杂的调用链，假如发生了异常，如何查明哪里发生故障以及什么原因导致性能下降？**分布式追踪（Distributed Tracing）** 正是一种解决方案。Java 王国有着许许多多的 APM（Application Performance Monitoring）系统专门解决此类问题，例如 [SkyWalking](https://github.com/apache/skywalking)、[Zipkin](https://github.com/openzipkin/zipkin)、[Pinpoint](https://github.com/naver/pinpoint)，它们或多或少支持了名为 [OpenTracing](https://opentracing.io/) 的标准，分布式追踪的标准与技术非常有助于微服务架构下的故障排除。
+
+> 本文首发于 https://h2cone.github.io
 
 ## 文章参考
 

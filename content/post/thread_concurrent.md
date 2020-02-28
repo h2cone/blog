@@ -1,0 +1,814 @@
+---
+title: "多线程·并发编程"
+date: 2020-02-21T17:47:30+08:00
+draft: false
+description: ""
+tags: []
+categories: []
+---
+
+Java 版。
+
+<!--more-->
+
+## 进程与线程
+
+现代的计算机系统提供了许多漂亮的**抽象**，如下图所示：
+
+![计算机系统的抽象](/img/concurrent/计算机系统的抽象.png)
+
+其中，进程是对处理器、主存和 I/O 设备的抽象，换言之，进程是操作系统对一个正在运行的程序的一种抽象。操作系统上可以“同时”运行多个进程，已经对一边听歌一边写代码和接收消息的流畅不足为奇，之所以用双引号，因为这可能是一种假象。
+
+大多数计算机系统中，需要运行的进程数是多于可以运行它们的 CPU 个数的，那么所谓的”同时“运行，很有可能是模拟并发的假象，也就是说一个进程的指令和另一个进程的指令是被 CPU 交错执行的，而且 CPU 在进程间切换足够快、间隔足够短，每个进程看上去像是连续执行。除非有多个 CPU 或多处理器的计算机系统，才能支持多进程并行，即处理器同时执行多个程序的指令。
+
+一个进程用完了操作系统分配给它的时间片，操作系统决定把控制权转移给新的进程，就会进行**上下文切换（context switch）**，即保存当前进程的状态，恢复新进程的状态，交接控制权。这种状态被称为上下文（context），比如程序计数器和寄存器的当前值以及主存的内容。
+
+一个进程可以存在多个控制流（control flow），它们被称为线程。如来自维基百科线程词条的插图所示：
+
+![Multithreaded_process](/img/concurrent/Multithreaded_process.svg)
+
+因为只有单处理器，所以这个进程的两个线程轮番运行在进程的上下文中（模拟并发）。操作系统不仅调度进程，教科书常说，线程是操作系统调度的最小单位。从单线程进程推广到多线程进程的线程，一个线程时间到了，上下文切换，轮到了另一个线程运行。
+
+多线程程序十分普遍。电脑和手机应用程序在用户界面渲染动画，同时在后台执行计算和网络请求。一个 Web 服务器一次处理数千个客户端的请求。多线程下载、多线程爬虫、多线程遍历文件树......多线程成为越来越重要的模型，因为多线程程序有不少优点。
+
+多线程之间比多进程之间更容易共享数据和通信。同一个进程的多个线程共享进程的资源，如进程**虚拟地址空间**的程序代码和程序处理的数据以及文件，对于同一进程的线程们来说，可执行代码只有一套，它们可以访问分配在堆 (Heap) 的共享变量或全局变量，但是，栈（Stack）、包括程序计数器（Program Counter）在内的寄存器（Register）副本、线程本地存储（Thread Local Storage）都是线程私有的（如果有的话）。不仅如此，线程之间可以通过共享的代码、数据、文件进行通信，绝大部分情况下比进程间的通信更高效。
+
+![4_01_ThreadDiagram](/img/concurrent/4_01_ThreadDiagram.jpg)
+
+多线程执行任务更多或更快，如果主线程阻塞在耗时任务，整个程序可能会卡顿或长时间无响应，解决办法之一便是创建一个工作线程专门执行这个耗时任务，而主线程则继续执行其它任务。例如，前面提到的手机 APP（特别是 Android APP），UI 线程被阻塞后很有可能无法正常人机交互了，用户体验极差。更进一步，单进程的多线程之间的协作有可能提高 client-server 系统的性能，譬如异步调用缩短了请求响应时间（也许总延迟几乎没变）。最重要的是，虽然一个传统的 CPU 只能交错执行一个进程的多个线程，但随着多核处理器和超线程（hyperthreading）的普及，面对多任务或大任务的执行，多线程程序的性能上限具有更高的天花板，因为减少了执行多个任务需要模拟并发的开销，还因为处理器可以并行执行多个线程。
+
+## 并发与并行
+
+并发（Concurrency）和并行（Parallelism）这两个术语经常混淆，语义应当结合语境。
+
+![串行和并行以及并发](/img/concurrent/串行和并行以及并发.png)
+
+如上图所示，假设有两个任务和两个线程，每个任务只能由一线程执行且用时分别是 t1 和 t2（t1 < t2），且线程都是同时启动，那么各个方式总执行时间可能如下表所示：
+
+方式 | 总执行时间
+:---: | :---:
+串行 | t1 + t2
+并行 | t2
+单处理器并发 | t1 + t2 + 上下文切换总时间
+
+由此可见，如果上下文切换的耗时可以忽略不计，单处理器并发不仅执行总时间近似于串行执行总时间，还有一个优点是同时执行两个任务的假象。并行的方式非常快，但也取决于最耗时的任务。
+
+既然在多处理器计算机系统中，多线程交错执行或并行执行都有可能发生，下文将”交错或并行“统称为为”并发“。
+
+## Java 多线程
+
+### Java 进程
+
+任何 Java 应用程序都跑在操作系统之上，操作系统作为硬件和应用程序的**中间层**，隐藏了下层具体实现的复杂性，并给上层提供了简单或统一的接口。
+
+![计算机系统的分层](/img/concurrent/计算机系统的分层.png)
+
+正在运行的 Java 程序就是 Java 虚拟机（JVM），而虚拟机是对整个操作系统的抽象，但对操作系统来说 JVM 仍然是进程。下面这张来自 [JVM Internals](http://blog.jamesdbloom.com/JVMInternals.html) 的图展示了 Java SE 7 虚拟机运行时的数据区域（Run-Time Data Areas）。堆、栈、PC 等区域与 Linux/Unix 操作系统进程的虚拟地址空间相似，值得注意的是 Java 8 用元空间（Metaspace）代替了永久代（PermGen）。JVM 运行时的数据区域可分成两大类，一是 Java 线程共享，如堆、方法区等，二是 Java 线程私有，如栈等，详情请见 [The Java Virtual Machine Specification, Java SE 8 Edition # 2.5. Run-Time Data Areas](https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.5)。
+
+![JVM_Internal_Architecture](/img/concurrent/JVM_Internal_Architecture.png)
+
+Java SE 最常用的虚拟机是 Oracle/Sun 研发的 Java HotSpot VM。HotSpot 基本的线程模型是 Java 线程与操作系统线程之间 1:1 的映射。线程通常在操作系统层实现或在应用程序层实现，前者的线程称为内核线程，后者的线程称为用户线程。内核（kernel）是操作系统代码常驻主存的部分，而所谓用户，就是应用程序和应用程序开发者。用户线程和内核线程的对应关系除了一对一，还可能是多对一和多对多。
+
+前文提到，充分利用多处理器能使多线程程序运行得更快。在操作系统层，消费多处理器的是内核线程，操作系统负责调度所有内核线程并派遣到任何可用的 CPU，因为 Java 线程与内核线程是一对一映射，所以充分利用多处理器能增强 Java 程序的性能。
+
+### 启动线程
+
+对于 HotSpot VM 来说，Java 线程是 `java.lang.Thread` 的实例。Java 用户可以使用类继承 `java.lang.Thread` 来新建和启动 Java 线程：
+
+```java
+public class HelloThread extends Thread {
+
+    @Override
+    public void run() {
+        System.out.println("Hello from a thread");
+    }
+
+    public static void main(String[] args) {
+        new HelloThread().start();
+    }
+}
+```
+
+或者使用类实现 `java.lang.Runnable` 来新建和启动线程。
+
+```java
+public class HelloRunnable implements Runnable {
+
+    @Override
+    public void run() {
+        System.out.println("Hello from a thread");
+    }
+
+    public static void main(String[] args) {
+        new Thread(new HelloRunnable()).start();
+    }
+}
+```
+
+Java 8 以上的用户也许更倾向于使用匿名内部类实现 `java.lang.Runnable` 或 Lambda 表达式简化以上代码，但都是通过调用 `java.lang.Thread#start` 方法来启动新线程，对应的内核线程在启动 Java 线程时创建，并在终止时回收。其中，`run` 方法是 Java 线程启动后执行的代码，即人类要求它执行的任务，而 `main` 方法的代码是 Java 用户直接或间接通过命令行启动 JVM 后执行。
+
+![main-thread-in-java](/img/concurrent/main-thread-in-java.jpeg)
+
+如上图所示，即使运行一个简单的 "Hello World" 程序，也可能在 JVM 或操作系统创建十几个或更多线程。例如执行 `main` 方法需要的主线程，主线程能启动子线程并继续执行其它代码，子线程也能启动其子线程并继续执行其它代码，而且还有其它由 HotSpot 为了内部目的而创建的线程，如 VM thread、Periodic task thread、GC threads、Compiler threads、Signal dispatcher thread。
+
+### Java 线程状态
+
+下面这个来自 [Java 6 Thread States and Life Cycle](https://www.uml-diagrams.org/examples/java-6-thread-state-machine-diagram-example.html) 的状态机，很好地描述了 Java 线程状态和生命周期。
+
+![state-machine-example-java-6-thread-states](/img/concurrent/state-machine-example-java-6-thread-states.png)
+
+翻阅 JDK 8 的 `java.lang.Thread.State` 可以确定，在给定的时间点，一个 Java 线程只能处于以下状态之一：
+
+- New。尚未启动的线程处于此状态。
+
+- Runnable。Java 虚拟机中执行的线程处于此状态。
+
+- Blocked。等待获得监视器锁（monitor lock）而被阻塞的线程处于此状态。
+
+- Waitting。无限期地等待另一个线程执行特定操作的线程处于此状态。
+
+- Timed Waiting。有限期地等待另一个线程执行特定操作的线程处于此状态。
+
+- Terminated。退出的线程处于此状态。
+
+如状态机所示，当线程执行不同操作时，线程状态发生转换，这些操作对应于 JDK 已提供的方法。注意上图的 o 表示 Object，t 表示 Thread。
+
+一个线程处于等待状态时，可以被另外一个线程通知，进入阻塞状态。比如，一个线程用一个对象（的引用）调用 `java.lang.Object#wait()` 方法进入等待状态，另一个线程用同一个对象（的引用）调用 `java.lang.Object#notify` 或 `java.lang.Object#notifyAll` 方法通知等待状态的线程进入阻塞状态，。不过，当该线程用该对象（的引用）调用 `java.lang.Object#wait()` 时，该线程必须拥有该对象的内置锁，否则将引发错误。拥有该对象内置锁的该线程的状态才能从已阻塞转为可运行。阻塞状态与内置锁或监视器锁息息相关，将在下文的"锁和同步"讨论。
+
+另外，线程有一个中断状态（interrupt status）。所谓中断，即停止正在执行的操作，并执行其它操作。例如，主线程可使用子线程对象（的引用）调用 `java.lang.Thread#interrupt` 中断子线程，子线程能够捕获 `java.lang.InterruptedException` 或调用 `java.lang.Thread#interrupted` 接收到中断。
+
+### 线程池
+
+使用 `Thread.start(...)` 启动线程足以执行基本的任务，但是对于复杂任务，例如有返回值的任务和定时任务等，其 API 过于低级。大规模的应用程序中，将线程的创建和管理从应用程序其余部分分开是很有意义的，理由之一是分离关注点能够减弱复杂性。封装了线程的创建和管理的对象们称为 Executors。
+
+JDK 的 `java.util.concurrent` 包定义了三个 Executor 接口，[Executor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html)、[ExecutorService](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html)、[ScheduledExecutorService](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledExecutorService.html)，大部分实现都使用**线程池（Thread Pool）**，这就是理由之二。
+
+例如，一个一般的服务器端程序服务着多个客户端，如果每个客户端的请求都通过新建一个线程来处理，即线程数随着请求数增加而增加，虽然新建线程比新建进程便宜，但是当活跃的线程数太多时，不仅占用大量的内存，容易导致内存溢出，而且操作系统内核需要花费大量的时间在线程调度上，大量的线程被迫等待，还有频繁创建和销毁执行短时任务的线程而引起的延迟，大量客户端长时间得不到响应。线程池就是为了解决此问题。
+
+线程池由数量可控的**工作线程（worker thread）** 组成，每个工作线程的生命都被延长，以便用于执行多个任务，既减少了过量线程的调度开销，也避免了频繁创建和毁灭执行短暂任务的线程而导致的延迟。线程池的新建通常是预处理，即服务器端程序提供服务之前已准备好线程池，避免了临时新建大量线程的开销。
+
+![任务通过队列提交到池中](/img/concurrent/任务通过队列提交到池中.png)
+
+线程池的一种常见类型是固定线程池（fixed thread pool），如果某个线程仍在使用中而被某种方式终止，那么就会有新的线程代替它。任务通过队列提交到池中，任务队列可以容纳超过线程池中线程数量的的任务。这样设计的好处是优雅降级（degrade gracefully）和削峰。
+
+```java
+public static ExecutorService newFixedThreadPool(int nThreads) {
+    return new ThreadPoolExecutor(nThreads, nThreads,
+                                    0L, TimeUnit.MILLISECONDS,
+                                    new LinkedBlockingQueue<Runnable>());
+}
+
+public static ExecutorService newFixedThreadPool(int nThreads, ThreadFactory threadFactory) {
+    return new ThreadPoolExecutor(nThreads, nThreads,
+                                    0L, TimeUnit.MILLISECONDS,
+                                    new LinkedBlockingQueue<Runnable>(),
+                                    threadFactory);
+}
+```
+
+上面是 `java.util.concurrent.Executors` 的新建固定线程池的方法。注意其中的 `LinkedBlockingQueue`，它是 `BlockingQueue` 的基于链表的实现类，作为阻塞队列，它有一个特性，当队列为空时，线程从队列拉取元素会被阻塞或被迫有限期等待（下文会介绍）。仔细翻阅源码，可以知道线程池的预先新建和工作线程的生命延长是通过阻塞工作线程或使之有限期等待来实现。除此之外，任务队列的的任务抽象为 `Runable`。
+
+新建线程池返回一个 `ExecutorService` 实例，利用它来提交任务：
+
+```java
+Future<?> future = executorService.submit(() -> {
+    // do something
+});
+// ....
+```
+
+可以执行异步任务也可以执行同步任务，既可以提交 `Runable` 也可以传递 `Callable`，或则其它类型的线程池。详情见 [ExecutorService 的方法](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html#method.summary) 和 [Executors 的方法](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#method.summary)
+
+使用 `Executors` 新建线程池，需要注意的是，可能会因为任务队列堆积过多任务从而导致内存溢出，因为 `LinkedBlockingQueue` 可自动扩容，最大值为 `Integer.MAX_VALUE`。建议合理设置线程池的各个参数，例如使用 `new ThreadPoolExecutor(..., ..., ..., ..., ...)` 来新建线程池，详情见 [ThreadPoolExecutor](https://docs.oracle.com/javase/tutorial/essential/concurrency/pools.html) 和 [ScheduledThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledThreadPoolExecutor.html)。
+
+### 非线程安全
+
+前面说到了多线程程序的优点，但它也有明显的缺点。因为多个线程并发执行，且多个线程共享同一份只读代码，当多个线程并发读写共享变量或全局变量时，可能导致线程干扰（thread interference）和内存一致性错误（memory consistency errors），从而无法保证程序功能正确，也称为线程不安全。
+
+```java
+public class Counter {
+    private long count;
+
+    public void increment() {
+        count++;
+    }
+
+    public long value() {
+        return count;
+    }
+}
+```
+
+上面是一个简单的计数器（Counter），其中有一个将计数器的值（count）增加 1 的方法（increment）。从人脑的角度，`increment` 方法可分解为三个步骤：
+
+1. 读取 count 的值。
+2. 计算 count + 1。
+3. 把计算结果写回 count。
+
+从计算机处理器的角度：
+
+1. 从主存复制 count 的值和 1 的值到两个寄存器，以覆盖寄存器原来的值。
+2. 把两个寄存器的值复制到 ALU，ALU 对这两个值做算术运算。
+3. ALU 将运算结果存入一个寄存器，以覆盖该寄存器原来的值。
+
+假设两个线程读取了 count 的值为 0，两个线程都在计算 0 + 1，一个线程比另一个线程更快把计算结果写回 count，此时 count 的值为 1，较慢的线程把 1 写回了 count，最终 count 的值是错误的 1，而不是正确的 2。在转账场景下，相互覆盖或丢失修改是一个非常严重的错误，例如两个人同时对一个银行账户进行取款或存款，如果银行软件系统开发者仍然有[线程惯性](https://zh.wikipedia.org/wiki/%E7%BA%BF%E7%A8%8B%E6%83%AF%E6%80%A7)，那么结果可能取多了金额或存少了金额。
+
+线程 1 | 线程 2 | &nbsp; | 整数值
+:---: | :---: | :---: | :---:
+&nbsp; | &nbsp; | &nbsp; | 0
+读取 | &nbsp; | <- | 0
+&nbsp; | 读取 | <- | 0
+增加 | &nbsp; |  &nbsp; | 0
+&nbsp; | 增加 | &nbsp; | 0
+写回 | &nbsp; | -> | 1
+&nbsp; | 写回 | -> | 1
+
+下面通过 [Junit](https://github.com/junit-team) 测试，来证实线程不安全的存在。
+
+```java
+public class CounterTest {
+    private static final long wait = 3000;
+
+    private final long threads = 2;
+    private final long times = 1000000;
+    private final long excepted = threads * times;
+
+    @Test
+    public void testIncrement() throws InterruptedException {
+        Counter counter = new Counter();
+
+        startThreads(counter, () -> {
+            for (int j = 0; j < times; j++) {
+                counter.increment();
+            }
+            System.out.printf("threadName: %s, counterValue: %s\n", Thread.currentThread().getName(), counter.value());
+        });
+        Assert.assertNotEquals(excepted, counter.value());
+    }
+
+    private void startThreads(Counter counter, Runnable runnable) throws InterruptedException {
+        for (int i = 0; i < threads; i++) {
+            new Thread(runnable).start();
+        }
+        Thread.sleep(CounterTest.wait);
+        System.out.printf("threadName: %s, exceptedCounterValue: %s, actualCounterValue: %s\n", Thread.currentThread().getName(), excepted, counter.value());
+    }
+}
+```
+
+一个临时测试线程调用了 `testIncrement` 方法，启动了 2 个子线程，为了避免其中一个线程已经停止了，而另外一线程启动中，模拟了一个耗时任务，两个线程都要重复调用 Counter 的 increment 方法 1000000 次。注意，临时测试线程跳出循环后，会睡眠 3000 毫秒，才继续往下执行，预期结果为 2000000（子线程数与递增次数的乘积）。此处省略本机信息，测试结果如下：
+
+![testIncrement](/img/concurrent/testIncrement.png)
+
+临时测试线程和两个子线程取得 count 的值都是错误的。根本原因是多线程并发访问共享变量或全局变量时，每个线程对该变量赋值前的值与它读取的值不一致，最终导致了程序错误。结合上面提到的 JVM 运行时的数据区域，可以推断出 Java 各种变量是否线程安全。
+
+变量 | 区域 | 是否线程共享 | 是否线程安全
+:---: | :---: | :---: | :---:
+静态字段 （static field）| 方法区的运行时常量池 | 是 | 否
+实例字段（instance field） | 堆 | 是 | 若单例则否，若多例则是
+局部变量 （local variable）| 栈帧 | 否 | 是
+
+## Java 并发编程
+
+### 锁
+
+保证多线程并发访问共享资源的程序正确，有一个直观的解决方案————锁（Lock）。
+
+![lock](/img/concurrent/lock.png)
+
+1. 只有获得锁的线程才能进入临界区（critical section），访问共享资源。
+
+2. 访问共享资源完成后，即使过程发生异常，也一定要释放锁，退出临界区。
+
+锁通常需要硬件支持才能有效实现。这种支持通常采取一种或多种[原子]((https://en.wikipedia.org/wiki/Linearizability))指令的形式，如 [test-and-set](https://en.wikipedia.org/wiki/Test-and-set)、[compare-and-swap](https://en.wikipedia.org/wiki/Compare-and-swap)、[fetch-and-add](https://en.wikipedia.org/wiki/Fetch-and-add)。所谓[原子指令](https://en.wikipedia.org/wiki/Linearizability#Primitive_atomic_instructions)，即处理器执行该指令不可分割、不可中断，换言之，原子操作要么完全发生，要么根本不发生。对于多处理器的计算机系统，为了保证“获得锁”的原子性，甚至可能通过锁定总线，暂时禁止其它 CPU 与内存通信。
+
+在 Java 中，读取以下变量的值或将某值写入以下变量都属于原子访问（atomic access）：
+
+- 引用类型的变量和大部分原始类型的变量（除了 `long` 和 `double` 的所有类型）。
+
+- 声明为 `volatile` 的所有变量（包括 `long` 和 `double` 变量）。
+
+### synchronized
+
+以前文的计数器为例，新增一个用 `synchronized` 修饰的 `incrementUseSync` 方法到 `Counter`，
+
+```java
+public class Counter {
+    private long count;
+
+    public void increment() {
+        count++;
+    }
+
+    public synchronized void incrementUseSync() {
+        count++;
+    }
+
+    public long value() {
+        return count;
+    }
+}
+```
+
+使用与测试 `increment` 方法相同的测试数据，测试启动相同个数的子线程重复调用同一个 Counter 对象的 `incrementUseSync` 方法相同次数，测试代码如下：
+
+```java
+@Test
+public void testIncrementUseSyncMethod() throws InterruptedException {
+    Counter counter = new Counter();
+
+    startThreads(counter, () -> {
+        for (int j = 0; j < times; j++) {
+            counter.incrementUseSyncMethod();
+        }
+        System.out.printf("threadName: %s, counterValue: %s\n", Thread.currentThread().getName(), counter.value());
+    });
+    Assert.assertEquals(excepted, counter.value());
+}
+```
+
+测试结果如下图所示：
+
+![testIncrementUseSyncMethod](/img/concurrent/testIncrementUseSyncMethod.png)
+
+测试通过，期望值（exceptedCounterValue）与实际值（exceptedCounterValue）相等，其中一个子线程（Thread-1）与临时测试线程（Time-limited test）读取的 count 值相等。
+
+防止线程干扰和内存一致性错误的机制是**同步（Synchronization）**。关键词 `synchronized`，翻译为已同步。当只有一个线程调用一个同步方法，它会自动获得这个方法的对象的内置锁（intrinsic lock）或监视器锁（monitor lock），并在方法返回时自动释放该对象的内置锁（即使返回是由未捕获异常引起的）。如果是用 `synchronized` 修饰的静态方法，这个线程会获得该静态方法所属的类所关联的 Class 对象的内置锁，因此，通过不同于该类的任何实例的锁来控制对该类的静态字段的访问。
+
+这足以解释上面的两个线程读写同一个变量的值重复百万次，最后结果仍然正确的原因。两个线程调用同一个同步方法，一个线程快于另一个线程获得这个方法的对象的内置锁，较慢的线程则等待获得该对象的内置锁，已获得该对象的内置锁的线程执行该方法的代码，修改了共享实例字段的值，该方法返回时自动释放了该对象的内置锁，被阻塞的线程有机会获得了该对象的内置锁......即使重复多次，一个时刻只能有一个线程正在访问共享实例字段，另一个线程只能等待，也就是说这个两个线程对于共享实例字段的访问是**互斥**的，也就不会出现线程干扰和内存一致性错误。
+
+线程 1 | 线程 2 | &nbsp; | 整数值
+:---: | :---: | :---: | :---:
+&nbsp; | &nbsp; | &nbsp; | 0
+获得锁（成功） | &nbsp; | &nbsp; | 0
+&nbsp; | 获得锁（失败） | | 0
+读取 | &nbsp; | <- | 0
+增加 | &nbsp; | &nbsp; | 0
+写回 | &nbsp; | -> | 1
+释放锁 | &nbsp; | &nbsp; | 1
+&nbsp; | 获得锁（成功）| &nbsp; | 1
+&nbsp; | 读取 | <- | 1
+&nbsp; | 增加 | &nbsp; | 1
+&nbsp; | 写回 | -> | 2
+&nbsp; | 释放锁 | &nbsp; | 2
+
+编写同步代码的另一个方式是使用同步语句（Synchronized Statements），比如，改写一下测试方法：
+
+```java
+@Test
+public void testIncrementUseSyncBlock() throws InterruptedException {
+    Counter counter = new Counter();
+
+    startThreads(counter, () -> {
+        for (int j = 0; j < times; j++) {
+            synchronized (counter) {
+                counter.increment();
+            }
+        }
+        System.out.printf("threadName: %s, counterValue: %s\n", Thread.currentThread().getName(), counter.value());
+    });
+    Assert.assertEquals(excepted, counter.value());
+}
+```
+
+或者添加一个 `incrementUseSyncStmt` 方法到 `Counter` 类，以及新增对应的测试用例：
+
+```java
+public class Counter {
+    private long count;
+
+    public void increment() {
+        count++;
+    }
+
+    public synchronized void incrementUseSyncMethod() {
+        count++;
+    }
+
+    public void incrementUseSyncStmt() {
+        synchronized (this) {
+            count++;
+        }
+    }
+
+    public long value() {
+        return count;
+    }
+}
+```
+
+```java
+@Test
+public void testIncrementUseSyncStmt() throws InterruptedException {
+    Counter counter = new Counter();
+
+    startThreads(counter, () -> {
+        for (int j = 0; j < times; j++) {
+            counter.incrementUseSyncStmt();
+        }
+        System.out.printf("threadName: %s, counterValue: %s\n", Thread.currentThread().getName(), counter.value());
+    });
+    Assert.assertEquals(excepted, counter.value());
+}
+```
+
+采用同步语句需要显式指定一个提供内置锁的对象，同步语句包裹的代码块（临界区），多线程互斥访问该对象的状态（实例字段或静态字段）。
+
+### 膨胀
+
+每一个 Java 对象都有一个与之关联的内置锁或监视器锁，其内部实体简称为监视器（monitor），又称为管程。因为有关键词 `synchronized`，所以每个 Java 对象都是一个潜在的监视器。一个线程可以锁定或解锁监视器，并且在任何时候只能有一个线程拥有该监视器。只有获得了监视器的所有权后，线程才可以进入受监视器保护的临界区。这与上文对内置锁的讨论一致，获得锁和释放锁可对应于 JVM 指令集的 `monitorenter` 和 `monitorexit`，即线程进入监视器和退出监视器。
+
+如果对 `Counter.class` 进行反汇编：
+
+```shell
+javap -v target/classes/io/h2cone/concurrent/Counter.class
+```
+
+那么可以看到同步方法和同步语句的可视化字节码。
+
+![monitor*](/img/concurrent/monitor*.png)
+
+同步方法虽然使用一个名为 `ACC_SYNCHRONIZED` 的 flag，但从 Java 虚拟机规范可以知道，底层行为也应该是进入监视器和退出监视器。
+
+在 Java Hostspot VM 中，每一个 Java 对象的内存布局都有一个通用的**对象头（object header）**结构。对象头的第一个字是 mark word，第二字是 klass pointer。
+
+![ObjectHeader](/img/concurrent/ObjectHeader.png)
+
+1. mark word。通常存储同步状态（synchronization state）和对象的 hash code。在 GC 期间，可能包含 GC 状态。
+
+2. klass pointer。指向另一个对象（元对象），该对象描述了原始对象的布局和行为。
+
+3. 普通对象头一般有 2 个字（word），数组对象头一般有 3 个字（word）。
+
+锁的信息被编码在在对象头的 mark word，Mark word 最低两位的值（Tag）包含了对象的同步状态：
+
+![MarkWord](/img/concurrent/MarkWord.png)
+
+- 未锁定/已解锁（Unlocked）。某个线程未获得该对象的锁。
+- 轻量级锁定（Light-weight locked）。某个线程已获得该对象的轻量级锁。
+- 重量级锁定（Heavy-weight locked）。某个线程已获得该对象的重量级锁。
+- 有偏向/可偏向（Biased / biasable）。该对象已偏向或可偏向于某线程。
+
+下图描述了对象同步状态的转换，也是锁状态的转换。
+
+![Synchronization](/img/concurrent/Synchronization.gif)
+
+如果一个类的“可偏向”被禁用，该类的实例或对象的同步状态始于未锁定，即右手边。
+
+- 当一个线程调用该对象的同步方法或执行了指定该对象的同步语句，Mark word 副本和指向对象的指针存储在该线程当前栈帧（frame）内的锁记录（lock record）中。
+
+- JVM 尝试通过 [compare-and-swap](https://en.wikipedia.org/wiki/Compare-and-swap)（CAS）在该对象的 mark word 中安装一个指向锁记录的指针（pointer to lock record）。
+
+    - 如果 CAS 操作成功，则该线程将获得该对象的锁。该对象的 mark word 最后两位的值是 00。该锁为**轻量级锁**。
+
+        - 如果是递归或嵌套调用作用于该对象的（其它）同步代码，锁记录初始化为 0，而不是该对象的 mark word。
+
+    - 如果 CAS 操作失败，则说明该对象已被锁定。JVM 首先检测该对象的 mark word 是否指向当前线程的栈。
+
+- 当多个不同的线程并发锁定同一个对象，且竞争足够激烈时，轻量级锁升为**重量级锁**。重量级锁就是监视器，监视器管理等待的线程。等待获得监视器的线程状态就是“Java 线程状态”所说的阻塞。
+
+![JavaMonitor](/img/concurrent/fig20-1.gif)
+
+- JVM 使用的监视器类型可能如上图所示，该监视器由三个房间组成。中间只有一个线程，即监视器所有者。在左侧，一个小房间包含了入口集（entry set）。在右侧，另一个小房间包含了等待集合（wait set）。那么如果此 Java 监视器未过时，阻塞中的线程更可能处于入口集，因为等待集中的线程状态是“Java 线程状态”所说的等待。
+
+- 轻量级锁比重量级锁便宜很多，因为避免了操作系统互斥锁/条件变量（mutex / condition variables）与每个对象的联动。
+
+- 如果有多个线程竞争锁，等待轻量级锁的线程通常不会被阻塞，而是**自旋**若干次，等待锁释放。HotSpot VM 使用高级自适应自旋技术（advanced adaptive spinning techniques）来提高程序吞吐量，即使是线程竞争锁激烈的程序。
+
+如果一个类的“可偏向”已启用，该类的实例或对象的同步状态始于未锁定，且无偏向，即左手边。
+
+- 据说，获得轻量锁的 CAS 在多处理器计算机系统上可能引起较大延迟，也许大多数对象在其生命周期中最多只能被一个线程锁定。早在 Java 6，此问题试图通过**偏向锁**优化。
+
+- 该对象被第一个线程锁定时，只执行一次 CAS 操作，以将该线程 ID 记录到该对象的 mark work 中。于是该对象偏向于该线程。将来该线程对该对象的锁定和解锁无需任何原子操作或 mark word 的更新，甚至该线程栈中的锁记录也不会初始化。
+
+- 当一个线程锁定已偏向于另一个线程的对象，该对象的偏向会被撤销（此操作必须暂停所有线程）。一般由偏向锁转为轻量级锁。
+
+- 偏向锁的设计对一个线程重新获得锁更便宜和另一个线程获得锁更昂贵做了权衡：
+    
+    - 如果某个类的实例在过去频繁发生便偏向撤销，则该类将禁用“可偏向”。这个机制叫做批量撤销（bulk revocation）。
+    
+    - 如果一个类的实例被不同的线程锁定和解锁，且不是并发，则该类的实例被重置为已解锁且无偏向，但仍是可偏向的对象，因为该类的“可偏向”不会被禁用。这个机制叫做批量重置偏向（bulk rebiasing）。
+
+- 当然可以从一开始就禁用偏向锁，启动 HotSpot VM 时指定关闭 `UseBiasedLocking`：
+
+```shell
+-XX:-UseBiasedLocking
+```
+
+对于一些程序，偏向锁弊大于利，例如 [Cassandra](https://github.com/apache/cassandra) 就禁用了它。
+
+简而言之，从 Java 6 开始就对 `synchronized` 做了不少优化，随着线程对锁的竞争强度增大，锁的状态一般由偏向锁升为轻量级锁，竞争足够激烈时，再升为重量级锁，这个过程由称为膨胀（inflate
+）。
+
+### 死锁
+
+死锁描述了线程等待获得自己或对方已拥有的锁的僵持状态。
+
+![死锁](/img/concurrent/死锁.png)
+
+防止死锁的有效方案如下：
+
+- 设置线程尝试获得锁的超时时间。
+- 每个线程尝试获得多个资源的锁的顺序必须一致。
+
+比如上图，线程 1 和线程 2 都需要获得资源 1 和资源 2 的锁，只要每个线程尝试获得资源的锁的顺序是 (1，2)，也就不会是僵局。
+
+### 惯用锁
+
+除了 `synchronized`，JDK 提供的 `java.util.concurrent` 的包，富有参差多态的锁。
+
+#### ReentrantLock
+
+`ReentrantLock`，可译为重入锁。重入（reentrant）是指一个线程可以获得它已拥有且未释放的锁。通过上文“偏向锁和轻量级锁以及重量级锁”，可以知道内置锁是可重入锁。
+
+```java
+public class Foobar {
+
+    public synchronized void doSomething() {
+        System.out.println("do something");
+        doOtherThings();
+    }
+
+    public synchronized void doOtherThings() {
+        System.out.println("do other things");
+    }
+}
+```
+
+如上代码所示，当一个线程用 `Foobar` 对象调用 `doSomething` 方法，成功获得该对象的内置锁后，继续调用 `doOther()` 方法时，假设内置锁不是重入锁，那么因为 `doSomething` 方法还未返回，所以该对象的内置锁还未自动释放，那么该线程将被迫无限期等待。
+
+或者断言该线程调用以下方法不会引起 `java.lang.StackOverflowError` 异常：
+
+```java
+public class Foobar {
+
+    public synchronized void doSomething() {
+        doSomething();
+    }
+}
+```
+
+事实证明，以上断言都是错的。`ReentrantLock` 的一般用法如下：
+
+```java
+final Lock lock = new ReentrantLock();
+
+lock.lock();
+try {
+    // critical section
+} finally {
+    lock.unlock();
+}
+```
+
+相比于 `synchronized`，`Lock` 要求显式获得锁（lock）和释放锁（unlock），因此要特别注意即使发生异常也要释放锁。如果不希望线程尝试获得锁失败后等待机会而是继续前行或者需要返回结果，可以使用以下的方法：
+
+- boolean tryLock();
+
+- boolean tryLock(long time, TimeUnit unit) throws InterruptedException;
+
+一个典型的用法可能是这样的：
+
+```java
+if (lock.tryLock()) {
+    try {
+        // manipulate protected state
+    } finally {
+        lock.unlock();
+    }
+} else {
+    // perform alternative actions
+}
+```
+
+#### ReadWriteLock
+
+`ReadWriteLock`，当只有一个线程写共享变量时，支持其它线程同时读共享变量。
+
+```java
+final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+```
+
+#### Semaphore
+
+`Semaphore`，翻译为信号量，也可实现锁。
+
+```java
+final Semaphore semaphore = new Semaphore(3);
+
+semaphore.acquire();
+// do something
+semaphore.release();
+```
+
+如上所示，在同一时刻，最多只能有 3 个线程获得锁成功。
+
+下面这张图来自美团技术团队，描述了 Java 主流锁的分类目录：
+
+![Java锁分类](/img/concurrent/Java锁分类.webp)
+
+多线程竞争锁时，抢不到锁的线程们，可能被迫有限期等待或被阻塞，可能让它们排队，也可能允许插队。
+
+### 协调
+
+#### CountDownLatch
+
+`CountDownLatch`，一个安全的且只能递减的计数器，支持一个线程无限期或有限期等待多个线程完成任务后继续执行。
+
+```java
+final CountDownLatch latch = new CountDownLatch(2);
+// ...
+latch.countDown();
+// ...
+latch.await(3000, TimeUnit.MILLISECONDS);
+```
+
+如上所示，主线程调用 `await` 方法被迫等待，除非设置了超时时间，否则直到最后一个子线程完成任务后调用 `countDown` 方法把 `latch` 的次数减少为 0 时，才能继续前行。
+
+#### CyclicBarrier
+
+`CyclicBarrier`，调用 `await` 方法的线程们相互等待，直到所有线程都准备好了，同时起跑。
+
+```java
+final CyclicBarrier barrier = new CyclicBarrier(8);
+// ...
+barrier.await();
+// ...
+```
+
+### 原子
+
+保证多线程并发访问共享变量的程序正确，有另一个解决方案————原子操作。
+
+#### CAS
+
+在“锁”中第一次提到了原子指令：compare-and-swap，而在“偏向锁和轻量级锁以及重量级锁”中也提到了 CAS。
+
+现在用全新的 `AtomicCounter` 来代替那个混杂的 `Counter`。
+
+```java
+public class AtomicCounter {
+    private AtomicLong count = new AtomicLong(0);
+
+    public void increment() {
+        while (true) {
+            long current = count.get();
+            long next = current + 1;
+            if (count.compareAndSet(current, next)) {
+                return;
+            }
+        }
+    }
+
+    public long value() {
+        return count.get();
+    }
+}
+```
+
+- 使用 `AtomicLong` 代替 `long`
+
+- 使用核心是 CAS 的方法代替使用 `synchronized` 的方法
+
+其中新的 `increment` 方法的循环体内的前两个步骤和在 “非线程安全” 所分解的前两个步骤是一致的，第三个步骤是关键：
+
+```java
+count.compareAndSet(current, next)
+```
+
+当有多个线程并发调用 `increment` 方法，到了第三个步骤，某一个线程比较 count 的值与它前一次读取的值（current）是否相等，如果相等，则把 count 的值设为 next 的值，`increment` 方法返回，如果不相等，则表明 count 已被其它线程修改，`compareAndSet` 方法返回 `false`，跳到第一步，继续尝试。
+
+`compareAndSet` 方法看似可分为两个步骤，实际上在底层，它是一个不可分且不可中断的原子指令，即比较后和赋值前的中间时刻有且只有一个线程在执行。该方法之所以可能返回 `false`，则是因为有可能一个线程赋值后，与此同时，另一个线程开始比较。
+
+同样，也给 `AtomicCounter` 写测试类，这一次线程加一，次数加一百万。
+
+```java
+public class AtomicCounterTest {
+    private static final long wait = 3000;
+
+    private final long threads = 3;
+    private final long times = 2000000;
+    private final long excepted = threads * times;
+
+    @Test
+    public void testIncrement() throws InterruptedException {
+        AtomicCounter counter = new AtomicCounter();
+
+        startThreads(counter, () -> {
+            for (int j = 0; j < times; j++) {
+                counter.increment();
+            }
+            System.out.printf("threadName: %s, counterValue: %s\n", Thread.currentThread().getName(), counter.value());
+        });
+        Assert.assertEquals(excepted, counter.value());
+    }
+
+    private void startThreads(AtomicCounter counter, Runnable runnable) throws InterruptedException {
+        for (int i = 0; i < threads; i++) {
+            new Thread(runnable).start();
+        }
+        Thread.sleep(AtomicCounterTest.wait);
+        System.out.printf("threadName: %s, exceptedCounterValue: %s, actualCounterValue: %s\n", Thread.currentThread().getName(), excepted, counter.value());
+    }
+}
+```
+
+结果果然正确：
+
+![testIncrement-1](/img/concurrent/testIncrement-1.png)
+
+事实上，JDK 已经提供了许多原子类的 `incrementAndGet` 方法，其源码实现与上文讨论的实现等效。
+
+#### 原子类
+
+[java.util.concurrent.atomic](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/package-summary.html)
+
+TODO
+
+### Collection
+
+#### BlockingQueue
+
+线程级的**生产者-消费者**问题的实质是分为生产者和消费者的两组线程共享同一个队列，消费者不能队列中拉取元素，除非队列非空，生产者不能推送元素到队列，除非队列未满。
+
+请点击查看 [BlockingQueueDemo](https://github.com/h2cone/java-examples/blob/master/concurrent/src/main/java/io/h2cone/concurrent/BlockingQueueDemo.java)。
+
+TODO
+
+#### ConcurentHashMap
+
+TODO
+
+## 完整代码
+
+已发布，请查看 [concurrent](https://github.com/h2cone/java-examples/tree/master/concurrent)。
+
+> 本文首发于 https://h2cone.github.io
+
+## 吸收更多
+
+- 《深入理解计算机系统》
+
+- [Thread (computing)](https://en.wikipedia.org/wiki/Thread_(computing))
+
+- [~jbell/CourseNotes/OperatingSystems/4_Threads](https://www.cs.uic.edu/~jbell/CourseNotes/OperatingSystems/4_Threads.html)
+
+- [Implementing threads :: Operating systems 2018](http://www.it.uu.se/education/course/homepage/os/vt18/module-4/implementing-threads/)
+
+- [HotSpot Runtime Overview # Thread Management](https://openjdk.java.net/groups/hotspot/docs/RuntimeOverview.html#Thread%20Management|outline)
+
+- [JVM中的线程模型是用户级的么？](https://www.zhihu.com/question/23096638)
+
+- [How Java thread maps to OS thread](https://medium.com/@unmeshvjoshi/how-java-thread-maps-to-os-thread-e280a9fb2e06)
+
+- [HotSpot JVM internal threads](https://jakubstransky.com/2017/12/19/hotspot-jvm-internal-threads/)
+
+- [Thread pool](https://en.wikipedia.org/wiki/Thread_pool)
+
+- [Java Tutorials # Concurrency # Thread Pools](https://docs.oracle.com/javase/tutorial/essential/concurrency/pools.html)
+
+- [Java Tutorials # Concurrency # Synchronization](https://docs.oracle.com/javase/tutorial/essential/concurrency/sync.html)
+
+- [The Java Language Specification, Java SE 8 Edition # Chapter 17. Threads and Locks](https://docs.oracle.com/javase/specs/jls/se8/html/jls-17.html)
+
+- [HotSpot Runtime Overview # Synchronization](https://openjdk.java.net/groups/hotspot/docs/RuntimeOverview.html#Synchronization|outline)
+
+- [OpenJDK Wiki # HotSpot # Synchronization and Object Locking](https://wiki.openjdk.java.net/display/HotSpot/Synchronization)
+
+- [The Java Virtual Machine Specification, Java SE 8 Edition # 2.11.10. Synchronization](https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.11.10)
+
+- [The Hotspot Java Virtual Machine by Paul Hohensee](https://www.cs.princeton.edu/picasso/mats/HotspotOverview.pdf)
+
+- [【死磕Java并发】-----深入分析synchronized的实现原理](https://blog.csdn.net/chenssy/article/details/54883355)
+
+- [Lock Lock Lock: Enter!](http://jpbempel.blogspot.com/2013/03/lock-lock-lock-enter.html)
+
+- [Inside the Java Virtual Machine by Bill Venners # Thread Synchronization](https://www.artima.com/insidejvm/ed2/threadsynch.html)
+
+- [Biased Locking in HotSpot](https://blogs.oracle.com/dave/biased-locking-in-hotspot)
+
+- [HotSpotGlossary](https://openjdk.java.net/groups/hotspot/docs/HotSpotGlossary.html)
+
+- [Lock (computer science)](https://en.wikipedia.org/wiki/Lock_(computer_science))
+
+- [Mutual exclusion](https://en.wikipedia.org/wiki/Mutual_exclusion#Hardware_solutions)
+
+- [Synchronization (computer science)](https://en.wikipedia.org/wiki/Synchronization_(computer_science))
+
+- [Monitor (synchronization)](https://en.wikipedia.org/wiki/Monitor_(synchronization))
+
+- [Understand the object internally](https://www.javaspring.net/java/jvm-works-architecture)
+
+- [Know Thy Java Object Memory Layout](http://psy-lob-saw.blogspot.com/2013/05/know-thy-java-object-memory-layout.html)
+
+- [Java Tutorials # Concurrency # Guarded Blocks](https://docs.oracle.com/javase/tutorial/essential/concurrency/guardmeth.html)
+
+- [聊聊并发（五）——原子操作的实现原理](https://www.infoq.cn/article/atomic-operation)
+
+- [【基本功】不可不说的Java“锁”事](https://mp.weixin.qq.com/s/E2fOUHOabm10k_EVugX08g)
+
+- 《码农翻身》
+
+- [Java Tutorials # Concurrency](https://docs.oracle.com/javase/tutorial/essential/concurrency/index.html)
+
+- [唯品会 Java 开发手册 (九) 并发处理](https://vipshop.github.io/vjtools/#/standard/chapter09)

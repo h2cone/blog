@@ -139,7 +139,7 @@ static class PersonServiceHandler implements InvocationHandler {
 
 上面这段代码通过了测试并输出了以下内容:
 
-```shell
+```
 proxy class: class com.sun.proxy.$Proxy4
 method: public abstract java.lang.String io.h2cone.proxy.jdk.PersonService.sayHello(java.lang.String)
 args: [World]
@@ -154,7 +154,7 @@ After invoke
 
 同时注意到了 `java.lang.reflect.Proxy#newProxyInstance` 方法参数:
 
-```javadoc
+```
 loader – the class loader to define the proxy class
 interfaces – the list of interfaces for the proxy class to implement
 h – the invocation handler to dispatch method invocations to
@@ -168,7 +168,7 @@ h – the invocation handler to dispatch method invocations to
 
 对于上文的代码, 当我们用 `javac` 编译源代码成功会输出 `PersonService.class` 和 `SimplePersonService.class` 等文件. 我们用编辑器看看其中一个文件的内容:
 
-```text
+```
 cafe babe 0000 0034 0009 0700 0707 0008
 0100 0873 6179 4865 6c6c 6f01 0026 284c
 6a61 7661 2f6c 616e 672f 5374 7269 6e67
@@ -241,7 +241,7 @@ static class PersonServiceInterceptor implements MethodInterceptor {
 
 输出结果如下:
 
-```shell
+```
 obj class: class io.h2cone.proxy.cglib.PersonService$$EnhancerByCGLIB$$64e53be2
 method: public java.lang.String io.h2cone.proxy.cglib.PersonService.sayHello(java.lang.String)
 args: [World]
@@ -259,13 +259,13 @@ After invoke
 
 虽然动态生成了代理类, 但是如果不把代理类加载到 JVM 方法区, 也就不能创建它的实例. 回头看一下 JDK 动态代理的 `newProxyInstance` 方法的首要参数:
 
-```javadoc
+```
 loader – the class loader to define the proxy class
 ```
 
 它是一个用于定义代理类的类加载器, 我们传递了被代理类的类加载器, 因而被代理类和代理类的类加载器是相同的.
 
-```shell
+```
 target class loader: sun.misc.Launcher$AppClassLoader@18b4aac2
 proxy class loader: sun.misc.Launcher$AppClassLoader@18b4aac2
 ```
@@ -279,6 +279,8 @@ proxy class loader: sun.misc.Launcher$AppClassLoader@18b4aac2
 ## 后记
 
 在 Spring AOP 的使用过程中, 还发现一个叫做 AspectJ 的家伙. 在编译时和运行时之间是编译后和加载时, 它就在加载时做手脚...
+
+> 本文首发于 https://h2cone.github.io
 
 ## 参考
 

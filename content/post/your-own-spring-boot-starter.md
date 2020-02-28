@@ -23,7 +23,7 @@ debug: true
 
 程序启动成功后，可以在控制台观察到一段叫做 `CONDITIONS EVALUATION REPORT` 的冗长日志，下面截取若干部分：
 
-```shell
+```
 ============================
 CONDITIONS EVALUATION REPORT
 ============================
@@ -135,7 +135,7 @@ public class SpringFoxSwagger2AutoConfig {
 
 `SpringFoxSwagger2AutoConfig` 的目的是创建 `springfox.documentation.spring.web.plugins.Docket` 实例并交由 Spring IoC 容器管理，为了能够让 Spring Boot 采用这个自动配置类，应当在 `springfox-swagger2-spring-boot-autoconfigure/src/main/resources/META-INF/spring.factories` 文件里声明：
 
-```text
+```
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 io.h2cone.springfox.swagger2.spring.boot.autoconfigure.SpringFoxSwagger2AutoConfig
 ```
@@ -207,6 +207,8 @@ public @interface SpringBootApplication {
 ```
 
 当然，开启了自动配置。
+
+> 本文首发于 https://h2cone.github.io
 
 ## 推荐阅读
 

@@ -149,7 +149,7 @@ public @interface Inspect {
 
 预期 `process` 方法会在**编译时**被调用，输出或打印传递而来的自定义注解的名称。可是其它项目如何使用定制的注解处理器？如果定制的注解处理器项目为 [annotation-processor](https://github.com/h2cone/java-examples/tree/master/annotation-processor)，那么它还需要一个文件（`src/main/resources/META-INF/services/javax.annotation.processing.Processor`）用来告诉编译器定制的注解处理器类在哪里：
 
-```text
+```
 io.h2cone.annotation.processor.SimpleAnnotationProcessor
 ```
 
@@ -191,9 +191,11 @@ public class Foobar {
 
 若使用 IntelliJ IDEA，依次点击 `Build > Rebuild Project`，成功后可以在底部的 `Messages` 看到 `process` 方法被调用从而输出了 `Inspect` 注解的名称：
 
-```text
+```
 Information:java: io.h2cone.annotation.processor.Inspect
 ```
+
+> 本文首发于 https://h2cone.github.io
 
 ## 参考资料
 

@@ -108,7 +108,7 @@ public void testExamplePlugin() throws IOException {
 
 运行测试代码输出如下：
 
-```shell
+```
 properties: {someProperty=1024}
 implement pre-processing if needed
 result: []
@@ -261,6 +261,8 @@ public class Plugin implements InvocationHandler {
 ## 尾声
 
 大胆猜想一下，分页插件是通过拦截 `StatementHandler` 的 `query` 等方法，取得 SQL，改写 SQL 使其能够分页、求总记录数、排序。除了分页，MyBatis 插件理所当然可以做慢 SQL 监控、水平分表、数据加密和解密、菜单权限控制......
+
+> 本文首发于 https://h2cone.github.io
 
 ## 参考资料
 
