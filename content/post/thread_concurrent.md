@@ -181,6 +181,64 @@ Future<?> future = executorService.submit(() -> {
 
 使用 `Executors` 新建线程池，需要注意的是，可能会因为任务队列堆积过多任务从而导致内存溢出，因为 `LinkedBlockingQueue` 可自动扩容，最大值为 `Integer.MAX_VALUE`。建议合理设置线程池的各个参数，例如使用 `new ThreadPoolExecutor(..., ..., ..., ..., ...)` 来新建线程池，详情见 [ThreadPoolExecutor](https://docs.oracle.com/javase/tutorial/essential/concurrency/pools.html) 和 [ScheduledThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledThreadPoolExecutor.html)。
 
+### Fork/Join
+
+Fork/Join 框架是 `ExecutorService` 接口的实现，它是为了可以分而治之的任务或工作而设计的，目标是使用所有可用的处理器来提高应用程序的性能。Fork/Join 框架分配任务给线程池中的工作线程，但是与一般的线程池不一样，它使用[工作窃取](https://en.wikipedia.org/wiki/Work_stealing)算法，空闲的工作线程可以窃取繁忙的工作线程的任务来执行，这个线程池称为 [ForkJoinPool](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinPool.html)。
+
+工作线程很有可能会被 BOSS 命令按以下套路工作：
+
+```
+if 我的工作量足够小
+  直接做
+else
+  将我的工作分为两个片段
+  调用两个片段并等待结果
+```
+
+分而治之，通常把一个足够大的工作任务递归分解为两个或多个相同或相识的子任务。
+
+```java
+public class BigTask extends RecursiveAction {
+    private long[] src;
+    private int start, len;
+    // ...
+
+    public BigTask(long[] src, int start, int len) {
+        this.src = src;
+        this.start = start;
+        this.len = len;
+    }
+
+    protected static int threshold = 1000;
+
+    @Override
+    protected void compute() {
+        if (len < threshold) {
+            // do the work directly
+        } else {
+            int split = len / 2;
+            invokeAll(new BigTask(src, start, split),
+                    new BigTask(src, start + split, len - split));
+            // ...
+        }
+    }
+}
+```
+
+假设这个大任务（BigTask）是对一个很长的数组（src）进行某些操作，例如排序、map、reduce、过滤、分组等。其中 `BigTask` 继承了 [RecursiveAction](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/RecursiveAction.html)，重写了 `compute` 方法。然后，新建一个线程池，命令工作线程执行大任务。
+
+```java
+long[] src = ...;
+
+BigTask task = new BigTask(src, 0, src.length);
+ForkJoinPool pool = new ForkJoinPool();
+pool.invoke(task);
+```
+
+一个工作线程调用了 `compute` 方法，先判断当前 src 的长度是否小于阈值（threshold），若是则认为这个任务足够小，单线程很快就能完成对 src 的操作，否者就认为这个任务足够大，需要分工，于是先把 src 分成两个片段，然后调用 `invokeAll` 方法，其它工作线程去执行这两个子任务，又调用了 `compute` 方法......在多处理器计算机系统中，因为支持多线程并行计算，所以这类程序通常运行得很快。
+
+JDK 的 [java.util.Arrays](https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html) 和 [java.util.streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) 已经提供了许多高效的并行化方法。
+
 ### 非线程安全
 
 前面说到了多线程程序的优点，但它也有明显的缺点。因为多个线程并发执行，且多个线程共享同一份只读代码，当多个线程并发读写共享变量或全局变量时，可能导致线程干扰（thread interference）和内存一致性错误（memory consistency errors），从而无法保证程序功能正确，也称为线程不安全。
@@ -766,6 +824,12 @@ TODO
 - [Thread pool](https://en.wikipedia.org/wiki/Thread_pool)
 
 - [Java Tutorials # Concurrency # Thread Pools](https://docs.oracle.com/javase/tutorial/essential/concurrency/pools.html)
+
+- [Java Tutorials # Concurrency # Fork/Join](https://docs.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html)
+
+- [Fork–join model](https://en.wikipedia.org/wiki/Fork%E2%80%93join_model)
+
+- [Java Tutorials # Collections # Streams # Parallelism](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html)
 
 - [Java Tutorials # Concurrency # Synchronization](https://docs.oracle.com/javase/tutorial/essential/concurrency/sync.html)
 
