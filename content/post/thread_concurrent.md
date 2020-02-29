@@ -186,7 +186,7 @@ public static ExecutorService newFixedThreadPool(int nThreads, ThreadFactory thr
 }
 ```
 
-上面是 `java.util.concurrent.Executors` 的新建固定线程池的方法。注意其中的 `LinkedBlockingQueue`，它是 `BlockingQueue` 的基于链表的实现类，作为阻塞队列，它有一个特性，当队列为空时，线程从队列拉取元素会被阻塞或被迫有限期等待（下文会介绍）。仔细翻阅源码，可以知道线程池的预先新建和工作线程的生命延长是通过阻塞工作线程或使之有限期等待来实现。除此之外，任务队列的的任务抽象为 `Runable`。
+上面是 `java.util.concurrent.Executors` 的新建固定线程池的方法。注意当中的参数类型，`LinkedBlockingQueue`，它是 `BlockingQueue` 的基于链表的实现类，作为阻塞队列，它有一个特性，当队列为空时，线程从队列拉取元素会被阻塞或被迫有限期等待。仔细翻阅源码，可以知道线程池的预先新建和工作线程的生命延长是通过阻塞工作线程或使之有限期等待来实现。除此之外，任务队列的的任务抽象为 `Runable`。
 
 新建线程池返回一个 `ExecutorService` 实例，利用它来提交任务：
 
@@ -354,7 +354,7 @@ public class CounterTest {
 
 ![lock](/img/concurrent/lock.png)
 
-1. 只有获得锁的线程才能进入临界区（critical section），访问共享资源。
+1. 只有获得锁成功的线程才能进入临界区（critical section），访问共享资源。
 
 2. 访问共享资源完成后，即使过程发生异常，也一定要释放锁，退出临界区。
 
@@ -413,7 +413,7 @@ public void testIncrementUseSyncMethod() throws InterruptedException {
 
 防止线程干扰和内存一致性错误的机制是**同步（Synchronization）**。关键词 `synchronized`，翻译为已同步。当只有一个线程调用一个同步方法，它会自动获得这个方法的对象的内置锁（intrinsic lock）或监视器锁（monitor lock），并在方法返回时自动释放该对象的内置锁（即使返回是由未捕获异常引起的）。如果是用 `synchronized` 修饰的静态方法，这个线程会获得该静态方法所属的类所关联的 Class 对象的内置锁，因此，通过不同于该类的任何实例的锁来控制对该类的静态字段的访问。
 
-这足以解释上面的两个线程读写同一个变量的值重复百万次，最后结果仍然正确的原因。两个线程调用同一个同步方法，一个线程快于另一个线程获得这个方法的对象的内置锁，较慢的线程则等待获得该对象的内置锁，已获得该对象的内置锁的线程执行该方法的代码，修改了共享实例字段的值，该方法返回时自动释放了该对象的内置锁，被阻塞的线程有机会获得了该对象的内置锁......即使重复多次，一个时刻只能有一个线程正在访问共享实例字段，另一个线程只能等待，也就是说这个两个线程对于共享实例字段的访问是**互斥**的，也就不会出现线程干扰和内存一致性错误。
+这足以解释上面的两个线程读写同一个变量的值重复百万次，最后结果仍然正确的原因。两个线程调用同一个同步方法，一个线程快于另一个线程获得了这个方法的对象的内置锁，较慢的线程则等待获得该对象的内置锁，已获得该对象的内置锁的线程执行该方法的代码，修改了共享实例字段的值，该方法返回时自动释放了该对象的内置锁，另一个线程有机会获得该对象的内置锁......即使重复多次，一个时刻只能有一个线程正在访问共享实例字段，另一个线程只能等待，也就是说这个两个线程对于共享实例字段的访问是**互斥**的，也就不会出现线程干扰和内存一致性错误。
 
 线程 1 | 线程 2 | &nbsp; | 整数值
 :---: | :---: | :---: | :---:
@@ -539,9 +539,9 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
     - 如果 CAS 操作成功，则该线程将获得该对象的锁。该对象的 mark word 最后两位的值是 00。该锁为**轻量级锁**。
 
-        - 如果是递归或嵌套调用作用于该对象的（其它）同步代码，锁记录初始化为 0，而不是该对象的 mark word。
+        - 如果是递归或嵌套调用作用于该对象的同步代码，锁记录初始化为 0，而不是该对象的 mark word。
 
-    - 如果 CAS 操作失败，则说明该对象已被锁定。JVM 首先检测该对象的 mark word 是否指向当前线程的栈。
+    - 如果 CAS 操作失败，则说明该对象已被其它线程锁定成功。JVM 首先检测该对象的 mark word 是否指向当前线程的栈。
 
 - 当多个不同的线程并发锁定同一个对象，且竞争足够激烈时，轻量级锁升为**重量级锁**。重量级锁就是监视器，监视器管理等待的线程。等待获得监视器的线程状态就是“Java 线程状态”所说的阻塞。
 
@@ -551,7 +551,7 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
 - 轻量级锁比重量级锁便宜很多，因为避免了操作系统互斥锁/条件变量（mutex / condition variables）与每个对象的联动。
 
-- 如果有多个线程竞争锁，等待轻量级锁的线程通常不会被阻塞，而是**自旋**若干次，等待锁释放。HotSpot VM 使用高级自适应自旋技术（advanced adaptive spinning techniques）来提高程序吞吐量，即使是线程竞争锁激烈的程序。
+- 如果有多个线程并发锁定共享对象，等待获得轻量级锁的线程通常不会被阻塞，而是**自旋**若干次，等待锁释放。HotSpot VM 使用高级自适应自旋技术（advanced adaptive spinning techniques）来提高程序吞吐量，即使是锁定共享对象竞争激烈的程序。
 
 如果一个类的“可偏向”已启用，该类的实例或对象的同步状态始于未锁定，且无偏向，即左手边。
 
@@ -575,8 +575,31 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
 对于一些程序，偏向锁弊大于利，例如 [Cassandra](https://github.com/apache/cassandra) 就禁用了它。
 
-简而言之，从 Java 6 开始就对 `synchronized` 做了不少优化，随着线程对锁的竞争强度增大，锁的状态一般由偏向锁升为轻量级锁，竞争足够激烈时，再升为重量级锁，这个过程由称为膨胀（inflate
-）。
+简而言之，从 Java 6 开始就对 `synchronized` 做了不少优化，随着多线程锁定共享对象的竞争强度增大，锁的状态一般由偏向锁升为轻量级锁，竞争足够激烈时，则升为重量级锁，这个过程称为膨胀（inflate）。
+
+在某些情况下，JVM 可以应用其它优化。例如，[StringBuffer](https://docs.oracle.com/javase/8/docs/api/java/lang/StringBuffer.html)，它有很多同步方法。
+
+```java
+{
+    StringBuffer sb = new StringBuffer();
+    sb.append("foo");
+    sb.append(v);
+    sb.append("bar");
+    return sb.toString();
+}
+```
+
+如上所示，代码在某方法体内，因为 `sb` 是线程私有变量，所以调用 `append` 方法可以省略锁，这叫做 lock elision。
+
+```java
+{
+    sb.append("foo");
+    sb.append(v);
+    sb.append("bar");
+}
+```
+
+再如上所示，如果 `sb` 是全局变量，且第一次 `append` 方法调用时已被某线程锁定成功，该线程可以避免 3 次锁定/解锁操作，而只需 1 次，这叫做 lock coarsening。
 
 ### 死锁
 
@@ -795,7 +818,17 @@ public class AtomicCounterTest {
 
 ![testIncrement-1](/img/concurrent/testIncrement-1.png)
 
-事实上，JDK 已经提供了许多操作原子类型实例的原子方法。
+事实上，JDK 已经提供了许多操作原子类型实例的原子方法。翻阅源码可以知道，原子类的 `compareAndSet` 方法使用了 `sun.misc.Unsafe` 的 `compareAndSet*` 方法：
+
+```java
+public final native boolean compareAndSwapObject(Object var1, long var2, Object var4, Object var5);
+
+public final native boolean compareAndSwapInt(Object var1, long var2, int var4, int var5);
+
+public final native boolean compareAndSwapLong(Object var1, long var2, long var4, long var6);
+```
+
+注意其中的 `native`，也就是说，下层的 `compareAndSwap` 函数由 C/C++ 实现，而 Java 代码可通过 [JNI](https://en.wikipedia.org/wiki/Java_Native_Interface) 调用这个函数。
 
 #### 原子类
 
