@@ -35,7 +35,7 @@ Java 版。
 
 ![4_01_ThreadDiagram](/img/concurrent/4_01_ThreadDiagram.jpg)
 
-多线程执行任务更多或更快，如果主线程阻塞在耗时任务，整个程序可能会卡顿或长时间无响应，解决办法之一便是创建一个工作线程专门执行这个耗时任务，而主线程则继续执行其它任务。例如，前面提到的手机 APP（特别是 Android APP），UI 线程被阻塞后很有可能无法正常人机交互了，用户体验极差。更进一步，单进程的多线程之间的协作有可能提高 client-server 系统的性能，譬如异步调用缩短了请求响应时间（也许总延迟几乎没变）。最重要的是，虽然一个传统的 CPU 只能交错执行一个进程的多个线程，但随着多核处理器和超线程（hyperthreading）的普及，面对多任务或大任务的执行，多线程程序的性能上限具有更高的天花板，因为减少了执行多个任务需要模拟并发的开销，还因为处理器可以并行执行多个线程。
+多线程执行任务更多或更快，如果主线程阻塞在耗时任务，整个程序可能会卡顿或长时间无响应，解决办法之一便是新建一个工作线程专门执行这个耗时任务，而主线程则继续执行其它任务。例如，前面提到的手机 APP（特别是 Android APP），UI 线程被阻塞后很有可能无法正常人机交互了，用户体验极差。更进一步，单进程的多线程之间的协作有可能提高 client-server 系统的性能，譬如异步调用缩短了请求响应时间（也许总延迟几乎没变）。最重要的是，虽然一个传统的 CPU 只能交错执行一个进程的多个线程，但随着多核处理器和超线程（hyperthreading）的普及，面对多任务或大任务的执行，多线程程序的性能上限具有更高的天花板，因为减少了执行多个任务需要模拟并发的开销，还因为处理器可以并行执行多个线程。
 
 ## 并发与并行
 
@@ -111,6 +111,26 @@ Java 8 以上的用户也许更倾向于使用匿名内部类实现 `java.lang.R
 
 如上图所示，即使运行一个简单的 "Hello World" 程序，也可能在 JVM 或操作系统创建十几个或更多线程。例如执行 `main` 方法需要的主线程，主线程能启动子线程并继续执行其它代码，子线程也能启动其子线程并继续执行其它代码，而且还有其它由 HotSpot 为了内部目的而创建的线程，如 VM thread、Periodic task thread、GC threads、Compiler threads、Signal dispatcher thread。
 
+### ThreadLocal
+
+前面提到了线程有若干的私有区域，其中之一能在 `java.lang.Thread` 中找到数据结构。`Thread` 维护了几个类型为 `java.lang.ThreadLocal.ThreadLocalMap` 的字段，`ThreadLocalMap` 是一个定制化的 HashMap，仅适用于维护线程本地变量，线程本地变量由 `ThreadLocal` 提供。
+
+```java
+public class TransactionId {
+    private static final ThreadLocal<Long> tid = ThreadLocal.withInitial(() -> 0L);
+
+    public static Long get() {
+        return tid.get();
+    }
+
+    public static void set(Long value) {
+        tid.set(value);
+    }
+}
+```
+
+如上所示，类型为 `ThreadLocal` 的字段初始化后，每个访问该字段（通过 get 或 set 方法）的线程都持有各自的 `ThreadLocal` 实例。
+
 ### Java 线程状态
 
 下面这个来自 [Java 6 Thread States and Life Cycle](https://www.uml-diagrams.org/examples/java-6-thread-state-machine-diagram-example.html) 的状态机，很好地描述了 Java 线程状态和生命周期。
@@ -143,9 +163,9 @@ Java 8 以上的用户也许更倾向于使用匿名内部类实现 `java.lang.R
 
 JDK 的 `java.util.concurrent` 包定义了三个 Executor 接口，[Executor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html)、[ExecutorService](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html)、[ScheduledExecutorService](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledExecutorService.html)，大部分实现都使用**线程池（Thread Pool）**，这就是理由之二。
 
-例如，一个一般的服务器端程序服务着多个客户端，如果每个客户端的请求都通过新建一个线程来处理，即线程数随着请求数增加而增加，虽然新建线程比新建进程便宜，但是当活跃的线程数太多时，不仅占用大量的内存，容易导致内存溢出，而且操作系统内核需要花费大量的时间在线程调度上，大量的线程被迫等待，还有频繁创建和销毁执行短时任务的线程而引起的延迟，大量客户端长时间得不到响应。线程池就是为了解决此问题。
+例如，一个一般的服务器端程序服务着多个客户端，如果每个客户端的请求都通过新建一个线程来处理，即线程数随着请求数增加而增加，虽然新建线程比新建进程便宜，但是当活跃的线程数太多时，不仅占用大量的内存，容易导致内存溢出，而且操作系统内核需要花费大量的时间在线程调度上，大量的线程被迫等待，还有频繁新建和终结执行短时任务的线程而引起的延迟，大量客户端长时间得不到响应。线程池就是为了解决此问题。
 
-线程池由数量可控的**工作线程（worker thread）** 组成，每个工作线程的生命都被延长，以便用于执行多个任务，既减少了过量线程的调度开销，也避免了频繁创建和毁灭执行短暂任务的线程而导致的延迟。线程池的新建通常是预处理，即服务器端程序提供服务之前已准备好线程池，避免了临时新建大量线程的开销。
+线程池由数量可控的**工作线程（worker thread）** 组成，每个工作线程的生命都被延长，以便用于执行多个任务，既减少了过量线程的调度开销，也避免了频繁新建和终结执行短暂任务的线程而导致的延迟。线程池的新建通常是预处理，即服务器端程序提供服务之前已准备好线程池，避免了临时新建大量线程的开销。
 
 ![任务通过队列提交到池中](/img/concurrent/任务通过队列提交到池中.png)
 
@@ -237,7 +257,7 @@ pool.invoke(task);
 
 一个工作线程调用了 `compute` 方法，先判断当前 src 的长度是否小于阈值（threshold），若是则认为这个任务足够小，单线程很快就能完成对 src 的操作，否者就认为这个任务足够大，需要分工，于是先把 src 分成两个片段，然后调用 `invokeAll` 方法，其它工作线程去执行这两个子任务，又调用了 `compute` 方法......在多处理器计算机系统中，因为支持多线程并行，所以这类程序通常运行得很快。
 
-JDK 的 [java.util.Arrays](https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html) 和 [java.util.streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) 已经提供了许多操作聚合类型的并行化方法。
+JDK 的 [java.util.Arrays](https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html) 和 [java.util.streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) 已经提供了许多操作聚合类型实例的并行化方法。
 
 ### 非线程安全
 
@@ -775,29 +795,25 @@ public class AtomicCounterTest {
 
 ![testIncrement-1](/img/concurrent/testIncrement-1.png)
 
-事实上，JDK 已经提供了许多原子类的 `incrementAndGet` 方法，其源码实现与上文讨论的实现等效。
+事实上，JDK 已经提供了许多操作原子类型实例的原子方法。
 
 #### 原子类
 
-[java.util.concurrent.atomic](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/package-summary.html)
+![juc-atomic](/img/concurrent/juc-atomic.png)
 
-TODO
+详情可见 [java.util.concurrent.atomic](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/package-summary.html)。
 
 ### Collection
 
 #### BlockingQueue
 
-线程级的**生产者-消费者**问题的实质是分为生产者和消费者的两组线程共享同一个队列，消费者不能队列中拉取元素，除非队列非空，生产者不能推送元素到队列，除非队列未满。
+线程级的**生产者-消费者**问题的实质是分为生产者和消费者的两组线程共享同一个队列，消费者暂不能从队列拉取元素，除非队列非空，生产者暂不能推送元素到队列，除非队列未满。[BlockingQueue](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html) 既有基于数组的实现，也有基于链表的实现，可用来解决生产者-消费者问题（比如 [BlockingQueueDemo](https://github.com/h2cone/java-examples/blob/master/concurrent/src/main/java/io/h2cone/concurrent/BlockingQueueDemo.java)），当阻塞队列为空时，线程从阻塞队列拉取元素时会被阻塞或被迫有限期等待，当阻塞队列已满时，线程推送元素到阻塞队列会被阻塞或被迫有限期等待。
 
-请点击查看 [BlockingQueueDemo](https://github.com/h2cone/java-examples/blob/master/concurrent/src/main/java/io/h2cone/concurrent/BlockingQueueDemo.java)。
+#### ConcurrentMap
 
-TODO
+[ConcurrentMap](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentMap.html) 是 [Map](https://docs.oracle.com/javase/8/docs/api/java/util/Map.html) 的子接口，它定义了有用的原子操作，例如，仅在键存在时才删除或替换键值对，或仅在键不存在时才添加键值对，其中一个标准实现是 [ConcurrentHashMap](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentHashMap.html)，它是 [HashMap](https://docs.oracle.com/javase/8/docs/api/java/util/HashMap.html) 的线程安全版本。
 
-#### ConcurentHashMap
-
-TODO
-
-## 完整代码
+## 配文代码
 
 已发布，请查看 [concurrent](https://github.com/h2cone/java-examples/tree/master/concurrent)。
 
