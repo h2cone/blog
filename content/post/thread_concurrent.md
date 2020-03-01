@@ -199,7 +199,7 @@ Future<?> future = executorService.submit(() -> {
 
 可以执行异步任务也可以执行同步任务，既可以提交 `Runable` 也可以传递 `Callable`，或则其它类型的线程池。详情见 [ExecutorService 的方法](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html#method.summary) 和 [Executors 的方法](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#method.summary)
 
-使用 `Executors` 新建线程池，需要注意的是，可能会因为任务队列堆积过多任务从而导致内存溢出，因为 `LinkedBlockingQueue` 可自动扩容，最大值为 `Integer.MAX_VALUE`。建议合理设置线程池的各个参数，例如使用 `new ThreadPoolExecutor(..., ..., ..., ..., ...)` 来新建线程池，详情见 [ThreadPoolExecutor](https://docs.oracle.com/javase/tutorial/essential/concurrency/pools.html) 和 [ScheduledThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledThreadPoolExecutor.html)。
+使用 `Executors` 新建线程池，需要注意的是，可能会因为任务队列堆积过多任务从而导致内存溢出，因为 `LinkedBlockingQueue` 可自动扩容，最大值为 `Integer.MAX_VALUE`。建议合理设置线程池的各个参数，例如使用 `new ThreadPoolExecutor(..., ..., ..., ..., ...)` 来新建线程池，详情见 [ThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ThreadPoolExecutor.html) 和 [ScheduledThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledThreadPoolExecutor.html)。
 
 ### Fork/Join
 
@@ -261,7 +261,7 @@ JDK 的 [java.util.Arrays](https://docs.oracle.com/javase/8/docs/api/java/util/A
 
 ### 非线程安全
 
-前面说到了多线程程序的优点，但它也有明显的缺点。因为多个线程并发执行，且多个线程共享同一份只读代码，当多个线程并发读写共享变量或全局变量时，可能导致线程干扰（thread interference）和内存一致性错误（memory consistency errors），从而无法保证程序功能正确，也称为线程不安全。
+前面说到了多线程程序的优点，但它也有明显的缺点。因为多个线程并发执行，且多个线程共享同一份只读代码，当多个线程并发读写共享变量或全局变量时，可能出现线程干扰（thread interference）和内存一致性错误（memory consistency errors），从而无法保证程序功能正确，也称为线程不安全。
 
 ```java
 public class Counter {
@@ -834,6 +834,72 @@ public final native boolean compareAndSwapLong(Object var1, long var2, long var4
 
 ![juc-atomic](/img/concurrent/juc-atomic.png)
 
+值得注意的是，`AtomicReference*` 用来防止多线程并发操作引用类型实例出现线程干扰和内存一致性错误。
+
+```java
+public class LinkedList<Item> {
+    private Node<Item> first;
+
+    static class Node<Item> {
+        Item item;
+        Node<Item> next;
+    }
+
+    public void push(Item item) {
+        Node<Item> oldFirst = first;
+        first = new Node<>();
+        first.item = item;
+        first.next = oldFirst;
+    }
+}
+```
+
+如上所示，一个简略的链表（LinkedList），维护了一个首结点（first），push 方法用于在链表表头插入结点，当多线程并发调用同一个 LinkedList 实例的 push 方法时，它们存储了各自的老首结点（Node<Item> oldFirst = first;），它们新建了各自的新首结点（new Node<>();），然后把 first 指向各自的结点（first = new Node<>();），因为 first 是它们的共享变量，所以可能已经出现相互覆盖或丢失修改，更不用说后面了。
+
+```java
+public class LinkedList<Item> {
+    private Node<Item> first;
+
+    static class Node<Item> {
+        Item item;
+        Node<Item> next;
+    }
+
+    public void push(Item item) {
+        Node<Item> oldFirst = first;
+        Node<Item> newFirst = new Node<>();
+        newFirst.item = item;
+        newFirst.next = oldFirst;
+        first = newFirst;
+    }
+}
+```
+
+再如上所示，为了使问题清晰，只在 push 方法最后一步才设置 first 的值。同样也因为 first 是它们的共享变量，所以它们都执行完最后一步后，可能出现一个或多个线程的新首结点游离于链表之外，因此，改用 CAS 方法：
+
+```java
+public class AtomicLinkedList<Item> {
+    private AtomicReference<Node<Item>> first = new AtomicReference<>();
+
+    static class Node<Item> {
+        Item item;
+        Node<Item> next;
+    }
+
+    public void push(Item item) {
+        Node<Item> newFirst = new Node<>();
+        newFirst.item = item;
+        while (true) {
+            Node<Item> oldFirst = first.get();
+            newFirst.next = oldFirst;
+            if (first.compareAndSet(oldFirst, newFirst)) {
+                return;
+            }
+        }
+    }
+}
+```
+
 详情可见 [java.util.concurrent.atomic](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/package-summary.html)。
 
 ### Collection
@@ -848,13 +914,13 @@ public final native boolean compareAndSwapLong(Object var1, long var2, long var4
 
 ### 后记
 
-单机可以运行数百万个 Go 协程（Goroutine），却只能运行数千个 Java 线程。现在的 Java HotSpot VM，默认一个 Java 线程占有 1 M 的栈（以前是 256K），而且是大小固定的栈，而 Go 协程的栈是大小可变的栈，即随着据存储数据量变化而变化，并且初始值仅为 4 KB。确实，运行过多的 Java 线程容易导致 OOM（Out of memory），而且 Java 线程与内核线程（本地线程）是 1:1 映射，那么过多线程的上下文切换也会引起应用程序较大延迟。Go 协程与内核线程（本地线程）是多对一映射，Go 实现了自己的协程调度器，实际上要运行数百万个协程，Go 需要做得事情要复杂得多。
+单机可以运行数百万个 Go 协程（Goroutine），却只能运行数千个 Java 线程。现在的 Java HotSpot VM，默认一个 Java 线程占有 1 M 的栈（以前是 256K），而且是大小固定的栈，而 Go 协程的栈是大小可变的栈，即随着据存储数据量变化而变化，并且初始值仅为 4 KB。确实，运行过多的 Java 线程容易导致 [out of memory](https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/memleaks002.html#CIHHJDJE)，而且 Java 线程与内核线程（本地线程）是 1:1 映射，那么过多线程的上下文切换也会引起应用程序较大延迟。Go 协程与内核线程（本地线程）是多对一映射，Go 实现了自己的协程调度器，实际上要运行数百万个协程，Go 需要做得事情要复杂得多。
 
 若只讨论 Java 单体应用承受高并发的场景，即使扩大线程池也不能显著提高性能或适得其反，相反，少量的线程就能处理更多的连接，比如，[Netty](https://netty.io/)。如果仍然认为重量级的 Java 线程是瓶颈，并且还想使用 Java 的话，不妨尝试 [Quasar](http://docs.paralleluniverse.co/quasar/)，它是一个提供[纤程（Fiber）](https://en.wikipedia.org/wiki/Fiber_(computer_science))和类似于 Go 的 [Channel](https://en.wikipedia.org/wiki/Channel_(programming)) 以及类似于 Erlang 的 [Actor](https://en.wikipedia.org/wiki/Actor_model) 的 Java 库。
 
 ## 文中代码
 
-已发布，可查看 [concurrent](https://github.com/h2cone/java-examples/tree/master/concurrent)。
+部分代码已发布，可查看 [concurrent](https://github.com/h2cone/java-examples/tree/master/concurrent)。
 
 > 本文首发于 https://h2cone.github.io
 
