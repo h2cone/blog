@@ -832,9 +832,11 @@ public final native boolean compareAndSwapLong(Object var1, long var2, long var4
 
 #### 原子类
 
+下图是 [java.util.concurrent.atomic](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/package-summary.html) 包的原子类：
+
 ![juc-atomic](/img/concurrent/juc-atomic.png)
 
-值得注意的是，`AtomicReference*` 用来防止多线程并发操作引用类型实例出现线程干扰和内存一致性错误。
+值得注意的是，`AtomicReference*` 用于防止多线程并发操作引用类型实例出现线程干扰和内存一致性错误。
 
 ```java
 public class LinkedList<Item> {
@@ -900,7 +902,7 @@ public class AtomicLinkedList<Item> {
 }
 ```
 
-但是，如果也允许线程删除一个结点，就要注意可能遇到 [ABA 问题了](https://en.wikipedia.org/wiki/ABA_problem)，这时请考虑使用 `AtomicStampedReference`。详情可见 [java.util.concurrent.atomic](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/package-summary.html)。
+如果还实现了删除结点的方法，则要小心 [ABA 问题](https://en.wikipedia.org/wiki/ABA_problem)，这时可考虑使用 `AtomicStampedReference`。
 
 ### Collection
 
