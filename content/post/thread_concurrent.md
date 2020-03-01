@@ -19,15 +19,15 @@ Java 版。
 
 其中，进程是对处理器、主存和 I/O 设备的抽象，换言之，进程是操作系统对一个正在运行的程序的一种抽象。操作系统上可以“同时”运行多个进程，已经对一边听歌一边写代码和接收消息的流畅不足为奇，之所以用双引号，因为这可能是一种假象。
 
-大多数计算机系统中，需要运行的进程数是多于可以运行它们的 CPU 个数的，那么所谓的”同时“运行，很有可能是模拟并发的假象，也就是说一个进程的指令和另一个进程的指令是被 CPU 交错执行的，而且 CPU 在进程间切换足够快、间隔足够短，每个进程看上去像是连续执行。除非有多个 CPU 或多处理器的计算机系统，才能支持多进程并行，即处理器同时执行多个程序的指令。
+大多数计算机系统中，需要运行的进程数是多于可以运行它们的 CPU 个数的，那么所谓的”同时“运行，很有可能是模拟并发的假象，也就是说一个进程的指令和另一个进程的指令是被 CPU 交错执行的，而且 CPU 在进程间切换足够快，进程“暂停”和“恢复”的间隔也足够短，每个进程看上去像是连续运行。除非有多个 CPU 或多处理器的计算机系统，才能支持多进程并行，即处理器同时执行多个程序的指令。
 
-一个进程用完了操作系统分配给它的时间片，操作系统决定把控制权转移给新的进程，就会进行**上下文切换（context switch）**，即保存当前进程的状态，恢复新进程的状态，交接控制权。这种状态被称为上下文（context），比如程序计数器和寄存器的当前值以及主存的内容。
+一个进程用完了操作系统分配给它的时间片，操作系统决定把控制权转移给新的进程，就会进行**上下文切换（context switch）**，即保存当前进程的状态，恢复目标进程的状态，交接控制权。这种状态被称为上下文（context），比如程序计数器和寄存器的当前值以及主存的内容。
 
 一个进程可以存在多个控制流（control flow），它们被称为线程。如来自维基百科线程词条的插图所示：
 
 ![Multithreaded_process](/img/concurrent/Multithreaded_process.svg)
 
-因为只有单处理器，所以这个进程的两个线程轮番运行在进程的上下文中（模拟并发）。操作系统不仅调度进程，教科书常说，线程是操作系统调度的最小单位。从单线程进程推广到多线程进程的线程，一个线程时间到了，上下文切换，轮到了另一个线程运行。
+因为只有单处理器，所以这个进程的两个线程轮番运行在进程的上下文中（模拟并发）。操作系统不仅调度进程，教科书常说，线程是操作系统调度的最小单位。大多数计算机系统中，需要运行的线程数大于可以运行它们的 CPU 核数，从单线程进程推广到多线程进程的线程，一个线程时间到了，上下文切换，它被“暂停”了，轮到了另一个线程运行，稍后轮到它时又“恢复”了。
 
 多线程程序十分普遍。电脑和手机应用程序在用户界面渲染动画，同时在后台执行计算和网络请求。一个 Web 服务器一次处理数千个客户端的请求。多线程下载、多线程爬虫、多线程遍历文件树......多线程成为越来越重要的模型，因为多线程程序有不少优点。
 
@@ -67,9 +67,9 @@ Java 版。
 
 ![JVM_Internal_Architecture](/img/concurrent/JVM_Internal_Architecture.png)
 
-Java SE 最常用的虚拟机是 Oracle/Sun 研发的 Java HotSpot VM。HotSpot 基本的线程模型是 Java 线程与操作系统线程之间 1:1 的映射。线程通常在操作系统层实现或在应用程序层实现，前者的线程称为内核线程，后者的线程称为用户线程。内核（kernel）是操作系统代码常驻主存的部分，而所谓用户，就是应用程序和应用程序开发者。用户线程和内核线程的对应关系除了一对一，还可能是多对一和多对多。
+Java SE 最常用的虚拟机是 Oracle/Sun 研发的 Java HotSpot VM。HotSpot 基本的线程模型是 Java 线程与本地线程（native thread）之间 1:1 的映射。线程通常在操作系统层实现或在应用程序层实现，前者的线程称为内核线程，后者的线程可能称为用户线程。内核（kernel）是操作系统代码常驻主存的部分，而所谓用户，就是应用程序和应用程序开发者。
 
-前文提到，充分利用多处理器能使多线程程序运行得更快。在操作系统层，消费多处理器的是内核线程，操作系统负责调度所有内核线程并派遣到任何可用的 CPU，因为 Java 线程与内核线程是一对一映射，所以充分利用多处理器能增强 Java 程序的性能。
+前文提到，充分利用多处理器能使多线程程序运行得更快。在操作系统层，消费多处理器的是内核线程，操作系统负责调度所有内核线程（本地线程）并派遣到任何可用的 CPU，因为 Java 线程与内核线程（本地线程）是一对一映射，所以充分利用多处理器能增强 Java 程序的性能。
 
 ### 启动线程
 
@@ -105,7 +105,7 @@ public class HelloRunnable implements Runnable {
 }
 ```
 
-Java 8 以上的用户也许更倾向于使用匿名内部类实现 `java.lang.Runnable` 或 Lambda 表达式简化以上代码，但都是通过调用 `java.lang.Thread#start` 方法来启动新线程，对应的内核线程在启动 Java 线程时创建，并在终止时回收。其中，`run` 方法是 Java 线程启动后执行的代码，即人类要求它执行的任务，而 `main` 方法的代码是 Java 用户直接或间接通过命令行启动 JVM 后执行。
+Java 8 以上的用户也许更倾向于使用匿名内部类实现 `java.lang.Runnable` 或 Lambda 表达式简化以上代码，但都是通过调用 `java.lang.Thread#start` 方法来启动新线程，对应的本地线程（内核线程）在启动 Java 线程时创建，并在终止时回收。其中，`run` 方法是 Java 线程启动后执行的代码，即人类要求它执行的任务，而 `main` 方法的代码是 Java 用户直接或间接通过命令行启动 JVM 后执行。
 
 ![main-thread-in-java](/img/concurrent/main-thread-in-java.jpeg)
 
@@ -163,9 +163,9 @@ public class TransactionId {
 
 JDK 的 `java.util.concurrent` 包定义了三个 Executor 接口，[Executor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html)、[ExecutorService](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html)、[ScheduledExecutorService](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledExecutorService.html)，大部分实现都使用**线程池（Thread Pool）**，这就是理由之二。
 
-例如，一个一般的服务器端程序服务着多个客户端，如果每个客户端的请求都通过新建一个线程来处理，即线程数随着请求数增加而增加，虽然新建线程比新建进程便宜，但是当活跃的线程数太多时，不仅占用大量的内存，容易导致内存溢出，而且操作系统内核需要花费大量的时间在线程调度上，大量的线程被迫等待，还有频繁新建和终结执行短时任务的线程而引起的延迟，大量客户端长时间得不到响应。线程池就是为了解决此问题。
+例如，一个一般的服务器端程序服务着多个客户端，如果每个客户端的请求都通过新建一个线程来处理，即线程数随着请求数增加而增加，虽然新建线程比新建进程便宜，但是当活跃的线程数太多时，不仅占用大量的内存，容易导致内存溢出，而且操作系统内核需要花费大量的时间在线程调度上（上下文切换），大量的线程被迫等待较长时间，还有频繁新建和终结执行短时任务的线程而引起的延迟，大量客户端长时间得不到响应。线程池就是为了解决此问题。
 
-线程池由数量可控的**工作线程（worker thread）** 组成，每个工作线程的生命都被延长，以便用于执行多个任务，既减少了过量线程的调度开销，也避免了频繁新建和终结执行短暂任务的线程而导致的延迟。线程池的新建通常是预处理，即服务器端程序提供服务之前已准备好线程池，避免了临时新建大量线程的开销。
+线程池由数量可控的**工作线程（worker thread）** 组成，每个工作线程的生命都被延长，以便用于执行多个任务，既减少了线程调度延迟，也避免了频繁新建和终结执行短暂任务的线程而导致的延迟。线程池的新建通常是预处理，即服务器端程序提供服务之前已准备好线程池，避免了临时新建大量线程的开销。
 
 ![任务通过队列提交到池中](/img/concurrent/任务通过队列提交到池中.png)
 
@@ -846,9 +846,15 @@ public final native boolean compareAndSwapLong(Object var1, long var2, long var4
 
 [ConcurrentMap](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentMap.html) 是 [Map](https://docs.oracle.com/javase/8/docs/api/java/util/Map.html) 的子接口，它定义了有用的原子操作，例如，仅在键存在时才删除或替换键值对，或仅在键不存在时才添加键值对，其中一个标准实现是 [ConcurrentHashMap](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentHashMap.html)，它是 [HashMap](https://docs.oracle.com/javase/8/docs/api/java/util/HashMap.html) 的线程安全版本。
 
-## 配文代码
+### 后记
 
-已发布，请查看 [concurrent](https://github.com/h2cone/java-examples/tree/master/concurrent)。
+单机可以运行数百万个 Go 协程（Goroutine），却只能运行数千个 Java 线程。现在的 Java HotSpot VM，默认一个 Java 线程占有 1 M 的栈（以前是 256K），而且是大小固定的栈，而 Go 协程的栈是大小可变的栈，即随着据存储数据量变化而变化，并且初始值仅为 4 KB。确实，运行过多的 Java 线程容易导致 OOM（Out of memory），而且 Java 线程与内核线程（本地线程）是 1:1 映射，那么过多线程的上下文切换也会引起应用程序较大延迟。Go 协程与内核线程（本地线程）是多对一映射，Go 实现了自己的协程调度器，实际上要运行数百万个协程，Go 需要做得事情要复杂得多。
+
+若只讨论 Java 单体应用承受高并发的场景，即使扩大线程池也不能显著提高性能或适得其反，相反，少量的线程就能处理更多的连接，比如，[Netty](https://netty.io/)。如果仍然认为重量级的 Java 线程是瓶颈，并且还想使用 Java 的话，不妨尝试 [Quasar](http://docs.paralleluniverse.co/quasar/)，它是一个提供[纤程（Fiber）](https://en.wikipedia.org/wiki/Fiber_(computer_science))和类似于 Go 的 [Channel](https://en.wikipedia.org/wiki/Channel_(programming)) 以及类似于 Erlang 的 [Actor](https://en.wikipedia.org/wiki/Actor_model) 的 Java 库。
+
+## 文中代码
+
+已发布，可查看 [concurrent](https://github.com/h2cone/java-examples/tree/master/concurrent)。
 
 > 本文首发于 https://h2cone.github.io
 
@@ -925,3 +931,11 @@ public final native boolean compareAndSwapLong(Object var1, long var2, long var4
 - [Java Tutorials # Concurrency](https://docs.oracle.com/javase/tutorial/essential/concurrency/index.html)
 
 - [唯品会 Java 开发手册 (九) 并发处理](https://vipshop.github.io/vjtools/#/standard/chapter09)
+
+- [Why you can have millions of Goroutines but only thousands of Java Threads](https://rcoh.me/posts/why-you-can-have-a-million-go-routines-but-only-1000-java-threads/)
+
+- [Java中的纤程库 - Quasar](https://colobu.com/2016/07/14/Java-Fiber-Quasar/)
+
+- [继续了解Java的纤程库 - Quasar](https://colobu.com/2016/08/01/talk-about-quasar-again/)
+
+- [The actor model in 10 minutes - Brian Storti](https://www.brianstorti.com/the-actor-model/)
