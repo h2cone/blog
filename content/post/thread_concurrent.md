@@ -900,7 +900,7 @@ public class AtomicLinkedList<Item> {
 }
 ```
 
-详情可见 [java.util.concurrent.atomic](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/package-summary.html)。
+但是，如果也允许线程删除一个结点，就要注意可能遇到 [ABA 问题了](https://en.wikipedia.org/wiki/ABA_problem)，这时请考虑使用 `AtomicStampedReference`。详情可见 [java.util.concurrent.atomic](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/package-summary.html)。
 
 ### Collection
 
