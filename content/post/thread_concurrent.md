@@ -153,7 +153,7 @@ public class TransactionId {
 
 如状态机所示，当线程执行不同操作时，线程状态发生转换，这些操作对应于 JDK 已提供的方法。注意上图的 o 表示 Object，t 表示 Thread。
 
-一个线程处于等待状态时，可以被另外一个线程通知，进入阻塞状态。比如，一个线程用一个对象（的引用）调用 `java.lang.Object#wait()` 方法进入等待状态，另一个线程用同一个对象（的引用）调用 `java.lang.Object#notify` 或 `java.lang.Object#notifyAll` 方法通知等待状态的线程进入阻塞状态，。不过，当该线程用该对象（的引用）调用 `java.lang.Object#wait()` 时，该线程必须拥有该对象的内置锁，否则将引发错误。拥有该对象内置锁的该线程的状态才能从已阻塞转为可运行。阻塞状态与内置锁或监视器锁息息相关，将在下文的"锁和同步"讨论。
+一个线程处于等待状态时，可以被另外一个线程通知，转为阻塞状态，再转为可运行状态。比如，一个线程用一个对象（的引用）调用 `java.lang.Object#wait()`，另一个线程用同一个对象（的引用）调用 `java.lang.Object#notify` 或 `java.lang.Object#notifyAll`，媒介则是该对象的内置锁。阻塞状态与内置锁或监视器锁息息相关，将在下文的"锁和同步"讨论。
 
 另外，线程有一个中断状态（interrupt status）。所谓中断，即停止正在执行的操作，并执行其它操作。例如，主线程可使用子线程对象（的引用）调用 `java.lang.Thread#interrupt` 中断子线程，子线程能够捕获 `java.lang.InterruptedException` 或调用 `java.lang.Thread#interrupted` 接收到中断。
 
