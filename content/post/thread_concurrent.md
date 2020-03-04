@@ -916,9 +916,11 @@ public class AtomicLinkedList<Item> {
 
 ### 后记
 
-单机可以运行数百万个 Go 协程（Goroutine），却只能运行数千个 Java 线程。现在的 Java HotSpot VM，默认一个 Java 线程占有 1 M 的栈（以前是 256K），而且是大小固定的栈，而 Go 协程的栈是大小可变的栈，即随着据存储数据量变化而变化，并且初始值仅为 4 KB。确实，运行过多的 Java 线程容易导致 [out of memory](https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/memleaks002.html#CIHHJDJE)，而且 Java 线程与内核线程（本地线程）是 1:1 映射，那么过多线程的上下文切换也会引起应用程序较大延迟。Go 协程与内核线程（本地线程）是多对一映射，Go 实现了自己的协程调度器，实际上要运行数百万个协程，Go 需要做得事情要复杂得多。
+单机可以运行数百万个 Go 协程（Goroutine），却只能运行数千个 Java 线程。现在的 Java HotSpot VM，默认一个 Java 线程占有 1 M 的栈（以前是 256K），而且是大小固定的栈，而 Go 协程的栈是大小可变的栈，即随着存储的数据量变化而变化，并且初始值仅为 4 KB。确实，运行过多的 Java 线程容易导致 [out of memory](https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/memleaks002.html#CIHHJDJE)，而且 Java 线程与内核线程（本地线程）是 1:1 映射，那么过多线程的上下文切换也会引起应用程序较大延迟。Go 协程与内核线程（本地线程）是多对一映射，Go 实现了自己的协程调度器，实际上要运行数百万个协程，Go 需要做得事情要复杂得多。
 
-若只讨论 Java 单体应用承受高并发的场景，即使扩大线程池也不能显著提高性能或适得其反，相反，少量的线程就能处理更多的连接，比如，[Netty](https://netty.io/)。如果仍然认为重量级的 Java 线程是瓶颈，并且还想使用 Java 的话，不妨尝试 [Quasar](http://docs.paralleluniverse.co/quasar/)，它是一个提供[纤程（Fiber）](https://en.wikipedia.org/wiki/Fiber_(computer_science))和类似于 Go 的 [Channel](https://en.wikipedia.org/wiki/Channel_(programming)) 以及类似于 Erlang 的 [Actor](https://en.wikipedia.org/wiki/Actor_model) 的 Java 库。
+若只讨论 Java 单体应用承受高并发的场景，即使扩大线程池也不能显著提高性能或适得其反，相反，少量的线程就能处理更多的连接，比如，[Netty](https://netty.io/)。如果仍然认为重量级的 Java 线程是瓶颈，并且还想使用 Java 的话，不妨尝试 [Quasar](http://docs.paralleluniverse.co/quasar/)，它是一个提供[纤程](https://en.wikipedia.org/wiki/Fiber_(computer_science))和类似于 Go 的 [Channel](https://en.wikipedia.org/wiki/Channel_(programming)) 以及类似于 Erlang 的 [Actor](https://en.wikipedia.org/wiki/Actor_model) 的 Java 库。
+
+虽然进程之间不一定共享本机资源，但是线程之间的同步可以推广到进程之间的同步，比如，分布式锁。分布式系统中，代码一致的多个进程可能共享同一个数据库，数据库支持并发访问控制，比如，共享锁和排他锁以及 [MVCC](https://en.wikipedia.org/wiki/Multiversion_concurrency_control)。
 
 ## 文中代码
 
@@ -943,6 +945,8 @@ public class AtomicLinkedList<Item> {
 - [How Java thread maps to OS thread](https://medium.com/@unmeshvjoshi/how-java-thread-maps-to-os-thread-e280a9fb2e06)
 
 - [HotSpot JVM internal threads](https://jakubstransky.com/2017/12/19/hotspot-jvm-internal-threads/)
+
+- [Java Tutorials # Concurrency # Guarded Blocks](https://docs.oracle.com/javase/tutorial/essential/concurrency/guardmeth.html)
 
 - [Thread pool](https://en.wikipedia.org/wiki/Thread_pool)
 
@@ -987,8 +991,6 @@ public class AtomicLinkedList<Item> {
 - [Understand the object internally](https://www.javaspring.net/java/jvm-works-architecture)
 
 - [Know Thy Java Object Memory Layout](http://psy-lob-saw.blogspot.com/2013/05/know-thy-java-object-memory-layout.html)
-
-- [Java Tutorials # Concurrency # Guarded Blocks](https://docs.oracle.com/javase/tutorial/essential/concurrency/guardmeth.html)
 
 - [聊聊并发（五）——原子操作的实现原理](https://www.infoq.cn/article/atomic-operation)
 
