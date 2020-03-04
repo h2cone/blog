@@ -153,7 +153,7 @@ public class TransactionId {
 
 如状态机所示，当线程执行不同操作时，线程状态发生转换，这些操作对应于 JDK 已提供的方法。注意上图的 o 表示 Object，t 表示 Thread。
 
-一个线程处于等待状态时，可以被另外一个线程通知，转为阻塞状态，再转为可运行状态。比如，一个线程用一个对象（的引用）调用 `java.lang.Object#wait()`，另一个线程用同一个对象（的引用）调用 `java.lang.Object#notify` 或 `java.lang.Object#notifyAll`，媒介则是该对象的内置锁。阻塞状态与内置锁或监视器锁息息相关，将在下文的"锁和同步"讨论。
+一个线程处于等待状态时，可以被另外一个线程通知，转为阻塞状态，再转为可运行状态。比如，一个线程用一个对象（的引用）调用 `Object#wait()`，另一个线程用同一个对象（的引用）调用 `Object#notify` 或 `Object#notifyAll`，前提是它们必须拥有该对象的内置锁。第一个线程调用 `Object#wait()` 时，它会释放该对象的内置锁并暂停执行，第二个线程获得该对象的内置锁成功之后，调用 `Object#notifyAll` 通知所有曾经用同一个对象（的引用）调用了 `Object#wait()` 的线程有重要事情发生。在第二个线程释放了该对象的内置锁后的某个时刻，第一个线程重新获得了该对象的内置锁，并从 `Object#wait()` 返回而恢复。阻塞状态与内置锁或监视器锁息息相关，将在下文的"锁和同步"讨论。
 
 另外，线程有一个中断状态（interrupt status）。所谓中断，即停止正在执行的操作，并执行其它操作。例如，主线程可使用子线程对象（的引用）调用 `java.lang.Thread#interrupt` 中断子线程，子线程能够捕获 `java.lang.InterruptedException` 或调用 `java.lang.Thread#interrupted` 接收到中断。
 
@@ -411,9 +411,9 @@ public void testIncrementUseSyncMethod() throws InterruptedException {
 
 测试通过，期望值（exceptedCounterValue）与实际值（exceptedCounterValue）相等，其中一个子线程（Thread-1）与临时测试线程（Time-limited test）读取的 count 值相等。
 
-防止线程干扰和内存一致性错误的机制是**同步（Synchronization）**。关键词 `synchronized`，翻译为已同步。当只有一个线程调用一个同步方法，它会自动获得这个方法的对象的内置锁（intrinsic lock）或监视器锁（monitor lock），并在方法返回时自动释放该对象的内置锁（即使返回是由未捕获异常引起的）。如果是用 `synchronized` 修饰的静态方法，这个线程会获得该静态方法所属的类所关联的 Class 对象的内置锁，因此，通过不同于该类的任何实例的锁来控制对该类的静态字段的访问。
+防止线程干扰和内存一致性错误的机制是**同步（Synchronization）**。关键词 `synchronized`，翻译为已同步。当只有一个线程调用一个同步方法，它会隐式获得该方法的对象的内置锁（intrinsic lock）或监视器锁（monitor lock），并在该方法返回时隐式释放该对象的内置锁（即使返回是由未捕获异常引起的）。如果是用 `synchronized` 修饰的静态方法，这个线程会获得该静态方法所属的类所关联的 Class 对象的内置锁，因此，通过不同于该类的任何实例的锁来控制对该类的静态字段的访问。
 
-这足以解释上面的两个线程读写同一个变量的值重复百万次，最后结果仍然正确的原因。两个线程调用同一个同步方法，一个线程快于另一个线程获得了这个方法的对象的内置锁，较慢的线程则等待获得该对象的内置锁，已获得该对象的内置锁的线程执行该方法的代码，修改了共享实例字段的值，该方法返回时自动释放了该对象的内置锁，另一个线程有机会获得该对象的内置锁......即使重复多次，一个时刻只能有一个线程正在访问共享实例字段，另一个线程只能等待，也就是说这个两个线程对于共享实例字段的访问是**互斥**的，也就不会出现线程干扰和内存一致性错误。
+这足以解释上面的两个线程读写同一个变量的值重复百万次，最后结果仍然正确的原因。两个线程调用同一个同步方法，一个线程快于另一个线程获得了这个方法的对象的内置锁，较慢的线程则等待获得该对象的内置锁，已拥有该对象的内置锁的线程执行该方法的代码，修改了共享实例字段的值，该方法返回时隐式释放了该对象的内置锁，另一个线程有机会拥有该对象的内置锁......即使重复多次，一个时刻只能有一个线程正在访问共享实例字段，另一个线程只能等待，也就是说这个两个线程对于共享实例字段的访问是**互斥**的，也就不会出现线程干扰和内存一致性错误。
 
 线程 1 | 线程 2 | &nbsp; | 整数值
 :---: | :---: | :---: | :---:
@@ -522,9 +522,9 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
 ![MarkWord](/img/concurrent/MarkWord.png)
 
-- 未锁定/已解锁（Unlocked）。某个线程未获得该对象的锁。
-- 轻量级锁定（Light-weight locked）。某个线程已获得该对象的轻量级锁。
-- 重量级锁定（Heavy-weight locked）。某个线程已获得该对象的重量级锁。
+- 未锁定/已解锁（Unlocked）。没有线程拥有该对象的锁。
+- 轻量级已锁定（Light-weight locked）。某个线程拥有该对象的轻量级锁。
+- 重量级已锁定（Heavy-weight locked）。某个线程拥有该对象的重量级锁。
 - 有偏向/可偏向（Biased / biasable）。该对象已偏向或可偏向于某线程。
 
 下图描述了对象同步状态的转换，也是锁状态的转换。
@@ -537,13 +537,13 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
 - JVM 尝试通过 [compare-and-swap](https://en.wikipedia.org/wiki/Compare-and-swap)（CAS）在该对象的 mark word 中安装一个指向锁记录的指针（pointer to lock record）。
 
-    - 如果 CAS 操作成功，则该线程将获得该对象的锁。该对象的 mark word 最后两位的值是 00。该锁为**轻量级锁**。
+    - 如果 CAS 操作成功，则该线程拥有了该对象的锁。该对象的 mark word 最后两位的值是 00。该锁称为**轻量级锁**。
 
         - 如果是递归或嵌套调用作用于该对象的同步代码，锁记录初始化为 0，而不是该对象的 mark word。
 
     - 如果 CAS 操作失败，则说明该对象已被其它线程锁定成功。JVM 首先检测该对象的 mark word 是否指向当前线程的栈。
 
-- 当多个不同的线程并发锁定同一个对象，且竞争足够激烈时，轻量级锁升为**重量级锁**。重量级锁就是监视器，监视器管理等待的线程。等待获得监视器的线程状态就是“Java 线程状态”所说的阻塞。
+- 当多个线程并发锁定同一个对象，且竞争足够激烈时，轻量级锁升为**重量级锁**。重量级锁就是监视器，监视器管理等待的线程。等待获得监视器的线程状态就是“Java 线程状态”所说的阻塞。
 
 ![JavaMonitor](/img/concurrent/fig20-1.gif)
 
@@ -620,7 +620,7 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
 #### ReentrantLock
 
-`ReentrantLock`，可译为重入锁。重入（reentrant）是指一个线程可以获得它已拥有且未释放的锁。通过上文“偏向锁和轻量级锁以及重量级锁”，可以知道内置锁是可重入锁。
+`ReentrantLock`，可译为重入锁。重入（reentrant）是指一个线程可以再次拥有它已拥有且未释放的锁。通过上文“偏向锁和轻量级锁以及重量级锁”，可以知道内置锁是可重入锁。
 
 ```java
 public class Foobar {
@@ -662,7 +662,7 @@ try {
 }
 ```
 
-相比于 `synchronized`，`Lock` 要求显式获得锁（lock）和释放锁（unlock），因此要特别注意即使发生异常也要释放锁。如果不希望线程尝试获得锁失败后等待机会而是继续前行或者需要返回结果，可以使用以下的方法：
+相比于 `synchronized`，`Lock` 要求显式获得锁（lock）和释放锁（unlock），因此要特别注意即使发生异常也要释放锁。如果不希望线程获得锁失败后等待机会而是继续前行或者需要返回结果，可以使用以下的方法：
 
 - boolean tryLock();
 
@@ -957,6 +957,8 @@ public class AtomicLinkedList<Item> {
 - [Fork–join model](https://en.wikipedia.org/wiki/Fork%E2%80%93join_model)
 
 - [Java Tutorials # Collections # Streams # Parallelism](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html)
+
+- [Java Tutorials # Concurrency # Atomic Access](https://docs.oracle.com/javase/tutorial/essential/concurrency/atomic.html)
 
 - [Java Tutorials # Concurrency # Synchronization](https://docs.oracle.com/javase/tutorial/essential/concurrency/sync.html)
 
