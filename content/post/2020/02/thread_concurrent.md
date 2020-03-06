@@ -1,9 +1,9 @@
 ---
-title: "多线程·并发编程（一）"
+title: "多线程·并发编程"
 date: 2020-02-21T17:47:30+08:00
 draft: false
 description: ""
-tags: []
+tags: [java, thread, concurrent]
 categories: []
 ---
 
@@ -249,7 +249,7 @@ public class BigTask extends RecursiveAction {
 }
 ```
 
-假设这个大任务（BigTask）是对一个很长的数组（src）进行某些操作，例如排序、map、reduce、过滤、分组等。其中 `BigTask` 继承了 [RecursiveAction](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/RecursiveAction.html)，重写了 `compute` 方法。然后，新建一个线程池，命令工作线程执行大任务。
+假设这个大任务（BigTask）是对一个很长的数组（src）进行某些操作，例如排序、map、reduce、过滤、分组等。其中 BigTask 继承了 [RecursiveAction](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/RecursiveAction.html)，重写了 `compute` 方法。然后，新建一个线程池，命令工作线程执行大任务。
 
 ```java
 long[] src = ...;
@@ -281,7 +281,7 @@ public class Counter {
 }
 ```
 
-上面是一个简单的计数器（Counter），其中有一个将计数器的值（count）增加 1 的方法（increment）。从人脑的角度，`increment` 方法可分解为三个步骤：
+上面是一个简单的计数器（Counter），其中有一个将计数器的值（count）增加 1 的方法（increment）。从人脑的角度，increment 方法可分解为三个步骤：
 
 1. 读取 count 的值。
 2. 计算 count + 1。
@@ -338,7 +338,7 @@ public class CounterTest {
 }
 ```
 
-一个临时测试线程调用了 `testIncrement` 方法，启动了 2 个子线程，为了避免其中一个线程已经停止了，而另外一线程启动中，模拟了一个耗时任务，两个线程都要重复调用 Counter 的 increment 方法 1000000 次。注意，临时测试线程跳出循环后，会睡眠 3000 毫秒，才继续往下执行，预期结果为 2000000（子线程数与递增次数的乘积）。此处省略本机信息，测试结果如下：
+一个临时测试线程调用了 testIncrement 方法，启动了 2 个子线程，为了避免其中一个线程已经停止了，而另外一线程启动中，模拟了一个耗时任务，两个线程都要重复调用 Counter 的 increment 方法 1000000 次。注意，临时测试线程跳出循环后，会睡眠 3000 毫秒，才继续往下执行，预期结果为 2000000（子线程数与递增次数的乘积）。此处省略本机信息，测试结果如下：
 
 ![testIncrement](/img/concurrent/testIncrement.png)
 
@@ -364,15 +364,9 @@ public class CounterTest {
 
 锁通常需要硬件支持才能有效实现。这种支持通常采取一种或多种[原子]((https://en.wikipedia.org/wiki/Linearizability))指令的形式，如 [test-and-set](https://en.wikipedia.org/wiki/Test-and-set)、[compare-and-swap](https://en.wikipedia.org/wiki/Compare-and-swap)、[fetch-and-add](https://en.wikipedia.org/wiki/Fetch-and-add)。所谓[原子指令](https://en.wikipedia.org/wiki/Linearizability#Primitive_atomic_instructions)，即处理器执行该指令不可分割、不可中断，换言之，原子操作要么完全发生，要么根本不发生。对于多处理器的计算机系统，为了保证“获得锁”的原子性，甚至可能通过锁定总线，暂时禁止其它 CPU 与内存通信。
 
-在 Java 中，读取以下变量的值或将某值写入以下变量都属于原子访问（atomic access）：
-
-- 引用类型的变量和大部分原始类型的变量（除了 `long` 和 `double` 的所有类型）。
-
-- 声明为 `volatile` 的所有变量（包括 `long` 和 `double` 变量）。
-
 ### synchronized
 
-以前文的计数器为例，新增一个用 `synchronized` 修饰的 `incrementUseSync` 方法到 `Counter`，
+以前文的计数器为例，新增一个用 `synchronized` 修饰的 incrementUseSync 方法到 Counter，
 
 ```java
 public class Counter {
@@ -392,7 +386,7 @@ public class Counter {
 }
 ```
 
-使用与测试 `increment` 方法相同的测试数据，测试启动相同个数的子线程重复调用同一个 Counter 对象的 `incrementUseSync` 方法相同次数，测试代码如下：
+使用与测试 increment 方法相同的测试数据，测试启动相同个数的子线程重复调用同一个 Counter 对象的 incrementUseSync 方法相同次数，测试代码如下：
 
 ```java
 @Test
@@ -453,7 +447,7 @@ public void testIncrementUseSyncBlock() throws InterruptedException {
 }
 ```
 
-或者添加一个 `incrementUseSyncStmt` 方法到 `Counter` 类，以及新增对应的测试用例：
+或者添加一个 incrementUseSyncStmt 方法到 Counter 类，以及新增对应的测试用例：
 
 ```java
 public class Counter {
@@ -500,7 +494,7 @@ public void testIncrementUseSyncStmt() throws InterruptedException {
 
 每一个 Java 对象都有一个与之关联的内置锁或监视器锁，其内部实体简称为监视器（monitor），又称为管程。因为有关键词 `synchronized`，所以每个 Java 对象都是一个潜在的监视器。一个线程可以锁定或解锁监视器，并且在任何时候只能有一个线程拥有该监视器。只有获得了监视器的所有权后，线程才可以进入受监视器保护的临界区。这与上文对内置锁的讨论一致，获得锁和释放锁可对应于 JVM 指令集的 `monitorenter` 和 `monitorexit`，即线程进入监视器和退出监视器。
 
-如果对 `Counter.class` 进行反汇编：
+如果对 Counter.class 进行反汇编：
 
 ```shell
 javap -v target/classes/io/h2cone/concurrent/Counter.class
@@ -593,7 +587,7 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 }
 ```
 
-如上所示，代码在某方法体内，因为 `sb` 是线程私有变量，所以调用 `append` 方法可以省略锁，这叫做 lock elision。
+如上所示，代码在某方法体内，因为 sb 是线程私有变量，所以调用 `append` 方法可以省略锁，这叫做 lock elision。
 
 ```java
 {
@@ -603,7 +597,7 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 }
 ```
 
-再如上所示，如果 `sb` 是全局变量，且第一次 `append` 方法调用时已被某线程锁定成功，该线程可以避免 3 次锁定/解锁操作，而只需 1 次，这叫做 lock coarsening。
+再如上所示，如果 sb 是全局变量，且第一次 `append` 方法调用时已被某线程锁定成功，该线程可以避免 3 次锁定/解锁操作，而只需 1 次，这叫做 lock coarsening。
 
 ### 死锁
 
@@ -620,7 +614,7 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
 ### 惯用锁
 
-除了 `synchronized`，JDK 提供的 `java.util.concurrent` 的包，富有参差多态的锁。
+除了 `synchronized`，JDK 提供的 `java.util.concurrent` 包，富有参差多态的锁。
 
 #### ReentrantLock
 
@@ -640,7 +634,7 @@ public class Foobar {
 }
 ```
 
-如上代码所示，当一个线程用 `Foobar` 对象调用 `doSomething` 方法，成功获得该对象的内置锁后，继续调用 `doOther()` 方法时，假设内置锁不是重入锁，那么因为 `doSomething` 方法还未返回，所以该对象的内置锁还未自动释放，那么该线程将被迫无限期等待。
+如上代码所示，当一个线程用  Foobar 对象调用 doSomething 方法，成功获得该对象的内置锁后，继续调用 doOther 方法时，假设内置锁不是重入锁，那么因为 doSomething 方法还未返回，所以该对象的内置锁还未自动释放，那么该线程将被迫无限期等待。
 
 或者断言该线程调用以下方法不会引起 `java.lang.StackOverflowError` 异常：
 
@@ -708,6 +702,8 @@ semaphore.release();
 
 如上所示，在同一时刻，最多只能有 3 个线程获得锁成功。
 
+#### 分类目录
+
 下面这张图来自美团技术团队，描述了 Java 主流锁的分类目录：
 
 ![Java锁分类](/img/concurrent/Java锁分类.webp)
@@ -749,7 +745,7 @@ barrier.await();
 
 在“锁”中第一次提到了原子指令：compare-and-swap，而在“偏向锁和轻量级锁以及重量级锁”中也提到了 CAS。
 
-现在用全新的 `AtomicCounter` 来代替那个混杂的 `Counter`。
+现在用全新的 AtomicCounter 来代替那个混杂的 Counter。
 
 ```java
 public class AtomicCounter {
@@ -775,17 +771,17 @@ public class AtomicCounter {
 
 - 使用核心是 CAS 的方法代替使用 `synchronized` 的方法
 
-其中新的 `increment` 方法的循环体内的前两个步骤和在 “非线程安全” 所分解的前两个步骤是一致的，第三个步骤是关键：
+其中新的 increment 方法的循环体内的前两个步骤和在 “非线程安全” 所分解的前两个步骤是一致的，第三个步骤是关键：
 
 ```java
 count.compareAndSet(current, next)
 ```
 
-当有多个线程并发调用 `increment` 方法，到了第三个步骤，某一个线程比较 count 的值与它前一次读取的值（current）是否相等，如果相等，则把 count 的值设为 next 的值，`increment` 方法返回，如果不相等，则表明 count 已被其它线程修改，`compareAndSet` 方法返回 `false`，跳到第一步，继续尝试。
+当有多个线程并发调用 increment 方法，到了第三个步骤，某一个线程比较 count 的值与它前一次读取的值（current）是否相等，如果相等，则把 count 的值设为 next 的值，increment 方法返回，如果不相等，则表明 count 已被其它线程修改，`compareAndSet` 方法返回 `false`，跳到第一步，继续尝试。
 
 `compareAndSet` 方法看似可分为两个步骤，实际上在底层，它是一个不可分且不可中断的原子指令，即比较后和赋值前的中间时刻有且只有一个线程在执行。该方法之所以可能返回 `false`，则是因为有可能一个线程赋值后，与此同时，另一个线程开始比较。
 
-同样，也给 `AtomicCounter` 写测试类，这一次线程加一，次数加一百万。
+同样，也给 AtomicCounter 写测试类，这一次线程加一，次数加一百万。
 
 ```java
 public class AtomicCounterTest {
@@ -822,7 +818,7 @@ public class AtomicCounterTest {
 
 ![testIncrement-1](/img/concurrent/testIncrement-1.png)
 
-事实上，JDK 已经提供了许多操作原子类型实例的原子方法。翻阅源码可以知道，原子类的 `compareAndSet` 方法使用了 `sun.misc.Unsafe` 的 `compareAndSet*` 方法：
+事实上，JDK 已经提供了许多操作原子类型实例的原子方法，上文最新版的“当前值加一”方法过于啰嗦，实际开发中请直接使用原子类的 `incrementAndGet` 方法。翻阅源码可以知道，原子类的 `compareAndSet` 方法使用了 `sun.misc.Unsafe` 的 `compareAndSet*` 方法：
 
 ```java
 public final native boolean compareAndSwapObject(Object var1, long var2, Object var4, Object var5);
@@ -833,12 +829,32 @@ public final native boolean compareAndSwapLong(Object var1, long var2, long var4
 ```
 
 注意其中的 `native`，也就是说，下层的 `compareAndSwap` 函数由 C/C++ 实现，而 Java 代码可通过 [JNI](https://en.wikipedia.org/wiki/Java_Native_Interface) 调用这个函数。
+虽然 JDK 没有包含 `sun.misc.Unsafe` 的源文件，但是通过对 `Unsafe.class`反编译，可以确定 `incrementAndGet` 方法同样使用了 CAS 函数：
+
+```java
+public final long getAndAddLong(Object var1, long var2, long var4) {
+    long var6;
+    do {
+        var6 = this.getLongVolatile(var1, var2);
+    } while(!this.compareAndSwapLong(var1, var2, var6, var6 + var4));
+
+    return var6;
+}
+```
 
 #### 原子类
 
-下图是 [java.util.concurrent.atomic](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/package-summary.html) 包的原子类：
+这个 [java.util.concurrent.atomic](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/package-summary.html) 包定义了支持对单个变量进行原子操作的类。
 
-![juc-atomic](/img/concurrent/juc-atomic.png)
+##### volatile
+
+在 Java 中，读取以下变量的值或将某值写入以下变量都属于原子访问（atomic access）：
+
+- 引用类型的变量和大部分原始类型的变量（除了 `long` 和 `double` 的所有类型）。
+
+- 声明为 `volatile` 的所有变量（包括 `long` 和 `double` 变量）。
+
+##### AtomicReference
 
 值得注意的是，`AtomicReference*` 用于防止多线程并发操作引用类型实例出现线程干扰和内存一致性错误。
 
@@ -962,8 +978,6 @@ public class AtomicLinkedList<Item> {
 
 - [Java Tutorials # Collections # Streams # Parallelism](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html)
 
-- [Java Tutorials # Concurrency # Atomic Access](https://docs.oracle.com/javase/tutorial/essential/concurrency/atomic.html)
-
 - [Java Tutorials # Concurrency # Synchronization](https://docs.oracle.com/javase/tutorial/essential/concurrency/sync.html)
 
 - [The Java Language Specification, Java SE 8 Edition # Chapter 17. Threads and Locks](https://docs.oracle.com/javase/specs/jls/se8/html/jls-17.html)
@@ -998,11 +1012,15 @@ public class AtomicLinkedList<Item> {
 
 - [Know Thy Java Object Memory Layout](http://psy-lob-saw.blogspot.com/2013/05/know-thy-java-object-memory-layout.html)
 
-- [聊聊并发（五）——原子操作的实现原理](https://www.infoq.cn/article/atomic-operation)
-
 - [【基本功】不可不说的Java“锁”事](https://mp.weixin.qq.com/s/E2fOUHOabm10k_EVugX08g)
 
 - 《码农翻身》
+
+- [Java Tutorials # Concurrency # Atomic Access](https://docs.oracle.com/javase/tutorial/essential/concurrency/atomic.html)
+
+- [Java Tutorials # Concurrency # Atomic Variables](https://docs.oracle.com/javase/tutorial/essential/concurrency/atomicvars.html)
+
+- [聊聊并发（五）——原子操作的实现原理](https://www.infoq.cn/article/atomic-operation)
 
 - [Java Tutorials # Concurrency](https://docs.oracle.com/javase/tutorial/essential/concurrency/index.html)
 

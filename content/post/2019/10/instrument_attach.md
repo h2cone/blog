@@ -3,7 +3,7 @@ title: "Java 程序探测或追踪"
 date: 2019-10-30T15:27:01+08:00
 draft: false
 description: ""
-tags: []
+tags: [java, agent, bytecode]
 categories: []
 ---
 
@@ -35,7 +35,7 @@ Oracle JDK 里有一个名为 `java.lang.instrument` 的包：
 
 ### 体验
 
-如何以**非侵入式**测量 Java 方法执行耗时？你可能立马想到了 AOP 库或框架，比如 [JDK 动态代理](https://docs.oracle.com/javase/8/docs/technotes/guides/reflection/proxy.html)、[cglib](https://github.com/cglib/cglib)、[ASM](https://asm.ow2.io)、[javassist](https://github.com/jboss-javassist/javassist)、[byte-buddy](https://github.com/raphw/byte-buddy)......通过操作字节码在方法或代码块执行前后插入计时代码，但却极有可能需要手动更改原来的程序代码，例如添加依赖项以及新增切面类等等，既然如此，那就请 Java agent 帮忙吧。
+如何以**非侵入式**测量 Java 方法执行耗时？你可能立马想到了操作字节码的库或框架，比如 [JDK 动态代理](https://docs.oracle.com/javase/8/docs/technotes/guides/reflection/proxy.html)、[cglib](https://github.com/cglib/cglib)、[ASM](https://asm.ow2.io)、[javassist](https://github.com/jboss-javassist/javassist)、[byte-buddy](https://github.com/raphw/byte-buddy)......通过操作字节码在方法或代码块执行前后插入计时代码，但却极有可能需要手动更改原来的程序代码，例如添加依赖项以及新增切面类等等，既然如此，那就请 Java agent 帮忙吧。
 
 假设有一个 Cat 类，它有一些耗时方法，如下：
 
@@ -113,7 +113,7 @@ public class ElapsedTimeTransformer implements ClassFileTransformer {
 
 重写 `transform` 方法允许我们用修改后的类代替原类并加载，具体实现是使用 javassist 的 API 去更改已加载类的字节码，在类方法体的开头和结尾分别插入获取当前的纳秒级时间戳语句，并在最后插入计算结果的打印语句，新类的字节码作为 `transform` 方法的返回值。`transform` 方法什么时候被调用？每一个新类被类加载器加载时。
 
-其次，新建 `MANIFEST.MF` 文件编写一些键值对告诉 JVM 这个 agent 类在哪里以及是否允许重定义类或重转换类：
+其次，新建 MANIFEST.MF 文件编写一些键值对告诉 JVM 这个 agent 类在哪里以及是否允许重定义类或重转换类：
 
 ```
 Manifest-Version: 1.0
@@ -187,13 +187,13 @@ public class CatMain {
 </plugin>
 ```
 
-最后，得到了 `agent-jar-with-dependencies.jar` 和 `app.jar` 后，查阅 Java agent 命令行接口文档：
+最后，得到了 agent-jar-with-dependencies.jar 和 app.jar 后，查阅 Java agent 命令行接口文档：
 
 ```shell
 -javaagent:jarpath[=options]
 ```
 
-`jarpath` 是 agent jar 文件的路径，可选的 `options` 能传递给 agent 类的 `premain` 方法，这里传递 Cat 类的命名： `io/h2cone/inst/app/Cat`，表示我们要测量它的方法执行时间：
+`jarpath` 是 agent jar 文件的路径，可选的 `options` 能传递给 agent 类的 `premain` 方法，这里传递 Cat 类的命名：io/h2cone/inst/app/Cat，表示我们要测量它的方法执行时间：
 
 ```shell
 java -javaagent:agent-jar-with-dependencies.jar=io/h2cone/inst/app/Cat -jar app.jar
@@ -245,7 +245,7 @@ managed bean name: 5424@borvino
 Woof Woof
 ```
 
-注意 `managed bean name` 的值为 `5424@borvino`，当中的 `5424` 就是这个进程的 PID。
+注意 managed bean name 的值为 5424@borvino，当中的 5424 就是这个进程的 PID。
 
 方便起见，编写简易的 agent 类：
 
@@ -266,7 +266,7 @@ public class OwnerAgent {
 
 回想前文所说的获取 `Instrumentation` 实例的两种方式，当把 Java agent 附加到 JVM 时，`Instrumentation` 实例将传递到 agent 类的 `agentmain` 方法，也是就说 `agentmain` 将会被调用。
 
-不忘编写 `MANIFEST.MF` 文件：
+不忘编写 MANIFEST.MF 文件：
 
 ```
 Manifest-Version: 1.0
@@ -276,9 +276,9 @@ Can-Redefine-Classes: true
 Can-Retransform-Classes: true
 ```
 
-既声明 `Agent-Class` 也声明 `Premain-Class`，`OwnerAgent` 类同时满足两种方式所要求的方法签名。
+既声明 `Agent-Class` 也声明 `Premain-Class`，OwnerAgent 类同时满足两种方式所要求的方法签名。
 
-与上文相似，打包好 `agent.jar` 后，方便起见，直接用 IDE 启动 `DogMain`，从控制台读取目标 JVM 的 PID，万事俱备，首先依附到 JVM，然后动态加载 agent 到 JVM，最后分离：
+与上文相似，打包好 agent.jar 后，方便起见，直接用 IDE 启动 DogMain，从控制台读取目标 JVM 的 PID，万事俱备，首先依附到 JVM，然后动态加载 agent 到 JVM，最后分离：
 
 ```java
 @Test
@@ -304,7 +304,7 @@ Woof Woof
 Woof Woof
 ```
 
-`OwnerAgent` 类的 `agentmain` 方法被调用，`DogMain` 的 `main` 方法也正常执行。
+OwnerAgent 类的 `agentmain` 方法被调用，DogMain 的 `main` 方法也正常执行。
 
 完整代码已发布，请参考 [attach-agent](https://github.com/h2cone/java-examples/tree/master/attach-agent) 和 [attach-app](https://github.com/h2cone/java-examples/tree/master/attach-app)。
 
@@ -326,18 +326,18 @@ Woof Woof
 
 [4] [入门科普，围绕JVM的各种外挂技术](https://mp.weixin.qq.com/s/cwU2rLOuwock048rKBz3ew)
 
-[java-instrumentation](https://javapapers.com/core-java/java-instrumentation/)
+[?] [java-instrumentation](https://javapapers.com/core-java/java-instrumentation/)
 
-[Guide to Java Instrumentation](https://www.baeldung.com/java-instrumentation)
+[?] [Guide to Java Instrumentation](https://www.baeldung.com/java-instrumentation)
 
-[Java Attach API](https://www.cnblogs.com/LittleHann/p/4783581.html)
+[?] [Java Attach API](https://www.cnblogs.com/LittleHann/p/4783581.html)
 
-[JAVA 拾遗 --Instrument 机制](https://www.cnkirito.moe/instrument/)
+[?] [JAVA 拾遗 --Instrument 机制](https://www.cnkirito.moe/instrument/)
 
-[Instrumentation: querying the memory usage of a Java object](https://www.javamex.com/tutorials/memory/instrumentation.shtml)
+[?] [Instrumentation: querying the memory usage of a Java object](https://www.javamex.com/tutorials/memory/instrumentation.shtml)
 
-[Java动态追踪技术探究](https://tech.meituan.com/2019/02/28/java-dynamic-trace.html)
+[?] [Java动态追踪技术探究](https://tech.meituan.com/2019/02/28/java-dynamic-trace.html)
 
-[JVM 源码分析之 javaagent 原理完全解读](https://www.infoq.cn/article/javaagent-illustrated)
+[?] [JVM 源码分析之 javaagent 原理完全解读](https://www.infoq.cn/article/javaagent-illustrated)
 
-[Java神器BTrace，从入门到熟练小工的手册](https://mp.weixin.qq.com/s/4bZ6iSvpqPsjdvkSoFVhrg)
+[?] [Java神器BTrace，从入门到熟练小工的手册](https://mp.weixin.qq.com/s/4bZ6iSvpqPsjdvkSoFVhrg)

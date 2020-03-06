@@ -3,7 +3,7 @@ title: "造你自己的 MyBatis 插件"
 date: 2020-02-08T18:28:19+08:00
 draft: false
 description: ""
-tags: []
+tags: [java, mybatis, build your own x]
 categories: []
 ---
 
@@ -66,9 +66,9 @@ public class ExamplePlugin implements Interceptor {
 }
 ```
 
-`@Intercepts` 必不可少，其中 `@Signature` 声明方法签名数组，上面这个简单的插件用于拦截 `Executor` 的参数类型列表为 `(MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class)` 的 `query` 方法，在此方法调用前做预处理，在此方法调用后做后处理。
+`@Intercepts` 必不可少，其中 `@Signature` 声明方法签名数组，上面这个简单的插件用于拦截 `Executor` 的参数类型列表为 (MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class) 的 `query` 方法，在此方法调用前做预处理，在此方法调用后做后处理。
 
-拦截 `Executor` 的 `query` 方法是否真能对 Mapper 方法调用起作用？且让我们先在 `mybatis-config.xml` 中声明自定义插件：
+拦截 `Executor` 的 `query` 方法是否真能对 Mapper 方法调用起作用？且让我们先在 mybatis-config.xml 中声明自定义插件：
 
 ```xml
 <plugins>
@@ -119,7 +119,7 @@ implement post-processing if needed
 
 ## 知其所以然
 
-MyBatis 如何实现插件？瞧瞧 MyBatis 源码也许能找到答案。先从 `testExamplePlugin` 这个测试方法开始，从表面上看，分成几步：
+MyBatis 如何实现插件？瞧瞧 MyBatis 源码也许能找到答案。先从 testExamplePlugin 这个测试方法开始，从表面上看，分成几步：
 
 1. 加载 XML 配置文件
 
@@ -176,7 +176,7 @@ public class InterceptorChain {
 }
 ```
 
-难道这就是**Chain-of-responsibility pattern**？注意 `pluginAll` 方法，终于还是回到了 `Interceptor`:
+难道这就是 **Chain-of-responsibility pattern**？注意 `pluginAll` 方法，终于还是回到了 `Interceptor`:
 
 ```java
 public interface Interceptor {
@@ -238,7 +238,7 @@ public class Plugin implements InvocationHandler {
 ...
 ```
 
-如代码所说，把插件要拦截的方法所属的类的实例当作被代理（target），满足条件时生成了代理（proxy）。举例来说， `Executor` 接口的实现类都是被代理类，全部都生成实现了 `Executor` 的代理类，一旦 `Executor` 实现类方法调用时，偷天换日，实际调用的是 `org.apache.ibatis.plugin.Plugin#invoke` 方法，其中调用了 `ExamplePlugin` 重写的`intercept` 方法，因此，我们才能在 `Executor` 实现类方法调用前后插入预处理和后处理。
+如代码所说，把插件要拦截的方法所属的类的实例当作被代理（target），满足条件时生成了代理（proxy）。举例来说，`Executor` 接口的实现类都是被代理类，它们对应的代理类都实现了 `Executor`，一旦 `Executor` 的实现类的方法被调用时，偷天换日，实际调用的则是 `org.apache.ibatis.plugin.Plugin#invoke` 方法，其中调用了 ExamplePlugin 重写的`intercept` 方法，因此，我们才能在 `Executor` 实现类方法调用前后插入预处理和后处理。
 
 那么，`org.apache.ibatis.plugin.InterceptorChain#pluginAll` 方法什么时候被调用？继续深入测试代码第三步的源代码：
 
@@ -266,18 +266,18 @@ public class Plugin implements InvocationHandler {
 
 ## 参考资料
 
-[MyBatis: plug-ins](https://mybatis.org/mybatis-3/configuration.html#plugins)
+- [MyBatis: plug-ins](https://mybatis.org/mybatis-3/configuration.html#plugins)
 
-[Mybatis之plugin插件设计原理](https://my.oschina.net/zudajun/blog/738973)
+- [Mybatis之plugin插件设计原理](https://my.oschina.net/zudajun/blog/738973)
 
-[MyBatis插件原理](https://luyanan.com/article/info/9bc65d0cd04f76917e1f8b964e7ab3dc.html)
+- [MyBatis插件原理](https://luyanan.com/article/info/9bc65d0cd04f76917e1f8b964e7ab3dc.html)
 
-[MyBatis: getting started](https://mybatis.org/mybatis-3/getting-started.html)
+- [MyBatis: getting started](https://mybatis.org/mybatis-3/getting-started.html)
 
-[MybatisAutoConfigurationTest](https://github.com/mybatis/spring-boot-starter/blob/master/mybatis-spring-boot-autoconfigure/src/test/java/org/mybatis/spring/boot/autoconfigure/MybatisAutoConfigurationTest.java#L189-L219)
+- [MybatisAutoConfigurationTest](https://github.com/mybatis/spring-boot-starter/blob/master/mybatis-spring-boot-autoconfigure/src/test/java/org/mybatis/spring/boot/autoconfigure/MybatisAutoConfigurationTest.java#L189-L219)
 
-[I can not config my interceptors in application.yml](https://github.com/mybatis/spring-boot-starter/issues/180)
+- [I can not config my interceptors in application.yml](https://github.com/mybatis/spring-boot-starter/issues/180)
 
-[plugins-package option for application.yml](https://github.com/mybatis/spring-boot-starter/issues/262)
+- [plugins-package option for application.yml](https://github.com/mybatis/spring-boot-starter/issues/262)
 
-[Plug-in (computing)](https://en.wikipedia.org/wiki/Plug-in_(computing))
+- [Plug-in (computing)](https://en.wikipedia.org/wiki/Plug-in_(computing))

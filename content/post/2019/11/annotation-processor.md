@@ -3,7 +3,7 @@ title: "注解处理器"
 date: 2019-11-30T23:43:35+08:00
 draft: false
 description: ""
-tags: []
+tags: [java, annotation]
 categories: []
 ---
 
@@ -13,7 +13,7 @@ Project Lombok 的底子之一。
 
 ## 为什么使用 Getter/Setter
 
-Java 的啰嗦和冗余是闻名于世的，特别在开发基于 Java 的业务系统的时候，继续不断地编写普通的 Java 类（数据类型），不假思索地用 `private` 修饰成员变量，熟练运用编辑器或集成开发环境不停地生成 `Getter`、`Setter`、`ToString`、`Constructor` 等方法。
+Java 的啰嗦和冗余是闻名于世的，特别在开发基于 Java 的业务系统的时候，继续不断地编写普通的 Java 类（数据类型），不假思索地用 `private` 修饰成员变量，熟练运用编辑器或集成开发环境不停地生成 Getter、Setter、ToString、Constructor 等方法。
 
 ```java
 public class Member {
@@ -60,13 +60,13 @@ public class Member {
 
 > All problems in computer science can be solved by another level of indirection.
 
-计算机科学领域的任何问题都可以通过增加一个中间层来解决，`Getter` 和 `Setter` 就是封装形成的中间层（私有变量不能直接访问，只能通过中间层访问，不过中间层往往非常浅薄），最后甩来一个链接：[why-use-getters-and-setters-accessors](https://stackoverflow.com/questions/1568091/why-use-getters-and-setters-accessors)。
+计算机科学领域的任何问题都可以通过增加一个中间层来解决，Getter 和 Setter 就是封装形成的中间层（私有变量不能直接访问，只能通过中间层访问，不过该中间层往往非常浅薄），最后甩来一个链接：[why-use-getters-and-setters-accessors](https://stackoverflow.com/questions/1568091/why-use-getters-and-setters-accessors)。
 
 哇哦。
 
 ## Project Lombok
 
-用 `private` 修饰的字段和其 `Getter/Settter` 方法，既然已经成为**约定俗成**（若改用 `public` 修饰字段，可能成为”异类“），又或者这是**库或框架的要求**（我们不显式调用的方法，它们却很有可能需要隐式调用才能正常工作），或许还有其它理由，Java 程序员们需要不厌其烦去手动编写或静态生成那些刻板又繁多的代码，还好他们有化繁为简的神器，名为 [Project Lombok](https://projectlombok.org/)：
+用 `private` 修饰的字段和其 Getter/Settter 方法，既然已经成为**约定俗成**（若改用 `public` 修饰字段，可能成为”异类“），又或者这是**库或框架的要求**（我们不显式调用的方法，它们却很有可能需要隐式调用才能正常工作），或许还有其它理由，Java 程序员们需要不厌其烦去手动编写或静态生成那些刻板又繁多的代码，还好他们有化繁为简的神器，名为 [Project Lombok](https://projectlombok.org/)：
 
 > Project Lombok is a java library that automatically plugs into your editor and build tools, spicing up your java.
 Never write another getter or equals method again, with one annotation your class has a fully featured builder, Automate your logging variables, and much more.
@@ -86,7 +86,7 @@ public class Member {
 }
 ```
 
-特地用 `@Accessors(chain = true)` 进行了增强，允许链式调用 `Setter` 方法创建对象（因为每次都返回 `this`）：
+特地用 `@Accessors(chain = true)` 进行了增强，允许链式调用 Setter 方法创建对象（因为每次都返回 `this`）：
 
 ```java
 Member member = new Member()
@@ -147,7 +147,7 @@ public @interface Inspect {
 }
 ```
 
-预期 `process` 方法会在**编译时**被调用，输出或打印传递而来的自定义注解的名称。可是其它项目如何使用定制的注解处理器？如果定制的注解处理器项目为 [annotation-processor](https://github.com/h2cone/java-examples/tree/master/annotation-processor)，那么它还需要一个文件（`src/main/resources/META-INF/services/javax.annotation.processing.Processor`）用来告诉编译器定制的注解处理器类在哪里：
+预期 `process` 方法会在**编译时**被调用，输出或打印传递而来的自定义注解的名称。可是其它项目如何使用定制的注解处理器？如果定制的注解处理器项目为 [annotation-processor](https://github.com/h2cone/java-examples/tree/master/annotation-processor)，那么它还需要一个文件（src/main/resources/META-INF/services/javax.annotation.processing.Processor）用来告诉编译器定制的注解处理器类在哪里：
 
 ```
 io.h2cone.annotation.processor.SimpleAnnotationProcessor
@@ -189,7 +189,7 @@ public class Foobar {
 }
 ```
 
-若使用 IntelliJ IDEA，依次点击 `Build > Rebuild Project`，成功后可以在底部的 `Messages` 看到 `process` 方法被调用从而输出了 `Inspect` 注解的名称：
+若使用 IntelliJ IDEA，依次点击 Build > Rebuild Project，成功后可以在底部的 Messages 看到 `process` 方法被调用从而输出了 Inspect 注解的名称：
 
 ```
 Information:java: io.h2cone.annotation.processor.Inspect
@@ -199,10 +199,10 @@ Information:java: io.h2cone.annotation.processor.Inspect
 
 ## 参考资料
 
-[Java开发神器Lombok的使用与原理](http://blog.didispace.com/java-lombok-how-to-use/)
+- [Java开发神器Lombok的使用与原理](http://blog.didispace.com/java-lombok-how-to-use/)
 
-[Open JDK: Compilation Overview](http://openjdk.java.net/groups/compiler/doc/compilation-overview/index.html)
+- [Open JDK # Compilation Overview](http://openjdk.java.net/groups/compiler/doc/compilation-overview/index.html)
 
-[【Lombok原理1】自定义注解处理器](http://patamon.me/icemimosa/Java/[Lombok%E5%8E%9F%E7%90%861]%E8%87%AA%E5%AE%9A%E4%B9%89%E6%B3%A8%E8%A7%A3%E5%A4%84%E7%90%86%E5%99%A8/)
+- [【Lombok原理1】自定义注解处理器](http://patamon.me/icemimosa/Java/[Lombok%E5%8E%9F%E7%90%861]%E8%87%AA%E5%AE%9A%E4%B9%89%E6%B3%A8%E8%A7%A3%E5%A4%84%E7%90%86%E5%99%A8/)
 
-[Java Pluggable Annotation Processor](https://www.logicbig.com/tutorials/core-java-tutorial/java-se-annotation-processing-api/annotation-processing-concepts.html)
+- [Java Pluggable Annotation Processor](https://www.logicbig.com/tutorials/core-java-tutorial/java-se-annotation-processing-api/annotation-processing-concepts.html)
