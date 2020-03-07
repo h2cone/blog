@@ -755,7 +755,7 @@ barrier.await();
 
 回想前文所讨论的“非线程安全”中的计数器（Counter），非同步的“当前值加一”分解出来的三个步骤是原子访问，但是试验证明，出现了相互覆盖或丢失修改。由上一段可知，即使使用 `volatile` 修饰 Counter 的 count 字段，非同步的“当前值加一”仍然会出现内存一致性错误。
 
-到此为止，难道只能使用 `synchronized` 或 Java 锁防止线程干扰和内存一致性错误？然而并不是，还有一种 `volatile` 变量组合 CAS 循环的方案，事实上前面“惯用锁“ 中所说的 `ReentrantLock` 的实现也使用了 CAS。
+到此为止，难道只能使用 `synchronized` 或 Java 锁防止线程干扰和内存一致性错误？然而并不是，还有一种 `volatile` 变量组合 CAS 循环的方案，其实前面”惯用锁“中所说的 `ReentrantLock` 的实现也使用了 CAS。
 
 #### CAS
 
