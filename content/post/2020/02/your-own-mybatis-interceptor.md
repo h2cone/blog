@@ -254,7 +254,7 @@ public class Plugin implements InvocationHandler {
 
 当然，我们也可以利用 IntelliJ IDEA CE 的代码分析功能，查一下哪里使用了 `pluginAll` 方法：
 
-![usages_of_pluginAll](/img/usages_of_pluginAll.png)
+![usages_of_pluginAll](/img/your-own-mybatis-interceptor/usages_of_pluginAll.png)
 
 从终点出发，回到了起点。
 

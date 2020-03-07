@@ -15,7 +15,7 @@ Java 版。
 
 现代的计算机系统提供了许多漂亮的**抽象**，如下图所示：
 
-![计算机系统的抽象](/img/concurrent/计算机系统的抽象.png)
+![计算机系统的抽象](/img/计算机系统的抽象.png)
 
 其中，进程是对处理器、主存和 I/O 设备的抽象，换言之，进程是操作系统对一个正在运行的程序的一种抽象。操作系统上可以“同时”运行多个进程，已经对一边听歌一边写代码和接收消息的流畅不足为奇，之所以用双引号，因为这可能是一种假象。
 
@@ -25,15 +25,15 @@ Java 版。
 
 一个进程可以存在多个控制流（control flow），它们被称为线程。如来自维基百科线程词条的插图所示：
 
-![Multithreaded_process](/img/concurrent/Multithreaded_process.svg)
+![Multithreaded_process](/img/thread_concurrent/Multithreaded_process.svg)
 
 因为只有单处理器，所以这个进程的两个线程轮番运行在进程的上下文中（模拟并发）。操作系统不仅调度进程，教科书常说，线程是操作系统调度的最小单位。大多数计算机系统中，需要运行的线程数大于可以运行它们的 CPU 核数，从单线程进程推广到多线程进程的线程，一个线程时间到了，上下文切换，它被“暂停”了，轮到了另一个线程运行，稍后轮到它时又“恢复”了。
 
 多线程程序十分普遍。电脑和手机应用程序在用户界面渲染动画，同时在后台执行计算和网络请求。一个 Web 服务器一次处理数千个客户端的请求。多线程下载、多线程爬虫、多线程遍历文件树......多线程成为越来越重要的模型，因为多线程程序有不少优点。
 
-多线程之间比多进程之间更容易共享数据和通信。同一个进程的多个线程共享进程的资源，如进程**虚拟地址空间**的程序代码和程序处理的数据以及文件，对于同一进程的线程们来说，可执行代码只有一套，它们可以访问分配在堆 (Heap) 的共享变量或全局变量，但是，栈（Stack）、包括程序计数器（Program Counter）在内的寄存器（Register）副本、线程本地存储（Thread Local Storage）都是线程私有的（如果有的话）。不仅如此，线程之间可以通过共享的代码、数据、文件进行通信，绝大部分情况下比进程间的通信更高效。
+多线程之间比多进程之间更容易共享数据和通信。同一个进程的多个线程共享进程的资源，比如进程的**虚拟地址空间**中的程序代码和程序处理的数据以及文件，对于同一进程的线程们来说，可执行代码只有一套，它们可以访问存储在堆 (Heap) 中的共享变量或全局变量，但是，栈（Stack）、包括程序计数器（Program Counter）在内的寄存器（Register）副本、线程本地存储（Thread Local Storage）都是线程私有的（如果有的话）。不仅如此，线程之间可以通过共享的代码、数据、文件进行通信，绝大部分情况下比进程间的通信更高效。
 
-![4_01_ThreadDiagram](/img/concurrent/4_01_ThreadDiagram.jpg)
+![4_01_ThreadDiagram](/img/thread_concurrent/4_01_ThreadDiagram.jpg)
 
 多线程执行任务更多或更快，如果主线程阻塞在耗时任务，整个程序可能会卡顿或长时间无响应，解决办法之一便是新建一个工作线程专门执行这个耗时任务，而主线程则继续执行其它任务。例如，前面提到的手机 APP（特别是 Android APP），UI 线程被阻塞后很有可能无法正常人机交互了，用户体验极差。更进一步，单进程的多线程之间的协作有可能提高 client-server 系统的性能，譬如异步调用缩短了请求响应时间（也许总延迟几乎没变）。最重要的是，虽然一个传统的 CPU 只能交错执行一个进程的多个线程，但随着多核处理器和超线程（hyperthreading）的普及，面对多任务或大任务的执行，多线程程序的性能上限具有更高的天花板，因为减少了执行多个任务需要模拟并发的开销，还因为处理器可以并行执行多个线程。
 
@@ -41,7 +41,7 @@ Java 版。
 
 并发（Concurrency）和并行（Parallelism）这两个术语经常混淆，语义应当结合语境。
 
-![串行和并行以及并发](/img/concurrent/串行和并行以及并发.png)
+![串行和并行以及并发](/img/thread_concurrent/串行和并行以及并发.png)
 
 如上图所示，假设有两个任务和两个线程，每个任务只能由一线程执行且用时分别是 t1 和 t2（t1 < t2），且线程都是同时启动，那么各个方式总执行时间可能如下表所示：
 
@@ -61,11 +61,11 @@ Java 版。
 
 任何 Java 应用程序都跑在操作系统之上，操作系统作为硬件和应用程序的**中间层**，隐藏了下层具体实现的复杂性，并给上层提供了简单或统一的接口。
 
-![计算机系统的分层](/img/concurrent/计算机系统的分层.png)
+![计算机系统的分层](/img/计算机系统的分层.png)
 
-正在运行的 Java 程序就是 Java 虚拟机（JVM），而虚拟机是对整个操作系统的抽象，但对操作系统来说 JVM 仍然是进程。下面这张来自 [JVM Internals](http://blog.jamesdbloom.com/JVMInternals.html) 的图展示了 Java SE 7 虚拟机运行时的数据区域（Run-Time Data Areas）。堆、栈、PC 等区域与 Linux/Unix 操作系统进程的虚拟地址空间相似，值得注意的是 Java 8 用元空间（Metaspace）代替了永久代（PermGen）。JVM 运行时的数据区域可分成两大类，一是 Java 线程共享，如堆、方法区等，二是 Java 线程私有，如栈等，详情请见 [The Java Virtual Machine Specification, Java SE 8 Edition # 2.5. Run-Time Data Areas](https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.5)。
+正在运行的 Java 程序就是 Java 虚拟机（JVM），而虚拟机是对整个操作系统的抽象，但对操作系统来说 JVM 仍然是进程。下面这张来自 [JVM Internals](http://blog.jamesdbloom.com/JVMInternals.html) 的图展示了 Java SE 7 虚拟机运行时的数据区域（Run-Time Data Areas）。图中的堆和栈类似于 Linux/Unix 操作系统进程的虚拟地址空间中的堆和栈，值得注意的是 Java 8 用元空间（Metaspace）代替了永久代（PermGen）。JVM 运行时的数据区域可分成两大类，一是 Java 线程共享区域，包括堆和方法区，二是 Java 线程私有区域，包括栈，详情请见 [The Java Virtual Machine Specification, Java SE 8 Edition # 2.5. Run-Time Data Areas](https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.5)。
 
-![JVM_Internal_Architecture](/img/concurrent/JVM_Internal_Architecture.png)
+![JVM_Internal_Architecture](/img/JVM_Internal_Architecture.png)
 
 Java SE 最常用的虚拟机是 Oracle/Sun 研发的 Java HotSpot VM。HotSpot 基本的线程模型是 Java 线程与本地线程（native thread）之间 1:1 的映射。线程通常在操作系统层实现或在应用程序层实现，前者的线程称为内核线程，后者的线程可能称为用户线程。内核（kernel）是操作系统代码常驻主存的部分，而所谓用户，就是应用程序和应用程序开发者。
 
@@ -107,7 +107,7 @@ public class HelloRunnable implements Runnable {
 
 Java 8 以上的用户也许更倾向于使用匿名内部类实现 `java.lang.Runnable` 或 Lambda 表达式简化以上代码，但都是通过调用 `java.lang.Thread#start` 方法来启动新线程，对应的本地线程（内核线程）在启动 Java 线程时创建，并在终止时回收。其中，`run` 方法是 Java 线程启动后执行的代码，即人类要求它执行的任务，而 `main` 方法的代码是 Java 用户直接或间接通过命令行启动 JVM 后执行。
 
-![main-thread-in-java](/img/concurrent/main-thread-in-java.jpeg)
+![main-thread-in-java](/img/thread_concurrent/main-thread-in-java.jpeg)
 
 如上图所示，即使运行一个简单的 "Hello World" 程序，也可能在 JVM 或操作系统创建十几个或更多线程。例如执行 `main` 方法需要的主线程，主线程能启动子线程并继续执行其它代码，子线程也能启动其子线程并继续执行其它代码，而且还有其它由 HotSpot 为了内部目的而创建的线程，如 VM thread、Periodic task thread、GC threads、Compiler threads、Signal dispatcher thread。
 
@@ -135,7 +135,7 @@ public class TransactionId {
 
 下面这个来自 [Java 6 Thread States and Life Cycle](https://www.uml-diagrams.org/examples/java-6-thread-state-machine-diagram-example.html) 的状态机，很好地描述了 Java 线程状态和生命周期。
 
-![state-machine-example-java-6-thread-states](/img/concurrent/state-machine-example-java-6-thread-states.png)
+![state-machine-example-java-6-thread-states](/img/thread_concurrent/state-machine-example-java-6-thread-states.png)
 
 翻阅 JDK 8 的 `java.lang.Thread.State` 可以确定，在给定的时间点，一个 Java 线程只能处于以下状态之一：
 
@@ -171,7 +171,7 @@ JDK 的 `java.util.concurrent` 包定义了三个 Executor 接口，[Executor](h
 
 线程池由数量可控的**工作线程（worker thread）** 组成，每个工作线程的生命都被延长，以便用于执行多个任务，既减少了线程调度延迟，也避免了频繁新建和终结执行短暂任务的线程而导致的延迟。线程池的新建通常是预处理，即服务器端程序提供服务之前已准备好线程池，避免了临时新建大量线程的开销。
 
-![任务通过队列提交到池中](/img/concurrent/任务通过队列提交到池中.png)
+![任务通过队列提交到池中](/img/thread_concurrent/任务通过队列提交到池中.png)
 
 线程池的一种常见类型是固定线程池（fixed thread pool），如果某个线程仍在使用中而被某种方式终止，那么就会有新的线程代替它。任务通过队列提交到池中，任务队列可以容纳超过线程池中线程数量的的任务。这样设计的好处是优雅降级（degrade gracefully）和削峰。
 
@@ -340,29 +340,29 @@ public class CounterTest {
 
 一个临时测试线程调用了 testIncrement 方法，启动了 2 个子线程，为了避免其中一个线程已经停止了，而另外一线程启动中，模拟了一个耗时任务，两个线程都要重复调用 Counter 的 increment 方法 1000000 次。注意，临时测试线程跳出循环后，会睡眠 3000 毫秒，才继续往下执行，预期结果为 2000000（子线程数与递增次数的乘积）。此处省略本机信息，测试结果如下：
 
-![testIncrement](/img/concurrent/testIncrement.png)
+![testIncrement](/img/thread_concurrent/testIncrement.png)
 
 临时测试线程和两个子线程取得 count 的值都是错误的。根本原因是多线程并发访问共享变量或全局变量时，每个线程对该变量赋值前的值与它读取的值不一致，最终导致了程序错误。结合上面提到的 JVM 运行时的数据区域，可以推断出 Java 各种变量是否线程安全。
 
 变量 | 区域 | 是否线程共享 | 是否线程安全
 :---: | :---: | :---: | :---:
-静态字段 （static field）| 方法区的运行时常量池 | 是 | 否
-实例字段（instance field） | 堆 | 是 | 若单例则否，若多例则是
-局部变量 （local variable）| 栈帧 | 否 | 是
+实例字段（instance field）| 堆 | 是 | 否
+静态字段（static field）| 堆 | 是 | 否
+局部变量（local variable）| 栈 | 否 | 是
 
 ## Java 并发编程
 
 ### 锁
 
-保证多线程并发访问共享资源的程序正确，有一个直观的解决方案————锁（Lock）。
+保证多线程并发访问共享资源的程序正确，有一个直观的解决方案——锁（Lock）。
 
-![lock](/img/concurrent/lock.png)
+![lock](/img/thread_concurrent/lock.png)
 
 1. 只有获得锁成功的线程才能进入临界区（critical section），访问共享资源。
 
 2. 访问共享资源完成后，即使过程发生异常，也一定要释放锁，退出临界区。
 
-锁通常需要硬件支持才能有效实现。这种支持通常采取一种或多种[原子]((https://en.wikipedia.org/wiki/Linearizability))指令的形式，如 [test-and-set](https://en.wikipedia.org/wiki/Test-and-set)、[compare-and-swap](https://en.wikipedia.org/wiki/Compare-and-swap)、[fetch-and-add](https://en.wikipedia.org/wiki/Fetch-and-add)。所谓[原子指令](https://en.wikipedia.org/wiki/Linearizability#Primitive_atomic_instructions)，即处理器执行该指令不可分割、不可中断，换言之，原子操作要么完全发生，要么根本不发生。对于多处理器的计算机系统，为了保证“获得锁”的原子性，甚至可能通过锁定总线，暂时禁止其它 CPU 与内存通信。
+锁通常需要硬件支持才能有效实现。这种支持通常采取一种或多种[原子]((https://en.wikipedia.org/wiki/Linearizability))指令的形式，如 [test-and-set](https://en.wikipedia.org/wiki/Test-and-set)、[compare-and-swap](https://en.wikipedia.org/wiki/Compare-and-swap)、[fetch-and-add](https://en.wikipedia.org/wiki/Fetch-and-add)。所谓[原子指令](https://en.wikipedia.org/wiki/Linearizability#Primitive_atomic_instructions)，即处理器执行该指令不可分割且不可中断，换言之，原子操作要么完全发生，要么根本不发生。对于多处理器的计算机系统，为了保证“获得锁”的原子性，甚至可能通过锁定总线，暂时禁止其它 CPU 与内存通信。
 
 ### synchronized
 
@@ -405,11 +405,11 @@ public void testIncrementUseSyncMethod() throws InterruptedException {
 
 测试结果如下图所示：
 
-![testIncrementUseSyncMethod](/img/concurrent/testIncrementUseSyncMethod.png)
+![testIncrementUseSyncMethod](/img/thread_concurrent/testIncrementUseSyncMethod.png)
 
 测试通过，期望值（exceptedCounterValue）与实际值（exceptedCounterValue）相等，其中一个子线程（Thread-1）与临时测试线程（Time-limited test）读取的 count 值相等。
 
-防止线程干扰和内存一致性错误的机制是**同步（Synchronization）**。关键词 `synchronized`，翻译为已同步。当只有一个线程调用一个同步方法，它会隐式获得该方法的对象的内置锁（intrinsic lock）或监视器锁（monitor lock），并在该方法返回时隐式释放该对象的内置锁（即使返回是由未捕获异常引起的）。如果是用 `synchronized` 修饰的静态方法，这个线程会获得该静态方法所属的类所关联的 Class 对象的内置锁，因此，通过不同于该类的任何实例的锁来控制对该类的静态字段的访问。
+防止线程干扰和内存一致性错误的机制是**同步（Synchronization）**。关键字 `synchronized`，翻译为已同步。当只有一个线程调用一个同步方法，它会隐式获得该方法的对象的内置锁（intrinsic lock）或监视器锁（monitor lock），并在该方法返回时隐式释放该对象的内置锁（即使返回是由未捕获异常引起的）。如果是用 `synchronized` 修饰的静态方法，这个线程会获得该静态方法所属的类所关联的 Class 对象的内置锁，因此，通过不同于该类的任何实例的锁来控制对该类的静态字段的访问。
 
 这足以解释上面的两个线程读写同一个变量的值重复百万次，最后结果仍然正确的原因。两个线程调用同一个同步方法，一个线程快于另一个线程获得了这个方法的对象的内置锁，较慢的线程则等待获得该对象的内置锁，已拥有该对象的内置锁的线程执行该方法的代码，修改了共享实例字段的值，该方法返回时隐式释放了该对象的内置锁，另一个线程有机会拥有该对象的内置锁......即使重复多次，一个时刻只能有一个线程正在访问共享实例字段，另一个线程只能等待，也就是说这个两个线程对于共享实例字段的访问是**互斥**的，也就不会出现线程干扰和内存一致性错误。
 
@@ -492,7 +492,7 @@ public void testIncrementUseSyncStmt() throws InterruptedException {
 
 ### 膨胀
 
-每一个 Java 对象都有一个与之关联的内置锁或监视器锁，其内部实体简称为监视器（monitor），又称为管程。因为有关键词 `synchronized`，所以每个 Java 对象都是一个潜在的监视器。一个线程可以锁定或解锁监视器，并且在任何时候只能有一个线程拥有该监视器。只有获得了监视器的所有权后，线程才可以进入受监视器保护的临界区。这与上文对内置锁的讨论一致，获得锁和释放锁可对应于 JVM 指令集的 `monitorenter` 和 `monitorexit`，即线程进入监视器和退出监视器。
+每一个 Java 对象都有一个与之关联的内置锁或监视器锁，其内部实体简称为监视器（monitor），又称为管程。因为有关键字 `synchronized`，所以每个 Java 对象都是一个潜在的监视器。一个线程可以锁定或解锁监视器，并且在任何时候只能有一个线程拥有该监视器。只有获得了监视器的所有权后，线程才可以进入受监视器保护的临界区。这与上文对内置锁的讨论一致，获得锁和释放锁可对应于 JVM 指令集的 `monitorenter` 和 `monitorexit`，即线程进入监视器和退出监视器。
 
 如果对 Counter.class 进行反汇编：
 
@@ -502,13 +502,13 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
 那么可以看到同步方法和同步语句的可视化字节码。
 
-![monitor*](/img/concurrent/monitor*.png)
+![monitor*](/img/thread_concurrent/monitor*.png)
 
 同步方法虽然使用一个名为 `ACC_SYNCHRONIZED` 的 flag，但从 Java 虚拟机规范可以知道，底层行为也应该是进入监视器和退出监视器。
 
 在 Java Hostspot VM 中，每一个 Java 对象的内存布局都有一个通用的**对象头（object header）**结构。对象头的第一个字是 mark word，第二字是 klass pointer。
 
-![ObjectHeader](/img/concurrent/ObjectHeader.png)
+![ObjectHeader](/img/thread_concurrent/ObjectHeader.png)
 
 1. mark word。通常存储同步状态（synchronization state）和对象的 hash code。在 GC 期间，可能包含 GC 状态。
 
@@ -518,7 +518,7 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
 锁的信息被编码在在对象头的 mark word，Mark word 最低两位的值（Tag）包含了对象的同步状态：
 
-![MarkWord](/img/concurrent/MarkWord.png)
+![MarkWord](/img/thread_concurrent/MarkWord.png)
 
 - 未锁定/已解锁（Unlocked）。没有线程拥有该对象的锁。
 - 轻量级已锁定（Light-weight locked）。某个线程拥有该对象的轻量级锁。
@@ -527,7 +527,7 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
 下图描述了对象同步状态的转换，也是锁状态的转换。
 
-![Synchronization](/img/concurrent/Synchronization.gif)
+![Synchronization](/img/thread_concurrent/Synchronization.gif)
 
 如果一个类的“可偏向”被禁用，该类的实例或对象的同步状态始于未锁定，即右手边。
 
@@ -543,7 +543,7 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
 - 当多个线程并发锁定同一个对象，且竞争足够激烈时，轻量级锁升为**重量级锁**。重量级锁就是监视器，监视器管理等待的线程。等待获得监视器的线程状态就是“Java 线程状态”所说的阻塞。
 
-![JavaMonitor](/img/concurrent/fig20-1.gif)
+![JavaMonitor](/img/thread_concurrent/fig20-1.gif)
 
 - JVM 使用的监视器类型可能如上图所示，该监视器由三个房间组成。中间只有一个线程，即监视器所有者。在左侧，一个小房间包含了入口集（entry set）。在右侧，另一个小房间包含了等待集合（wait set）。那么如果此 Java 监视器未过时，阻塞中的线程更可能处于入口集，因为等待集中的线程状态是“Java 线程状态”所说的等待。
 
@@ -603,7 +603,7 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
 死锁描述了线程等待获得自己或对方已拥有的锁的僵持状态。
 
-![死锁](/img/concurrent/死锁.png)
+![死锁](/img/thread_concurrent/死锁.png)
 
 防止死锁的有效方案如下：
 
@@ -706,7 +706,7 @@ semaphore.release();
 
 下面这张图来自美团技术团队，描述了 Java 主流锁的分类目录：
 
-![Java锁分类](/img/concurrent/Java锁分类.webp)
+![Java锁分类](/img/thread_concurrent/Java锁分类.webp)
 
 多线程竞争锁时，抢不到锁的线程们，可能被迫有限期等待或被阻塞，可能让它们排队，也可能允许插队。
 
@@ -739,7 +739,23 @@ barrier.await();
 
 ### 原子
 
-保证多线程并发访问共享变量的程序正确，有另一个解决方案————原子操作。
+保证多线程并发访问共享变量的程序正确，有另一个解决方案——原子操作。
+
+#### 原子访问
+
+在 Java 中，对以下变量的读取或写入都属于原子访问（atomic access）：
+
+- 引用类型的变量和大部分原始类型的变量（除了 `long` 和 `double` 的所有类型）。
+
+- 声明为 `volatile` 的所有变量（包括 `long` 和 `double` 变量）。
+
+原子访问是指不可分且不可中断的操作，原子访问要么完全发生，要么根本不发生。虽然单一原子访问避免了线程干扰，但是不代表一组原子访问可以防止内存一致性错误。
+
+使用 `volatile` 可降低内存一致性错误的风险，因为任何对 `volatile` 变量的写入都会与该变量的后续读取建立先发生在前的关系（happens-before relationship）。换言之，对 `volatile` 变量的更改始终对其它线程可见，即线程读取 `volatile` 变量的值总是最新的。从 [The Java Virtual Machine Specification, Java SE 8 Edition # 4.5. Fields](https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.5) 可以发现，`ACC_VOLATILE` 这个 flag 解释为 `volatile` 变量无法缓存，只要 JVM 遵循了这个规范项，则线程只会从主存中读取而不是从其它高速缓存。`volatile` 另一个作用是避免**指令重排**导致线程对变量的修改不可见，因为现在的 HotSpot VM 默认开启了 JIT 编译器（Just-in-time compiler），在运行时 JIT 可能应用指令重排优化。
+
+回想前文所讨论的“非线程安全”中的计数器（Counter），非同步的“当前值加一”分解出来的三个步骤是原子访问，但是试验证明，出现了相互覆盖或丢失修改。由上一段可知，即使使用 `volatile` 修饰 Counter 的 count 字段，非同步的“当前值加一”仍然会出现内存一致性错误。
+
+到此为止，难道只能使用 `synchronized` 或 Java 锁防止线程干扰和内存一致性错误？并不是，下文将讨论 `volatile` 变量组合循环 CAS 的方案。
 
 #### CAS
 
@@ -767,9 +783,9 @@ public class AtomicCounter {
 }
 ```
 
-- 使用 `AtomicLong` 代替 `long`
+- 使用 `AtomicLong` 代替 `long`，它维护了一个用 `volatile` 修饰的 `long` 字段。
 
-- 使用核心是 CAS 的方法代替使用 `synchronized` 的方法
+- 使用核心是 CAS 的方法（循环 CAS）代替使用 `synchronized` 的方法。
 
 其中新的 increment 方法的循环体内的前两个步骤和在 “非线程安全” 所分解的前两个步骤是一致的，第三个步骤是关键：
 
@@ -816,9 +832,9 @@ public class AtomicCounterTest {
 
 结果果然正确：
 
-![testIncrement-1](/img/concurrent/testIncrement-1.png)
+![testIncrement-1](/img/thread_concurrent/testIncrement-1.png)
 
-事实上，JDK 已经提供了许多操作原子类型实例的原子方法，上文最新版的“当前值加一”方法过于啰嗦，实际开发中请直接使用原子类的 `incrementAndGet` 方法。翻阅源码可以知道，原子类的 `compareAndSet` 方法使用了 `sun.misc.Unsafe` 的 `compareAndSet*` 方法：
+事实上，JDK 已经提供了许多操作原子类型实例的原子方法，上文最新版的“当前值加一”方法过于啰嗦，实际开发中请直接使用原子类的 `incrementAndGet` 方法。翻阅源码可以知道，原子类的 `compareAndSet` 方法使用了 `sun.misc.Unsafe` 的 `compareAndSwap` 方法：
 
 ```java
 public final native boolean compareAndSwapObject(Object var1, long var2, Object var4, Object var5);
@@ -829,7 +845,13 @@ public final native boolean compareAndSwapLong(Object var1, long var2, long var4
 ```
 
 注意其中的 `native`，也就是说，下层的 `compareAndSwap` 函数由 C/C++ 实现，而 Java 代码可通过 [JNI](https://en.wikipedia.org/wiki/Java_Native_Interface) 调用这个函数。
-虽然 JDK 没有包含 `sun.misc.Unsafe` 的源文件，但是通过对 `Unsafe.class`反编译，可以确定 `incrementAndGet` 方法同样使用了 CAS 函数：
+虽然 JDK 没有包含 `sun.misc.Unsafe` 的源文件，但是通过对 `Unsafe.class`反编译，可以确定 `incrementAndGet` 方法同样使用了 CAS 函数，并且也是循环 CAS。
+
+```java
+public final long incrementAndGet() {
+    return unsafe.getAndAddLong(this, valueOffset, 1L) + 1L;
+}
+```
 
 ```java
 public final long getAndAddLong(Object var1, long var2, long var4) {
@@ -845,16 +867,6 @@ public final long getAndAddLong(Object var1, long var2, long var4) {
 #### 原子类
 
 这个 [java.util.concurrent.atomic](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/package-summary.html) 包定义了支持对单个变量进行原子操作的类。
-
-##### volatile
-
-在 Java 中，读取以下变量的值或将某值写入以下变量都属于原子访问（atomic access）：
-
-- 引用类型的变量和大部分原始类型的变量（除了 `long` 和 `double` 的所有类型）。
-
-- 声明为 `volatile` 的所有变量（包括 `long` 和 `double` 变量）。
-
-##### AtomicReference
 
 值得注意的是，`AtomicReference*` 用于防止多线程并发操作引用类型实例出现线程干扰和内存一致性错误。
 

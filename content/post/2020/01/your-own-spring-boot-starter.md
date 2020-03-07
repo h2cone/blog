@@ -158,7 +158,7 @@ io.h2cone.springfox.swagger2.spring.boot.autoconfigure.SpringFoxSwagger2AutoConf
 
 以上经验告诉我们，Spring Boot 启动时会读取 `META-INF/spring.factories` 的元数据，加载类，进行自动配置。那我们就能通过 IntelliJ IDEA CE 强大的搜索功能发现加载此文件的类：
 
-![search_spring_factories](/img/search_spring_factories.png)
+![search_spring_factories](/img/your-own-spring-boot-starter/search_spring_factories.png)
 
 进去阅读一下 `org.springframework.core.io.support.SpringFactoriesLoader` 的源码和 Javadoc，再利用 IntelliJ IDEA CE 代码分析能力得知 `loadFactories` 和 `loadFactoryNames` 这两个公共方法被 `org.springframework.boot.autoconfigure.AutoConfigurationImportSelector` 使用了。再来看看 `AutoConfigurationImportSelector` 的简介：
 

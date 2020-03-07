@@ -35,7 +35,7 @@ Netty 高性能的原因之一是使用了 [Java NIO](https://docs.oracle.com/ja
 
 微服务架构下，各个程序被分发部署到各个机器上运行，多个进程可能是同一程序代码，进程间通信需要知道彼此的位置从而建立连接。一个连接可以用（本地 IP，本地端口，远程 IP，远程端口，协议）表示，这里的协议通常是 TCP 或 UDP。那么，如何确定位置呢？比如，有两个微服务 A 和 B 部署在不同的机器上，A 服务需要调用 B 服务的方法，把具体的地址和端口写死是不可能的，因为不知道下次 B 服务会部署到哪台机器上。想象一下我们在浏览器输入域名并成功访问一个网站，并不需要知道网站的 IP，因为浏览器帮我们向 DNS 发送一个 UDP 包：根据域名查询 IP。俗话说“计算机科学领域的任何问题都可以通过增加一个中间层来解决”，我们引入注册点或注册中心，它提供根据服务名查询服务位置的功能，服务名对应的位置信息则来源于服务向注册中心注册自身的位置信息。
 
-![triangle](/img/rpc_triangle.png)
+![triangle](/img/implementing-rpc/rpc_triangle.png)
 
 ## 开始
 
@@ -232,11 +232,11 @@ Client 和 Server 的数据传输协议，这里以 JSON 序列化和反序列�
 
 Client 请求 Server，如下图所示：
 
-![client2server](/img/client2server.png)
+![client2server](/img/implementing-rpc/client2server.png)
 
 Server 响应 Client，如下图所示：
 
-![server2client](/img/server2client.png)
+![server2client](/img/implementing-rpc/server2client.png)
 
 然后，设计简单的注册中心接口。
 
