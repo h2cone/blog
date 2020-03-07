@@ -946,7 +946,15 @@ public class AtomicLinkedList<Item> {
 
 [ConcurrentMap](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentMap.html) 是 [Map](https://docs.oracle.com/javase/8/docs/api/java/util/Map.html) 的子接口，它定义了有用的原子操作，例如，仅在键存在时才删除或替换键值对，或仅在键不存在时才添加键值对，其中一个标准实现是 [ConcurrentHashMap](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentHashMap.html)，它是 [HashMap](https://docs.oracle.com/javase/8/docs/api/java/util/HashMap.html) 的线程安全版本。
 
-### 后记
+### 一成不变
+
+如果一个共享对象的状态只读，就不存在线程干扰和内存一致性错误，而且只要尝试改写状态时，每次都新建不同状态的这种对象并返回，完美制造了状态可变的假象（想象一下手翻书），也就不存在线程安全问题。这种对象，被称为不可变对象（Immutable Objects）。定义不可变对象的策略，可参考 [A Strategy for Defining Immutable Objects](https://docs.oracle.com/javase/tutorial/essential/concurrency/imstrat.html)。
+
+《The Joy of Clojure, second-edition》，1.4. Why Clojure isn’t especially object-oriented，作者对不可变的和可变的做了很棒的类比。
+
+![01fig07](/img/thread_concurrent/01fig07.jpg)  ![01fig08](/img/thread_concurrent/01fig08.jpg)
+
+## 后记
 
 单机可以运行数百万个 Go 协程（Goroutine），却只能运行数千个 Java 线程。现在的 Java HotSpot VM，默认一个 Java 线程占有 1 M 的栈（以前是 256K），而且是大小固定的栈，而 Go 协程的栈是大小可变的栈，即随着存储的数据量变化而变化，并且初始值仅为 4 KB。确实，运行过多的 Java 线程容易导致 [out of memory](https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/memleaks002.html#CIHHJDJE)，而且 Java 线程与内核线程（本地线程）是 1:1 映射，那么过多线程的上下文切换也会引起应用程序较大延迟。Go 协程与内核线程（本地线程）是多对一映射，Go 实现了自己的协程调度器，实际上要运行数百万个协程，Go 需要做得事情要复杂得多。
 
