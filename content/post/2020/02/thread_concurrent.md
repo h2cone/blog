@@ -362,7 +362,7 @@ public class CounterTest {
 
 2. 访问共享资源完成后，即使过程发生异常，也一定要释放锁，退出临界区。
 
-锁通常需要硬件支持才能有效实现。这种支持通常采取一种或多种[原子]((https://en.wikipedia.org/wiki/Linearizability))指令的形式，如 [test-and-set](https://en.wikipedia.org/wiki/Test-and-set)、[compare-and-swap](https://en.wikipedia.org/wiki/Compare-and-swap)、[fetch-and-add](https://en.wikipedia.org/wiki/Fetch-and-add)。所谓[原子指令](https://en.wikipedia.org/wiki/Linearizability#Primitive_atomic_instructions)，即处理器执行该指令不可分割且不可中断，换言之，原子操作要么完全发生，要么根本不发生。对于多处理器的计算机系统，为了保证“获得锁”的原子性，甚至可能通过锁定总线，暂时禁止其它 CPU 与内存通信。
+软件层的锁通常需要硬件层支持才能有效实现。这种支持通常采取一种或多种[原子]((https://en.wikipedia.org/wiki/Linearizability))指令的形式，如 [test-and-set](https://en.wikipedia.org/wiki/Test-and-set)、[compare-and-swap](https://en.wikipedia.org/wiki/Compare-and-swap)、[fetch-and-add](https://en.wikipedia.org/wiki/Fetch-and-add)。所谓[原子指令](https://en.wikipedia.org/wiki/Linearizability#Primitive_atomic_instructions)，即处理器执行该指令不可分割且不可中断，换言之，原子操作要么完全发生，要么根本不发生。对于多处理器的计算机系统，为了保证原子性，甚至可能通过锁定总线，暂时禁止其它 CPU 与内存通信。
 
 ### synchronized
 
@@ -411,7 +411,7 @@ public void testIncrementUseSyncMethod() throws InterruptedException {
 
 防止线程干扰和内存一致性错误的机制是**同步（Synchronization）**。关键字 `synchronized`，翻译为已同步。当只有一个线程调用一个同步方法，它会隐式获得该方法的对象的内置锁（intrinsic lock）或监视器锁（monitor lock），并在该方法返回时隐式释放该对象的内置锁（即使返回是由未捕获异常引起的）。如果是用 `synchronized` 修饰的静态方法，这个线程会获得该静态方法所属的类所关联的 Class 对象的内置锁，因此，通过不同于该类的任何实例的锁来控制对该类的静态字段的访问。
 
-这足以解释上面的两个线程读写同一个变量的值重复百万次，最后结果仍然正确的原因。两个线程调用同一个同步方法，一个线程快于另一个线程获得了这个方法的对象的内置锁，较慢的线程则等待获得该对象的内置锁，已拥有该对象的内置锁的线程执行该方法的代码，修改了共享实例字段的值，该方法返回时隐式释放了该对象的内置锁，另一个线程有机会拥有该对象的内置锁......即使重复多次，一个时刻只能有一个线程正在访问共享实例字段，另一个线程只能等待，也就是说这个两个线程对于共享实例字段的访问是**互斥**的，也就不会出现线程干扰和内存一致性错误。
+这足以解释上面的两个线程读写同一个变量重复百万次，最后结果仍然正确的原因。两个线程调用同一个同步方法，一个线程快于另一个线程获得了这个方法的对象的内置锁，较慢的线程则等待获得该对象的内置锁，已拥有该对象的内置锁的线程执行该方法的代码，修改共享实例字段，该方法返回时隐式释放了该对象的内置锁，另一个线程有机会拥有该对象的内置锁......即使重复多次，一个时刻只能有一个线程正在访问共享实例字段，另一个线程只能等待，也就是说这个两个线程对于共享实例字段的访问是**互斥**的，也就不会出现线程干扰和内存一致性错误。
 
 线程 1 | 线程 2 | &nbsp; | 整数值
 :---: | :---: | :---: | :---:
@@ -751,15 +751,15 @@ barrier.await();
 
 原子访问是指不可分且不可中断的操作，原子访问要么完全发生，要么根本不发生。虽然单一原子访问避免了线程干扰，但是不代表一组原子访问可以防止内存一致性错误。
 
-使用 `volatile` 可降低内存一致性错误的风险，因为任何对 `volatile` 变量的写入都会与该变量的后续读取建立先发生在前的关系（happens-before relationship）。换言之，对 `volatile` 变量的更改始终对其它线程可见，即线程读取 `volatile` 变量的值总是最新的。从 [The Java Virtual Machine Specification, Java SE 8 Edition # 4.5. Fields](https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.5) 可以发现，`ACC_VOLATILE` 这个 flag 解释为 `volatile` 变量无法缓存，只要 JVM 遵循了这个规范项，则线程只会从主存中读取而不是从其它高速缓存。`volatile` 另一个作用是避免**指令重排**导致线程对变量的修改不可见，因为现在的 HotSpot VM 默认开启了 JIT 编译器（Just-in-time compiler），在运行时 JIT 可能应用指令重排优化。
+使用 `volatile` 可降低内存一致性错误的风险，因为任何对 `volatile` 变量的写入都会与该变量的后续读取建立先发生在前的关系（happens-before relationship）。换言之，对 `volatile` 变量的更改始终对其它线程可见，即线程读取的 `volatile` 变量总是最新的。从 [The Java Virtual Machine Specification, Java SE 8 Edition # 4.5. Fields](https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.5) 可以发现，`ACC_VOLATILE` 这个 flag 解释为 `volatile` 变量无法缓存，只要 JVM 遵循了这个规范项，则线程只会从主存中读取而不是从其它高速缓存。`volatile` 另一个作用是避免**指令重排**导致线程对变量的修改不可见，因为现在的 HotSpot VM 默认开启了 JIT 编译器（Just-in-time compiler），在运行时 JIT 可能应用指令重排优化。
 
 回想前文所讨论的“非线程安全”中的计数器（Counter），非同步的“当前值加一”分解出来的三个步骤是原子访问，但是试验证明，出现了相互覆盖或丢失修改。由上一段可知，即使使用 `volatile` 修饰 Counter 的 count 字段，非同步的“当前值加一”仍然会出现内存一致性错误。
 
-到此为止，难道只能使用 `synchronized` 或 Java 锁防止线程干扰和内存一致性错误？并不是，下文将讨论 `volatile` 变量组合循环 CAS 的方案。
+到此为止，难道只能使用 `synchronized` 或 Java 锁防止线程干扰和内存一致性错误？然而并不是，还有一种 `volatile` 变量组合 CAS 循环的方案，事实上前面“惯用锁“ 中所说的 `ReentrantLock` 的实现也使用了 CAS。
 
 #### CAS
 
-在“锁”中第一次提到了原子指令：compare-and-swap，而在“偏向锁和轻量级锁以及重量级锁”中也提到了 CAS。
+在“锁”中第一次提到了 compare-and-swap 这个指令，而在“偏向锁和轻量级锁以及重量级锁”中也提到了 CAS。CAS 的实现通常需要硬件层的支持，甚至可能在硬件层见到类似于软件层的锁概念。
 
 现在用全新的 AtomicCounter 来代替那个混杂的 Counter。
 
@@ -768,9 +768,10 @@ public class AtomicCounter {
     private AtomicLong count = new AtomicLong(0);
 
     public void increment() {
+        long current, next;
         while (true) {
-            long current = count.get();
-            long next = current + 1;
+            current = count.get();
+            next = current + 1;
             if (count.compareAndSet(current, next)) {
                 return;
             }
@@ -785,7 +786,7 @@ public class AtomicCounter {
 
 - 使用 `AtomicLong` 代替 `long`，它维护了一个用 `volatile` 修饰的 `long` 字段。
 
-- 使用核心是 CAS 的方法（循环 CAS）代替使用 `synchronized` 的方法。
+- 使用核心是 CAS 的方法（CAS 循环）代替使用 `synchronized` 的方法。
 
 其中新的 increment 方法的循环体内的前两个步骤和在 “非线程安全” 所分解的前两个步骤是一致的，第三个步骤是关键：
 
@@ -793,9 +794,9 @@ public class AtomicCounter {
 count.compareAndSet(current, next)
 ```
 
-当有多个线程并发调用 increment 方法，到了第三个步骤，某一个线程比较 count 的值与它前一次读取的值（current）是否相等，如果相等，则把 count 的值设为 next 的值，increment 方法返回，如果不相等，则表明 count 已被其它线程修改，`compareAndSet` 方法返回 `false`，跳到第一步，继续尝试。
+当有多个线程并发调用 increment 方法，到了第三个步骤，某一个线程比较 count 绑定的字段与它前一次读取的 current 变量是否相等，如果相等，则把 count 绑定的字段的值设为 next 的值，increment 方法返回，如果不相等，则表明 count 绑定的字段已被其它线程修改，`compareAndSet` 方法返回 `false`，跳到第一步，继续尝试。竞争足够激烈时，相比于 `synchronized`，`volatile` 变量组合 CAS 循环是非阻塞方案。
 
-`compareAndSet` 方法看似可分为两个步骤，实际上在底层，它是一个不可分且不可中断的原子指令，即比较后和赋值前的中间时刻有且只有一个线程在执行。该方法之所以可能返回 `false`，则是因为有可能一个线程赋值后，与此同时，另一个线程开始比较。
+`compareAndSet` 方法看似可分为两个步骤，实际上在底层，它是一个不可分且不可中断的原子指令，即从比较开始到赋值结束有且只有一个线程在执行此任务。该方法之所以可能返回 `false`，则是因为有可能一个线程赋值结束，与此同时，另一个线程开始比较。
 
 同样，也给 AtomicCounter 写测试类，这一次线程加一，次数加一百万。
 
@@ -845,7 +846,7 @@ public final native boolean compareAndSwapLong(Object var1, long var2, long var4
 ```
 
 注意其中的 `native`，也就是说，下层的 `compareAndSwap` 函数由 C/C++ 实现，而 Java 代码可通过 [JNI](https://en.wikipedia.org/wiki/Java_Native_Interface) 调用这个函数。
-虽然 JDK 没有包含 `sun.misc.Unsafe` 的源文件，但是通过对 `Unsafe.class`反编译，可以确定 `incrementAndGet` 方法同样使用了 CAS 函数，并且也是循环 CAS。
+虽然 JDK 没有包含 `sun.misc.Unsafe` 的源文件，但是通过对 `Unsafe.class`反编译，可以确定 `incrementAndGet` 方法同样使用了 CAS 函数，并且也使用 CAS 循环。
 
 ```java
 public final long incrementAndGet() {
@@ -863,6 +864,8 @@ public final long getAndAddLong(Object var1, long var2, long var4) {
     return var6;
 }
 ```
+
+注意，上文讨论的计数器在高并发场景也不一定是最优的方案，请看 [LongAdder](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/LongAdder.html)。
 
 #### 原子类
 
@@ -909,7 +912,7 @@ public class LinkedList<Item> {
 }
 ```
 
-再如上所示，为了使问题清晰，只在 push 方法最后一步才设置 first 的值。同样也因为 first 是它们的共享变量，所以它们都执行完最后一步后，可能出现一个或多个线程的新首结点游离于链表之外，因此，改用 CAS 方法：
+再如上所示，为了使问题清晰，只在 push 方法最后一步才设置 first。同样也因为 first 是它们的共享变量，所以它们都执行完最后一步后，可能出现一个或多个线程的新首结点游离于链表之外，因此，改用 CAS 方法：
 
 ```java
 public class AtomicLinkedList<Item> {
@@ -923,8 +926,9 @@ public class AtomicLinkedList<Item> {
     public void push(Item item) {
         Node<Item> newFirst = new Node<>();
         newFirst.item = item;
+        Node<Item> oldFirst;
         while (true) {
-            Node<Item> oldFirst = first.get();
+            oldFirst = first.get();
             newFirst.next = oldFirst;
             if (first.compareAndSet(oldFirst, newFirst)) {
                 return;
