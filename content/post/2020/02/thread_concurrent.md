@@ -348,7 +348,7 @@ public class CounterTest {
 :---: | :---: | :---: | :---:
 实例字段（instance field）| 堆 | 是 | 否
 静态字段（static field）| 堆 | 是 | 否
-局部变量（local variable）| 栈 | 否 | 是
+本地变量（local variable）| 栈 | 否 | 是
 
 ## Java 并发编程
 
@@ -490,7 +490,7 @@ public void testIncrementUseSyncStmt() throws InterruptedException {
 
 采用同步语句需要显式指定一个提供内置锁的对象，同步语句包裹的代码块（临界区），多线程互斥访问该对象的状态（实例字段或静态字段）。
 
-### 膨胀
+#### 膨胀
 
 每一个 Java 对象都有一个与之关联的内置锁或监视器锁，其内部实体简称为监视器（monitor），又称为管程。因为有关键字 `synchronized`，所以每个 Java 对象都是一个潜在的监视器。一个线程可以锁定或解锁监视器，并且在任何时候只能有一个线程拥有该监视器。只有获得了监视器的所有权后，线程才可以进入受监视器保护的临界区。这与上文对内置锁的讨论一致，获得锁和释放锁可对应于 JVM 指令集的 `monitorenter` 和 `monitorexit`，即线程进入监视器和退出监视器。
 
@@ -575,6 +575,8 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
 简而言之，从 Java 6 开始就对 `synchronized` 做了不少优化，随着多线程锁定共享对象的竞争强度增大，锁的状态一般由偏向锁升为轻量级锁，竞争足够激烈时，则升为重量级锁，这个过程称为膨胀（inflate）。
 
+#### 消除
+
 在某些情况下，JVM 可以应用其它优化。例如，[StringBuffer](https://docs.oracle.com/javase/8/docs/api/java/lang/StringBuffer.html)，它有很多同步方法。
 
 ```java
@@ -587,7 +589,9 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 }
 ```
 
-如上所示，代码在某方法体内，因为 sb 是线程私有变量，所以调用 `append` 方法可以省略锁，这叫做 lock elision。
+如上所示，代码在某方法体内，因为 sb 是本地变量，所以调用 `append` 方法可以省略锁，这叫做锁消除（lock elision）。
+
+#### 粗化
 
 ```java
 {
@@ -597,7 +601,7 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 }
 ```
 
-再如上所示，如果 sb 是全局变量，且第一次 `append` 方法调用时已被某线程锁定成功，该线程可以避免 3 次锁定/解锁操作，而只需 1 次，这叫做 lock coarsening。
+再如上所示，如果 sb 是全局变量，且第一次 `append` 方法调用时已被某线程锁定成功，该线程可以避免 3 次锁定/解锁操作，而只需 1 次，这叫做锁粗化（lock coarsening）。
 
 ### 死锁
 
@@ -865,7 +869,7 @@ public final long getAndAddLong(Object var1, long var2, long var4) {
 }
 ```
 
-注意，上文讨论的计数器在高并发场景也不一定是最优的方案，请看 [LongAdder](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/LongAdder.html)。
+注意，上文讨论的计数器在高并发场景中不一定是最优的方案，请看 [LongAdder](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/LongAdder.html) 和 [LongAccumulator](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/LongAccumulator.html)。
 
 #### 原子类
 
