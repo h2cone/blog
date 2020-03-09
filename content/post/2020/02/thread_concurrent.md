@@ -196,7 +196,7 @@ public static ExecutorService newFixedThreadPool(int nThreads, ThreadFactory thr
 }
 ```
 
-上面是 `java.util.concurrent.Executors` 的新建固定线程池的方法。注意当中的参数类型，`LinkedBlockingQueue`，它是 `BlockingQueue` 的基于链表的实现类，作为阻塞队列，它有一个特性，当队列为空时，线程从队列拉取元素会被阻塞或被迫有限期等待。仔细翻阅源码，可以知道线程池的预先新建和工作线程的生命延长是通过阻塞工作线程或使之有限期等待来实现。除此之外，任务队列的的任务抽象为 `Runable`。
+上面是 `java.util.concurrent.Executors` 的新建固定线程池的方法。注意当中的参数类型，`LinkedBlockingQueue`，它是 `BlockingQueue` 的基于链表的实现类，作为阻塞队列，它有一个特性，当队列为空时，线程从队列拉取元素会被阻塞或被迫等待。仔细翻阅源码，可以知道线程池的预先新建和工作线程的生命延长是通过阻塞工作线程或使之有限期等待来实现。除此之外，任务队列的的任务抽象为 `Runable`。
 
 新建线程池返回一个 `ExecutorService` 实例，利用它来提交任务：
 
@@ -740,7 +740,7 @@ semaphore.release();
 
 #### CountDownLatch
 
-`CountDownLatch`，一个安全的且只能递减的计数器，支持一个线程无限期或有限期等待多个线程完成任务后继续执行。
+`CountDownLatch`，一个安全的且只能递减的计数器，支持一个线程等待多个线程完成任务后继续执行。
 
 ```java
 final CountDownLatch latch = new CountDownLatch(2);
@@ -758,7 +758,7 @@ latch.await(3000, TimeUnit.MILLISECONDS);
 
 #### CyclicBarrier
 
-`CyclicBarrier`，调用 `await` 方法的线程等待，直到给定数量的线程都到达“栅栏”，同时起跑。
+`CyclicBarrier`，调用 `await` 方法的线程被迫等待，直到给定数量的线程都到达“栅栏”，同时起跑。
 
 ```java
 final CyclicBarrier barrier = new CyclicBarrier(8);
@@ -975,7 +975,7 @@ public class AtomicLinkedList<Item> {
 
 #### BlockingQueue
 
-线程级的**生产者-消费者**问题的实质是分为生产者和消费者的两组线程共享同一个队列，消费者暂不能从队列拉取元素，除非队列非空，生产者暂不能推送元素到队列，除非队列非满。[BlockingQueue](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html) 既有基于数组的实现，也有基于链表的实现，可用来解决生产者-消费者问题（比如 [BlockingQueueDemo](https://github.com/h2cone/java-examples/blob/master/concurrent/src/main/java/io/h2cone/concurrent/BlockingQueueDemo.java)），当阻塞队列为空时，线程从阻塞队列拉取元素时会被阻塞或被迫有限期等待，当阻塞队列已满时，线程推送元素到阻塞队列会被阻塞或被迫有限期等待。
+线程级的**生产者-消费者**问题的实质是分为生产者和消费者的两组线程共享同一个队列，消费者暂不能从队列拉取元素，除非队列非空，生产者暂不能推送元素到队列，除非队列非满。[BlockingQueue](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html) 既有基于数组的实现，也有基于链表的实现，可用来解决生产者-消费者问题（比如 [BlockingQueueDemo](https://github.com/h2cone/java-examples/blob/master/concurrent/src/main/java/io/h2cone/concurrent/BlockingQueueDemo.java)），当阻塞队列为空时，线程从阻塞队列拉取元素时会被阻塞或被迫等待，当阻塞队列已满时，线程推送元素到阻塞队列会被阻塞或被迫等待。
 
 [LinkedBlockingDeque](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/LinkedBlockingDeque.html) 和 [ArrayBlockingQueue](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ArrayBlockingQueue.html) 均使用了 [Condition](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/Condition.html)，维护了队列非满条件和队列非空条件，如下图所示，通知的实现基于上文 "通知" 中提到的 park/unpark。
 
