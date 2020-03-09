@@ -131,7 +131,7 @@ public class TransactionId {
 
 如上所示，类型为 `ThreadLocal` 的字段初始化后，每个访问该字段（通过 get 或 set 方法）的线程都持有各自的 `ThreadLocal` 实例。
 
-### Java 线程状态
+### 线程状态
 
 下面这个来自 [Java 6 Thread States and Life Cycle](https://www.uml-diagrams.org/examples/java-6-thread-state-machine-diagram-example.html) 的状态机，很好地描述了 Java 线程状态和生命周期。
 
@@ -153,13 +153,19 @@ public class TransactionId {
 
 如状态机所示，当线程执行不同操作时，线程状态发生转换，这些操作对应于 JDK 已提供的方法。注意上图的 o 表示 Object，t 表示 Thread。
 
+### 通知
+
 #### wait/notify
 
-一个线程处于等待状态时，可以被另外一个线程通知，转为阻塞状态，再转为可运行状态。比如，一个线程用一个对象（的引用）调用 `Object#wait()`，另一个线程用同一个对象（的引用）调用 `Object#notify` 或 `Object#notifyAll`，前提是它们必须拥有该对象的内置锁。第一个线程调用 `Object#wait()` 时，它会释放该对象的内置锁并暂停执行，第二个线程获得该对象的内置锁成功之后，调用 `Object#notifyAll` 通知所有曾经用同一个对象（的引用）调用了 `Object#wait()` 的线程有重要事情发生。在第二个线程释放了该对象的内置锁后的某个时刻，第一个线程重新获得了该对象的内置锁，并从 `Object#wait()` 返回而恢复。阻塞状态与内置锁或监视器锁息息相关，将在下文的"锁和同步"讨论。
+一个线程处于等待状态时，可以被另外一个线程通知，转为阻塞状态，再转为可运行状态。比如，一个线程用一个对象（的引用）调用 `Object#wait()`，另一个线程用同一个对象（的引用）调用 `Object#notify()` 或 `Object#notifyAll()`，前提是它们必须拥有该对象的内置锁。第一个线程调用 `Object#wait()` 时，它会释放该对象的内置锁并“暂停”，第二个线程获得该对象的内置锁成功之后，调用 `Object#notifyAll()` 通知所有曾经用同一个对象（的引用）调用了 `Object#wait()` 的线程有重要事情发生。在第二个线程释放了该对象的内置锁后的某个时刻，第一个线程重新获得了该对象的内置锁，并从 `Object#wait()` 返回而“恢复”。阻塞状态与内置锁或监视器锁息息相关，将在下文的"锁和同步"讨论。
 
 #### interrupt
 
-另外，线程有一个中断状态（interrupt status）。所谓中断，即停止正在执行的操作，并执行其它操作。例如，主线程可使用子线程对象（的引用）调用 `java.lang.Thread#interrupt` 中断子线程，子线程能够捕获 `java.lang.InterruptedException` 或调用 `java.lang.Thread#interrupted` 接收到中断。
+另外，线程有一个中断状态（interrupt status）。所谓中断，即停止正在执行的操作，并执行其它操作。例如，主线程可使用子线程对象（的引用）调用 `java.lang.Thread#interrupt()` 中断子线程，子线程能够捕获 `java.lang.InterruptedException` 或调用 `java.lang.Thread#interrupted()` 接收到中断。
+
+#### park/unpark
+
+类比申请许可和提供许可。相比于 wait/notify，park/unpark 对调用顺序没有要求。线程调用 `LockSupport#park()` 时“暂停”，线程调用 `LockSupport#unpark(Thread)` 时取消给定线程的“暂停”，如果给定线程已“暂停”，则给定线程从 `LockSupport#park()` 返回而“恢复”，如果给定线程没有“暂停”，那么将来给定线程第一次调用 `LockSupport#park()` 时立即返回。
 
 ### 线程池
 
@@ -541,11 +547,11 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
     - 如果 CAS 操作失败，则说明该对象已被其它线程锁定成功。JVM 首先检测该对象的 mark word 是否指向当前线程的栈。
 
-- 当多个线程并发锁定同一个对象，且竞争足够激烈时，轻量级锁升为**重量级锁**。重量级锁就是监视器，监视器管理等待的线程。等待获得监视器的线程状态就是“Java 线程状态”所说的阻塞。
+- 当多个线程并发锁定同一个对象，且竞争足够激烈时，轻量级锁升为**重量级锁**。重量级锁就是监视器，监视器管理等待的线程。等待获得监视器的线程状态就是“线程状态”所说的阻塞。
 
 ![JavaMonitor](/img/thread_concurrent/fig20-1.gif)
 
-- JVM 使用的监视器类型可能如上图所示，该监视器由三个房间组成。中间只有一个线程，即监视器所有者。在左侧，一个小房间包含了入口集（entry set）。在右侧，另一个小房间包含了等待集合（wait set）。那么如果此 Java 监视器未过时，阻塞中的线程更可能处于入口集，因为等待集中的线程状态是“Java 线程状态”所说的等待。
+- JVM 使用的监视器类型可能如上图所示，该监视器由三个房间组成。中间只有一个线程，即监视器所有者。在左侧，一个小房间包含了入口集（entry set）。在右侧，另一个小房间包含了等待集合（wait set）。那么如果此 Java 监视器未过时，阻塞中的线程更可能处于入口集，因为等待集中的线程状态是“线程状态”所说的等待。
 
 - 轻量级锁比重量级锁便宜很多，因为避免了操作系统互斥锁/条件变量（mutex / condition variables）与每个对象的联动。
 
@@ -655,7 +661,9 @@ public class Foobar {
 
 ```java
 final Lock lock = new ReentrantLock();
+```
 
+```java
 lock.lock();
 try {
     // critical section
@@ -686,10 +694,18 @@ if (lock.tryLock()) {
 
 #### ReadWriteLock
 
-`ReadWriteLock`，当只有一个线程写共享变量时，支持其它线程同时读共享变量。
+`ReadWriteLock`，支持只有一个线程在写共享变量，其它线程同时读共享变量。
 
 ```java
 final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+```
+
+```java
+Lock readLock = readWriteLock.readLock();
+```
+
+```java
+Lock writeLock = readWriteLock.writeLock();
 ```
 
 #### Semaphore
@@ -698,7 +714,9 @@ final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
 ```java
 final Semaphore semaphore = new Semaphore(3);
+```
 
+```java
 semaphore.acquire();
 // do something
 semaphore.release();
@@ -722,9 +740,13 @@ semaphore.release();
 
 ```java
 final CountDownLatch latch = new CountDownLatch(2);
-// ...
+```
+
+```java
 latch.countDown();
-// ...
+```
+
+```java
 latch.await(3000, TimeUnit.MILLISECONDS);
 ```
 
@@ -736,9 +758,10 @@ latch.await(3000, TimeUnit.MILLISECONDS);
 
 ```java
 final CyclicBarrier barrier = new CyclicBarrier(8);
-// ...
+```
+
+```java
 barrier.await();
-// ...
 ```
 
 ### 原子
@@ -944,11 +967,15 @@ public class AtomicLinkedList<Item> {
 
 如果还实现了删除结点的方法，则要小心 [ABA 问题](https://en.wikipedia.org/wiki/ABA_problem)，这时可考虑使用 `AtomicStampedReference`。
 
-### Collection
+### Collections
 
 #### BlockingQueue
 
-线程级的**生产者-消费者**问题的实质是分为生产者和消费者的两组线程共享同一个队列，消费者暂不能从队列拉取元素，除非队列非空，生产者暂不能推送元素到队列，除非队列未满。[BlockingQueue](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html) 既有基于数组的实现，也有基于链表的实现，可用来解决生产者-消费者问题（比如 [BlockingQueueDemo](https://github.com/h2cone/java-examples/blob/master/concurrent/src/main/java/io/h2cone/concurrent/BlockingQueueDemo.java)），当阻塞队列为空时，线程从阻塞队列拉取元素时会被阻塞或被迫有限期等待，当阻塞队列已满时，线程推送元素到阻塞队列会被阻塞或被迫有限期等待。
+线程级的**生产者-消费者**问题的实质是分为生产者和消费者的两组线程共享同一个队列，消费者暂不能从队列拉取元素，除非队列非空，生产者暂不能推送元素到队列，除非队列非满。[BlockingQueue](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html) 既有基于数组的实现，也有基于链表的实现，可用来解决生产者-消费者问题（比如 [BlockingQueueDemo](https://github.com/h2cone/java-examples/blob/master/concurrent/src/main/java/io/h2cone/concurrent/BlockingQueueDemo.java)），当阻塞队列为空时，线程从阻塞队列拉取元素时会被阻塞或被迫有限期等待，当阻塞队列已满时，线程推送元素到阻塞队列会被阻塞或被迫有限期等待。
+
+[LinkedBlockingDeque](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/LinkedBlockingDeque.html) 和 [ArrayBlockingQueue](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ArrayBlockingQueue.html) 均使用了 [Condition](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/Condition.html)，维护了队列非满条件和队列非空条件，如下图所示，通知的实现基于上文 "通知" 中提到的 park/unpark。
+
+![生产者-消费者](/img/thread_concurrent/生产者-消费者.png)
 
 #### ConcurrentMap
 
