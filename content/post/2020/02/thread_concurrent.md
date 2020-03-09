@@ -7,7 +7,7 @@ tags: [java, thread, concurrent]
 categories: []
 ---
 
-Java 版。
+Java 基本功。
 
 <!--more-->
 
@@ -15,7 +15,7 @@ Java 版。
 
 现代的计算机系统提供了许多漂亮的**抽象**，如下图所示：
 
-![计算机系统的抽象](/img/计算机系统的抽象.png)
+![计算机系统的抽象](/img/csapp/计算机系统的抽象.png)
 
 其中，进程是对处理器、主存和 I/O 设备的抽象，换言之，进程是操作系统对一个正在运行的程序的一种抽象。操作系统上可以“同时”运行多个进程，已经对一边听歌一边写代码和接收消息的流畅不足为奇，之所以用双引号，因为这可能是一种假象。
 
@@ -61,11 +61,11 @@ Java 版。
 
 任何 Java 应用程序都跑在操作系统之上，操作系统作为硬件和应用程序的**中间层**，隐藏了下层具体实现的复杂性，并给上层提供了简单或统一的接口。
 
-![计算机系统的分层](/img/计算机系统的分层.png)
+![计算机系统的分层](/img/csapp/计算机系统的分层.png)
 
 正在运行的 Java 程序就是 Java 虚拟机（JVM），而虚拟机是对整个操作系统的抽象，但对操作系统来说 JVM 仍然是进程。下面这张来自 [JVM Internals](http://blog.jamesdbloom.com/JVMInternals.html) 的图展示了 Java SE 7 虚拟机运行时的数据区域（Run-Time Data Areas）。图中的堆和栈类似于 Linux/Unix 操作系统进程的虚拟地址空间中的堆和栈，值得注意的是 Java 8 用元空间（Metaspace）代替了永久代（PermGen）。JVM 运行时的数据区域可分成两大类，一是 Java 线程共享区域，包括堆和方法区，二是 Java 线程私有区域，包括栈，详情请见 [The Java Virtual Machine Specification, Java SE 8 Edition # 2.5. Run-Time Data Areas](https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.5)。
 
-![JVM_Internal_Architecture](/img/JVM_Internal_Architecture.png)
+![JVM_Internal_Architecture](/img/jvm/JVM_Internal_Architecture.png)
 
 Java SE 最常用的虚拟机是 Oracle/Sun 研发的 Java HotSpot VM。HotSpot 基本的线程模型是 Java 线程与本地线程（native thread）之间 1:1 的映射。线程通常在操作系统层实现或在应用程序层实现，前者的线程称为内核线程，后者的线程可能称为用户线程。内核（kernel）是操作系统代码常驻主存的部分，而所谓用户，就是应用程序和应用程序开发者。
 
@@ -173,7 +173,7 @@ public class TransactionId {
 
 JDK 的 `java.util.concurrent` 包定义了三个 Executor 接口，[Executor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html)、[ExecutorService](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html)、[ScheduledExecutorService](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledExecutorService.html)，大部分实现都使用**线程池（Thread Pool）**，这就是理由之二。
 
-例如，一个一般的服务器端程序服务着多个客户端，如果每个客户端的请求都通过新建一个线程来处理，即线程数随着请求数增加而增加，虽然新建线程比新建进程便宜，但是当活跃的线程数太多时，不仅占用大量的内存，容易导致内存溢出，而且操作系统内核需要花费大量的时间在线程调度上（上下文切换），大量的线程被迫等待较长时间，还有频繁新建和终结执行短时任务的线程而引起的延迟，大量客户端长时间得不到响应。线程池就是为了解决此问题。
+例如，一个一般的服务器端程序服务着多个客户端，如果每个客户端的请求都通过新建一个线程来处理，即线程数随着请求数增加而增加，虽然新建线程比新建进程便宜，但是当活跃的线程数太多时，不仅占用大量的内存，容易导致内存溢出，而且操作系统内核需要花费大量的时间在线程调度上（上下文切换），大量的线程“暂停”较长时间，还有频繁新建和终结执行短时任务的线程而引起的延迟，大量客户端长时间得不到响应。线程池就是为了解决此问题。
 
 线程池由数量可控的**工作线程（worker thread）** 组成，每个工作线程的生命都被延长，以便用于执行多个任务，既减少了线程调度延迟，也避免了频繁新建和终结执行短暂任务的线程而导致的延迟。线程池的新建通常是预处理，即服务器端程序提供服务之前已准备好线程池，避免了临时新建大量线程的开销。
 
@@ -417,7 +417,7 @@ public void testIncrementUseSyncMethod() throws InterruptedException {
 
 防止线程干扰和内存一致性错误的机制是**同步（Synchronization）**。关键字 `synchronized`，翻译为已同步。当只有一个线程调用一个同步方法，它会隐式获得该方法的对象的内置锁（intrinsic lock）或监视器锁（monitor lock），并在该方法返回时隐式释放该对象的内置锁（即使返回是由未捕获异常引起的）。如果是用 `synchronized` 修饰的静态方法，这个线程会获得该静态方法所属的类所关联的 Class 对象的内置锁，因此，通过不同于该类的任何实例的锁来控制对该类的静态字段的访问。
 
-这足以解释上面的两个线程读写同一个变量重复百万次，最后结果仍然正确的原因。两个线程调用同一个同步方法，一个线程快于另一个线程获得了这个方法的对象的内置锁，较慢的线程则等待获得该对象的内置锁，已拥有该对象的内置锁的线程执行该方法的代码，修改共享实例字段，该方法返回时隐式释放了该对象的内置锁，另一个线程有机会拥有该对象的内置锁......即使重复多次，一个时刻只能有一个线程正在访问共享实例字段，另一个线程只能等待，也就是说这个两个线程对于共享实例字段的访问是**互斥**的，也就不会出现线程干扰和内存一致性错误。
+这足以解释上面的两个线程读写同一个变量重复百万次，最后结果仍然正确的原因。两个线程调用同一个同步方法，一个线程快于另一个线程获得了这个方法的对象的内置锁，较慢的线程则被迫等待或被阻塞，已拥有该对象的内置锁的线程执行该方法的代码，修改共享实例字段，该方法返回时隐式释放了该对象的内置锁，另一个线程有机会拥有该对象的内置锁......即使重复多次，一个时刻只能有一个线程正在访问共享实例字段，另一个线程被迫等待或被阻塞，也就是说这个两个线程对于共享实例字段的访问是**互斥**的，也就不会出现线程干扰和内存一致性错误。
 
 线程 1 | 线程 2 | &nbsp; | 整数值
 :---: | :---: | :---: | :---:
@@ -551,11 +551,11 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
 ![JavaMonitor](/img/thread_concurrent/fig20-1.gif)
 
-- JVM 使用的监视器类型可能如上图所示，该监视器由三个房间组成。中间只有一个线程，即监视器所有者。在左侧，一个小房间包含了入口集（entry set）。在右侧，另一个小房间包含了等待集合（wait set）。那么如果此 Java 监视器未过时，阻塞中的线程更可能处于入口集，因为等待集中的线程状态是“线程状态”所说的等待。
+- JVM 使用的监视器类型可能如上图所示，该监视器由三个房间组成。中间只有一个线程，即监视器所有者。在左侧，一个小房间包含了入口集（entry set）。在右侧，另一个小房间包含了等待集合（wait set）。那么如果此 Java 监视器未过时，被阻塞的线程更可能处于入口集，因为等待集中的线程状态是“线程状态”所说的等待。
 
 - 轻量级锁比重量级锁便宜很多，因为避免了操作系统互斥锁/条件变量（mutex / condition variables）与每个对象的联动。
 
-- 如果有多个线程并发锁定共享对象，等待获得轻量级锁的线程通常不会被阻塞，而是**自旋**若干次，等待锁释放。HotSpot VM 使用高级自适应自旋技术（advanced adaptive spinning techniques）来提高程序吞吐量，即使是锁定共享对象竞争激烈的程序。
+- 如果有多个线程并发锁定共享对象，获得轻量级锁失败的线程通常不会被阻塞或被迫等待，而是**自旋**若干次，尝试获得锁。HotSpot VM 使用高级自适应自旋技术（advanced adaptive spinning techniques）来提高程序吞吐量，即使是锁定共享对象竞争激烈的程序。
 
 如果一个类的“可偏向”已启用，该类的实例或对象的同步状态始于未锁定，且无偏向，即左手边。
 
@@ -672,7 +672,7 @@ try {
 }
 ```
 
-相比于 `synchronized`，`Lock` 要求显式获得锁（lock）和释放锁（unlock），因此要特别注意即使发生异常也要释放锁。如果不希望线程获得锁失败后等待机会而是继续前行或者需要返回结果，可以使用以下的方法：
+相比于 `synchronized`，`Lock` 要求显式锁定（lock）和解锁（unlock），因此要特别注意即使发生异常也要释放锁。如果不希望线程获得锁失败后等待机会而是继续前行或者需要返回结果，可以使用以下的方法：
 
 - boolean tryLock();
 
@@ -708,6 +708,8 @@ Lock readLock = readWriteLock.readLock();
 Lock writeLock = readWriteLock.writeLock();
 ```
 
+readLock 和 writeLock 类似于共享锁和排他锁。
+
 #### Semaphore
 
 `Semaphore`，翻译为信号量，也可实现锁。
@@ -718,7 +720,9 @@ final Semaphore semaphore = new Semaphore(3);
 
 ```java
 semaphore.acquire();
-// do something
+```
+
+```java
 semaphore.release();
 ```
 
@@ -730,7 +734,7 @@ semaphore.release();
 
 ![Java锁分类](/img/thread_concurrent/Java锁分类.webp)
 
-多线程竞争锁时，抢不到锁的线程们，可能被迫有限期等待或被阻塞，可能让它们排队，也可能允许插队。
+多线程竞争锁时，抢不到锁的线程，可能被迫等待（等待通知），或被阻塞（等待获得锁），抑或自旋。
 
 ### 协调
 
@@ -754,7 +758,7 @@ latch.await(3000, TimeUnit.MILLISECONDS);
 
 #### CyclicBarrier
 
-`CyclicBarrier`，调用 `await` 方法的线程们相互等待，直到所有线程都准备好了，同时起跑。
+`CyclicBarrier`，调用 `await` 方法的线程等待，直到给定数量的线程都到达“栅栏”，同时起跑。
 
 ```java
 final CyclicBarrier barrier = new CyclicBarrier(8);
@@ -980,6 +984,30 @@ public class AtomicLinkedList<Item> {
 #### ConcurrentMap
 
 [ConcurrentMap](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentMap.html) 是 [Map](https://docs.oracle.com/javase/8/docs/api/java/util/Map.html) 的子接口，它定义了有用的原子操作，例如，仅在键存在时才删除或替换键值对，或仅在键不存在时才添加键值对，其中一个标准实现是 [ConcurrentHashMap](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentHashMap.html)，它是 [HashMap](https://docs.oracle.com/javase/8/docs/api/java/util/HashMap.html) 的线程安全版本。
+
+JDK 7 的 `HashMap` 是基于拉链法的散列表。
+
+![separate-chaining](/img/algs4/separate-chaining.png)
+
+如上面这张来自 [algs4](https://algs4.cs.princeton.edu/34hash/) 的图所示，散列表是一种符号表（symbol table），符号表是一种存储键值对的数据结构，支持两种操作：
+
+- 插入（put）。查找给定的键是否命中，若命中，则更新对应的值，若未命中，则插入键值对。
+
+- 查找（get）。通过给定的键得到相应的值。
+
+基于拉链法的散列表维护了元素类型是链表的数组，它的查找算法可分为两步：
+
+1. 使用 Hash 函数将给定的键转化为数组的索引。
+
+2. 在链表中查找给定的键，返回对应的值。
+
+如下面这张来自 [Java HashMap internals](https://deepakvadgama.com/blog/java-hashmap-internals/) 的图所示，在 `HashMap` 中，数组元素称为 bucket 或 bin，链表结点称为 entry。
+
+![hashmap](/img/hashmap/hashmap.jpg)
+
+JDK 8 在 `HashMap` 中引入红黑树以优化查找算法。当一个桶的大小（链表大小）大于等于树化阈值（TREEIFY_THRESHOLD）且桶的数量（数组长度）大于等于 64，该桶将转化为一颗红黑树，当一个桶的大小小于等于解树阈值（TREEIFY_THRESHOLD），该桶将转化为链表。说到红黑二叉查找树，不得不先说二叉查找树和 2-3 查找树，未来将开启 `HashMap` 的新篇章。
+
+翻阅源码可以知道，例如 `ConcurrentHashMap#put` 方法，`ConcurrentHashMap` 使用 CAS 和 `synchronized` 防止多线程并发访问它维护的链表或红黑树时出现线程干扰和内存一致性错误。
 
 ### 一成不变
 
