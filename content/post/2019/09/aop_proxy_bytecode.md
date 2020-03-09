@@ -41,7 +41,7 @@ Python、JavaScript、PHP、Ruby 等动态语言们，竟然能在运行时对�
 
 当我们写完一个 Java 程序，通过 Java 编译器编译后输出包含 Java 字节码的 Class 文件，随后启动 Java 虚拟机（简称 JVM，本文以 HotSpot 为例），Java 运行时环境（JRE）通过类加载器（ClassLoader）加载类到 JVM 运行时的方法区，方法区储存着类的数据，比如运行时的常量池（Run-Time Constant Pool）和方法代码等，之后，类被实例化或对象被创建......那么，Java 是否支持运行时修改类或者运行时生成类并动态加载到方法区？
 
-![java_class_from_to](/img/java_class_from_to.png)
+![java_class_from_to](/img/aop_proxy_bytecode/java_class_from_to.png)
 
 一番搜索后，果然其中一些想法早已实现在 JDK 中。JDK 动态代理不仅能够在运行时生成类，还能拦截方法调用，接下来用简单的代码详细说明。
 
@@ -272,7 +272,7 @@ proxy class loader: sun.misc.Launcher$AppClassLoader@18b4aac2
 
 `AppClassLoader` 是应用程序类加载器，又名为系统类加载器（System Class Loader），它所在的家族大概长这样子：
 
-![ClassLoaderFamily](/img/ClassLoaderFamily.png)
+![ClassLoaderFamily](/img/aop_proxy_bytecode/ClassLoaderFamily.png)
 
 其中没有双亲的 Bootstrap Class Loader 从 JRE/lib/rt.jar 加载类，它的孩子 Extension Class Loader 从 JRE/lib/ext 或 java.ext.dirs 加载类，它的子孙 System Class Loader 从 CLASSPATH、-classpath、-cp、Mainfest 加载类，不仅如此，类加载机制使用 **Parent Delegation Model** 处理类加载请求，先将请求委派给父母，若父母不能完成加载，则退回由孩子加载，且防止同一个类被同一个类加载器加载多次。当然，如果有需要自定义类加载器，则需要编写类直接或间接继承 `java.lang.ClassLoader` 并重写相应的方法（一般会继承 `java.net.URLClassLoader`）。
 

@@ -32,7 +32,7 @@ StatementHandler | prepare, parameterize, batch, update, query
 
 顾名思义，MyBatis 不愧为 SQL 映射框架。这些重要的组件共同参与了 MyBatis 一般的工作流程：
 
-![mybatis_process](/img/mybatis_process.png)
+![mybatis_process](/img/mybatis/mybatis_process.png)
 
 ## 示例插件
 
