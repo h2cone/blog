@@ -109,7 +109,7 @@ Java 8 以上的用户也许更倾向于使用匿名内部类实现 `java.lang.R
 
 ![main-thread-in-java](/img/thread_concurrent/main-thread-in-java.jpeg)
 
-如上图所示，即使运行一个简单的 "Hello World" 程序，也可能在 JVM 或操作系统创建十几个或更多线程。例如执行 `main` 方法需要的主线程，主线程能启动子线程并继续执行其它代码，子线程也能启动其子线程并继续执行其它代码，而且还有其它由 HotSpot 为了内部目的而创建的线程，如 VM thread、Periodic task thread、GC threads、Compiler threads、Signal dispatcher thread。
+如上图所示，即使运行一个简单的 "Hello World" 程序，也可能在 JVM 或操作系统创建十几个或更多线程。例如执行 `main` 方法需要的主线程，主线程能启动子线程并执行后续代码，子线程也能启动其子线程并执行后续代码，而且还有其它由 HotSpot 为了内部目的而创建的线程，如 VM thread、Periodic task thread、GC threads、Compiler threads、Signal dispatcher thread。
 
 ### ThreadLocal
 
@@ -222,7 +222,7 @@ public static ExecutorService newFixedThreadPool(int nThreads, ThreadFactory thr
 }
 ```
 
-上面是 `java.util.concurrent.Executors` 的新建固定线程池的方法。注意当中的参数类型，`LinkedBlockingQueue`，它是 `BlockingQueue` 的基于链表的实现类，作为阻塞队列，它有一个特性，当队列为空时，线程从队列拉取元素会被阻塞或被迫等待。仔细翻阅源码，可以知道线程池的预先新建和工作线程的生命延长是通过阻塞工作线程或使之有限期等待来实现。除此之外，任务队列的的任务抽象为 `Runable`。
+上面是 [Executors](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html) 的新建固定线程池的简单方法，。注意当中的参数类型，`LinkedBlockingQueue`，它是 `BlockingQueue` 的基于链表的实现类，作为阻塞队列，它有一个特性，当队列为空时，线程从队列拉取元素会被阻塞或被迫等待。仔细翻阅源码，可以知道线程池的预先新建和工作线程的生命延长是通过阻塞工作线程或使之有限期等待来实现。除此之外，任务队列的的任务抽象为 `Runable`。
 
 新建线程池返回一个 `ExecutorService` 实例，利用它来提交任务：
 
@@ -230,10 +230,31 @@ public static ExecutorService newFixedThreadPool(int nThreads, ThreadFactory thr
 Future<?> future = executorService.submit(() -> {
     // do something
 });
-// ....
 ```
 
-可以执行异步任务也可以执行同步任务，既可以提交 `Runable` 也可以传递 `Callable`，或则其它类型的线程池。详情见 [ExecutorService 的方法](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html#method.summary) 和 [Executors 的方法](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#method.summary)
+`submit` 方法可传递 `Runable` 引用或 `Callable` 引用，两者的关系如下：
+
+```java
+Runnable runnable = new FutureTask<>(callable);
+```
+
+[Future](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html) 表示异步结果。主线程调用 `Future#get` 方法时被迫等待，直到子线程完成相应的任务后，主线程从 `Future#get` 方法返回得到结果并执行后续代码。
+
+```java
+CompletableFuture<Object> future = CompletableFuture.supplyAsync(() -> {
+    // do something
+});
+future.thenCompose(obj -> CompletableFuture.supplyAsync(() -> {
+    // do other things
+}));
+future.whenComplete((obj, e) -> {
+    // callback
+});
+```
+
+如上所示，[CompletableFuture](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html) 实现了 `Future`，并且支持设置回调方法。主线程无需等待子线程完成相应的任务，当子线程完成相应的任务后，回调方法会被调用。
+
+`Executors` 还提供了 `newCachedThreadPool` 和 `newSingleThreadExecutor` 等工厂方法，详情请见 [Executors # Method Summary](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#method.summary)。
 
 使用 `Executors` 新建线程池，需要注意的是，可能会因为任务队列堆积过多任务从而导致内存溢出，因为 `LinkedBlockingQueue` 可自动扩容，最大值为 `Integer.MAX_VALUE`。建议合理设置线程池的各个参数，例如使用 `new ThreadPoolExecutor(..., ..., ..., ..., ...)` 来新建线程池，详情见 [ThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ThreadPoolExecutor.html) 和 [ScheduledThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledThreadPoolExecutor.html)。
 
@@ -293,7 +314,41 @@ pool.invoke(task);
 
 一个工作线程调用了 `compute` 方法，先判断当前 src 的长度是否小于阈值（threshold），若是则认为这个任务足够小，单线程很快就能完成对 src 的操作，否者就认为这个任务足够大，需要分工，于是先把 src 分成两个片段，然后调用 `invokeAll` 方法，其它工作线程去执行这两个子任务，又调用了 `compute` 方法......在多处理器计算机系统中，因为支持多线程并行，所以这类程序通常运行得很快。
 
-JDK 的 [java.util.Arrays](https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html) 和 [java.util.streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) 已经提供了许多操作聚合类型实例的并行化方法。
+如果需要返回值，则可以使用 [RecursiveTask](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/RecursiveTask.html)。
+
+```java
+public class FibonacciTask extends RecursiveTask<Integer> {
+    private int n;
+
+    public FibonacciTask(int n) {
+        this.n = n;
+    }
+
+    @Override
+    protected Integer compute() {
+        if (n <= 1) {
+            return n;
+        }
+        FibonacciTask f1 = new FibonacciTask(n - 1);
+        f1.fork();
+        FibonacciTask f2 = new FibonacciTask(n - 2);
+        return f2.compute() + f1.join();
+    }
+
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        ForkJoinPool pool = new ForkJoinPool
+                (Runtime.getRuntime().availableProcessors(),
+                        ForkJoinPool.defaultForkJoinWorkerThreadFactory,
+                        null, true);
+        ForkJoinTask<Integer> task = pool.submit(new FibonacciTask(10));
+        Integer result = task.get();
+    }
+}
+```
+
+![fork-join](/img/thread_concurrent/fork-join.png)
+
+JDK 的 [java.util.Arrays](https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html) 和 [java.util.streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) 提供了许多操作聚合类型实例的并行化方法，这些方法通常基于 Fork/Join。
 
 ### 非线程安全
 
@@ -766,7 +821,7 @@ semaphore.release();
 
 #### CountDownLatch
 
-`CountDownLatch`，一个安全的且只能递减的计数器，支持一个线程等待多个线程完成任务后继续执行。
+`CountDownLatch`，一个安全的且只能递减的计数器，支持一个线程等待多个线程完成任务后恢复执行。
 
 ```java
 final CountDownLatch latch = new CountDownLatch(2);
