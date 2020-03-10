@@ -195,11 +195,27 @@ while (waiters.peek() != current || !locked.compareAndSet(false, true)) {
 
 ### 线程池
 
-使用 `Thread.start(...)` 启动线程足以执行基本的任务，但是对于复杂任务，例如有返回值的任务和定时任务等，其 API 过于低级。大规模的应用程序中，将线程的创建和管理从应用程序其余部分分开是很有意义的，理由之一是分离关注点能够减弱复杂性。封装了线程的创建和管理的对象们称为 Executors。
+使用 `Thread.start(...)` 启动线程足以执行基本的任务，但是对于复杂任务，例如有返回值的任务和定时任务等，其 API 过于低级。大规模的应用程序中，将线程的创建和管理从应用程序其余部分分开是很有意义的，理由之一是分离关注点能够减弱复杂性。封装了线程的创建和管理的对象们称为 Executors。JDK 的 `java.util.concurrent` 包定义了三代 `Executor` 接口：
 
-JDK 的 `java.util.concurrent` 包定义了三个 Executor 接口，[Executor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html)、[ExecutorService](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html)、[ScheduledExecutorService](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledExecutorService.html)，大部分实现都使用**线程池（Thread Pool）**，这就是理由之二。
+- [Executor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html)
 
-例如，一个一般的服务器端程序服务着多个客户端，如果每个客户端的请求都通过新建一个线程来处理，即线程数随着请求数增加而增加，虽然新建线程比新建进程便宜，但是当活跃的线程数太多时，不仅占用大量的内存，容易导致内存溢出，而且操作系统内核需要花费大量的时间在线程调度上（上下文切换），大量的线程“暂停”较长时间，还有频繁新建和终结执行短时任务的线程而引起的延迟，大量客户端长时间得不到响应。线程池就是为了解决此问题。
+- [ExecutorService](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html)
+
+- [ScheduledExecutorService](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledExecutorService.html)
+
+如果 r 是 `Runnable` 对象，而 e 是 `Executor` 对象，则可以使用
+
+```java
+e.execute(r);
+```
+
+代替
+
+```java
+new Thread(r).start();
+```
+
+`Executor` 接口大部分实现都使用**线程池（Thread Pool）**，这就是理由之二。例如，一个一般的服务器端程序服务着多个客户端，如果每个客户端的请求都通过新建一个线程来处理，即线程数随着请求数增加而增加，虽然新建线程比新建进程便宜，但是当活跃的线程数太多时，不仅占用大量的内存，容易导致内存溢出，而且操作系统内核需要花费大量的时间在线程调度上（上下文切换），大量的线程“暂停”较长时间，还有频繁新建和终结执行短时任务的线程而引起的延迟，大量客户端长时间得不到响应。线程池就是为了解决此问题。
 
 线程池由数量可控的**工作线程（worker thread）** 组成，每个工作线程的生命都被延长，以便用于执行多个任务，既减少了线程调度延迟，也避免了频繁新建和终结执行短暂任务的线程而导致的延迟。线程池的新建通常是预处理，即服务器端程序提供服务之前已准备好线程池，避免了临时新建大量线程的开销。
 
