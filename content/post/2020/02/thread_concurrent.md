@@ -372,7 +372,7 @@ public class CounterTest {
 
 ### synchronized
 
-以前文的计数器为例，新增一个用 `synchronized` 修饰的 incrementUseSync 方法到 Counter，
+以前文的计数器为例，新增一个用 `synchronized` 修饰的 incrementSyncMethod 方法到 Counter，
 
 ```java
 public class Counter {
@@ -382,7 +382,7 @@ public class Counter {
         count++;
     }
 
-    public synchronized void incrementUseSync() {
+    public synchronized void incrementSyncMethod() {
         count++;
     }
 
@@ -392,16 +392,16 @@ public class Counter {
 }
 ```
 
-使用与测试 increment 方法相同的测试数据，测试启动相同个数的子线程重复调用同一个 Counter 对象的 incrementUseSync 方法相同次数，测试代码如下：
+使用与测试 increment 方法相同的测试数据，测试启动相同个数的子线程重复调用同一个 Counter 对象的 incrementSyncMethod 方法相同次数，测试代码如下：
 
 ```java
 @Test
-public void testIncrementUseSyncMethod() throws InterruptedException {
+public void testIncrementSyncMethod() throws InterruptedException {
     Counter counter = new Counter();
 
     startThreads(counter, () -> {
         for (int j = 0; j < times; j++) {
-            counter.incrementUseSyncMethod();
+            counter.incrementSyncMethod();
         }
         System.out.printf("threadName: %s, counterValue: %s\n", Thread.currentThread().getName(), counter.value());
     });
@@ -411,7 +411,7 @@ public void testIncrementUseSyncMethod() throws InterruptedException {
 
 测试结果如下图所示：
 
-![testIncrementUseSyncMethod](/img/thread_concurrent/testIncrementUseSyncMethod.png)
+![testIncrementSyncMethod](/img/thread_concurrent/testIncrementSyncMethod.png)
 
 测试通过，期望值（exceptedCounterValue）与实际值（exceptedCounterValue）相等，其中一个子线程（Thread-1）与临时测试线程（Time-limited test）读取的 count 值相等。
 
@@ -438,7 +438,7 @@ public void testIncrementUseSyncMethod() throws InterruptedException {
 
 ```java
 @Test
-public void testIncrementUseSyncBlock() throws InterruptedException {
+public void testIncrementSyncBlock() throws InterruptedException {
     Counter counter = new Counter();
 
     startThreads(counter, () -> {
@@ -453,7 +453,7 @@ public void testIncrementUseSyncBlock() throws InterruptedException {
 }
 ```
 
-或者添加一个 incrementUseSyncStmt 方法到 Counter 类，以及新增对应的测试用例：
+或者添加一个 incrementSyncStmt 方法到 Counter 类，以及新增对应的测试用例：
 
 ```java
 public class Counter {
@@ -463,11 +463,11 @@ public class Counter {
         count++;
     }
 
-    public synchronized void incrementUseSyncMethod() {
+    public synchronized void incrementSyncMethod() {
         count++;
     }
 
-    public void incrementUseSyncStmt() {
+    public void incrementSyncStmt() {
         synchronized (this) {
             count++;
         }
@@ -481,12 +481,12 @@ public class Counter {
 
 ```java
 @Test
-public void testIncrementUseSyncStmt() throws InterruptedException {
+public void testIncrementSyncStmt() throws InterruptedException {
     Counter counter = new Counter();
 
     startThreads(counter, () -> {
         for (int j = 0; j < times; j++) {
-            counter.incrementUseSyncStmt();
+            counter.incrementSyncStmt();
         }
         System.out.printf("threadName: %s, counterValue: %s\n", Thread.currentThread().getName(), counter.value());
     });
