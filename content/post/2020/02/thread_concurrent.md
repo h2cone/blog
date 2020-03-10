@@ -159,13 +159,39 @@ public class TransactionId {
 
 一个线程处于等待状态时，可以被另外一个线程通知，转为阻塞状态，再转为可运行状态。比如，一个线程用一个对象（的引用）调用 `Object#wait()`，另一个线程用同一个对象（的引用）调用 `Object#notify()` 或 `Object#notifyAll()`，前提是它们必须拥有该对象的内置锁。第一个线程调用 `Object#wait()` 时，它会释放该对象的内置锁并“暂停”，第二个线程获得该对象的内置锁成功之后，调用 `Object#notifyAll()` 通知所有曾经用同一个对象（的引用）调用了 `Object#wait()` 的线程有重要事情发生。在第二个线程释放了该对象的内置锁后的某个时刻，第一个线程重新获得了该对象的内置锁，并从 `Object#wait()` 返回而“恢复”。阻塞状态与内置锁或监视器锁息息相关，将在下文的"锁和同步"讨论。
 
+详情请见 [Object](https://docs.oracle.com/javase/8/docs/api/java/lang/Object.html)。
+
 #### interrupt
 
 另外，线程有一个中断状态（interrupt status）。所谓中断，即停止正在执行的操作，并执行其它操作。例如，主线程可使用子线程对象（的引用）调用 `java.lang.Thread#interrupt()` 中断子线程，子线程能够捕获 `java.lang.InterruptedException` 或调用 `java.lang.Thread#interrupted()` 接收到中断。
 
+详情请见 [Thread](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html)。
+
 #### park/unpark
 
 类比申请许可和提供许可。相比于 wait/notify，park/unpark 对调用顺序没有要求。线程调用 `LockSupport#park()` 时“暂停”，线程调用 `LockSupport#unpark(Thread)` 时取消给定线程的“暂停”，如果给定线程已“暂停”，则给定线程从 `LockSupport#park()` 返回而“恢复”，如果给定线程没有“暂停”，那么将来给定线程第一次调用 `LockSupport#park()` 时立即返回。
+
+详情请见 [LockSupport](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/LockSupport.html)。
+
+#### spurious wakeup
+
+中断和虚假唤醒可能发生，官方建议在循环体内使用 wait 和 park，如下所示：
+
+```java
+synchronized (obj) {
+    while (<condition does not hold>)
+        obj.wait();
+    ... // Perform action appropriate to condition
+}
+```
+
+```java
+while (waiters.peek() != current || !locked.compareAndSet(false, true)) {
+    LockSupport.park(this);
+    if (Thread.interrupted()) // ignore interrupts while waiting
+        wasInterrupted = true;
+}
+```
 
 ### 线程池
 
