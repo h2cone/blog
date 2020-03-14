@@ -7,7 +7,7 @@ tags: [java, thread, concurrent]
 categories: []
 ---
 
-Java 基本功。
+Java 基本功（一）。
 
 <!--more-->
 
@@ -238,7 +238,7 @@ public static ExecutorService newFixedThreadPool(int nThreads, ThreadFactory thr
 }
 ```
 
-上面是 [Executors](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html) 的新建固定线程池的简单方法，。注意当中的参数类型，`LinkedBlockingQueue`，它是 `BlockingQueue` 的基于链表的实现类，作为阻塞队列，它有一个特性，当队列为空时，线程从队列拉取元素会被阻塞或被迫等待。仔细翻阅源码，可以知道线程池的预先新建和工作线程的生命延长是通过阻塞工作线程或使之有限期等待来实现。除此之外，任务队列的的任务抽象为 `Runable`。
+上面是 [Executors](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html) 的新建固定线程池的简单方法。注意当中的参数类型，`LinkedBlockingQueue`，它是 `BlockingQueue` 的基于链表的实现类，作为阻塞队列，它有一个特性，当队列为空时，线程从队列拉取元素会被阻塞或被迫等待。仔细翻阅源码，可以知道线程池的预先新建和工作线程的生命延长是通过阻塞工作线程或使之有限期等待来实现。除此之外，任务队列的的任务抽象为 `Runable`。
 
 新建线程池返回一个 `ExecutorService` 实例，利用它来提交任务：
 
