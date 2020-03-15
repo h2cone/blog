@@ -381,15 +381,15 @@ class Reactor implements Runnable {
 
 （1）Reactor 构造器。使用 serverSocketChannel 注册 selector 并添加感兴趣的 I/O 事件（`OP_ACCEPT`）之后，返回得到一个 selectionKey，selectionKey 可添加一个附件，这个附件是 Acceptor 对象的引用。
 
-（2）调度循环。首先，调用 `selector.select()` 时阻塞，直到选中了一组已准备好进行 I/O 操作的 Channel 所对应的键（SelectionKey），初始只对 `OP_ACCEPT` 感兴趣。然后，迭代得到相应的键，因为一开始只有一个 Channel，所以当前键集合大小为 1，调用 dispatch 时得到的键的附件即是 Acceptor 对象的引用。
+（2）分派循环。首先，调用 `selector.select()` 时阻塞，直到选中了一组已准备好进行 I/O 操作的 Channel 所对应的键（SelectionKey），初始只对 `OP_ACCEPT` 感兴趣。然后，迭代得到相应的键，因为一开始只有一个 Channel，所以当前键集合大小为 1，调用 dispatch 时得到的键的附件即是 Acceptor 对象的引用。
 
-（3）调度方法。由（2）可知，Acceptor 的 `run` 方法被调用，但不直接启动新线程。
+（3）分派方法。由（2）可知，Acceptor 的 `run` 方法被调用，但不直接启动新线程。
 
-（4）Acceptor 运行方法。传递 selector 和 socketChannel 来新建 Handler 对象，不直接调用其 `run` 方法，而是返回到调度循环。
+（4）Acceptor 运行方法。传递 selector 和 socketChannel 来新建 Handler 对象，不直接调用其 `run` 方法，而是返回到分派循环。
 
 （5）Handler 构造器。用当前的 socketChannel 注册 selector 并添加感兴趣的 I/O 事件（`OP_READ`）和附件（Handler 对象的引用），但要注意唤醒 selector，使尚未返回的第一个 select 操作立即返回，理由是有新的 Channel 加入。
 
-（6）Handler 运行方法。在调度循环中，若可读的 socketChannel 对应的键被选中，则该键的附件，即 Handler 对象的 `run` 方法被调用，对 Channel 进行非阻塞读写操作，中间还有 process 方法，写完之后取消该键关联的 socketChannel 对 selector 的注册。
+（6）Handler 运行方法。在分派循环中，若可读的 socketChannel 对应的键被选中，则该键的附件，即 Handler 对象的 `run` 方法被调用，对 Channel 进行非阻塞读写操作，中间还有 process 方法，写完之后取消该键关联的 socketChannel 对 selector 的注册。
 
 在 Java NIO 中，对 Channel 的读写是非阻塞方法，通常要判断输入是否完成（inputCompleted），完成后进行具体处理（process），以及判断输出是否完成（outputCompleted），完成后注销（短连接）。
 
@@ -543,7 +543,7 @@ ExecutorService executorService = Executors.newSingleThreadExecutor();
 executorService.execute(new Reactor(port, Executors.newCachedThreadPool(), new DefaultChannelHandler()));
 ```
 
-有多个工作线程在运行，如果还有可用的处理器，甚至可以同时运行两个 Boss 线程。
+进一步扩展，甚至可以同时运行两个 Boss 线程，大 Boss 线程负责 accept，小 Boss 线程负责 read 和 write，工作线程则负责 process。
 
 ![Using-Multiple-Reactors](/img/network_nio/Using-Multiple-Reactors.png)
 
@@ -567,9 +567,10 @@ executorService.execute(new Reactor(port, Executors.newCachedThreadPool(), new D
 
 - [It’s all about buffers: zero-copy, mmap and Java NIO](https://medium.com/@xunnan.xu/its-all-about-buffers-zero-copy-mmap-and-java-nio-50f2a1bfc05c)
 
-- [UNP # Chapter 6. I/O Multiplexing: The select and poll Functions
-](https://notes.shichao.io/unp/ch6/#io-models)
+- [UNP # Chapter 6. I/O Multiplexing: The select and poll Functions](https://notes.shichao.io/unp/ch6/#io-models)
 
 - [Java Tutorials # Basic I/O](https://docs.oracle.com/javase/tutorial/essential/io/index.html)
 
 - [Java Tutorials # Custom Networking](https://docs.oracle.com/javase/tutorial/networking/)
+
+- [Build Your Own Netty — Reactor Pattern](https://medium.com/@kezhenxu94/in-the-previous-post-we-already-have-an-echoserver-that-is-implemented-with-java-nio-lets-check-ccf5b5b32da9)
