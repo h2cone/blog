@@ -362,6 +362,8 @@ public class FibonacciTask extends RecursiveTask<Integer> {
 }
 ```
 
+先分解，后合并。
+
 ![fork-join](/img/thread_concurrent/fork-join.png)
 
 JDK 的 [java.util.Arrays](https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html) 和 [java.util.streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html) 提供了许多操作聚合类型实例的并行化方法，这些方法通常基于 Fork/Join。
