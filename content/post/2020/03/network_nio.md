@@ -19,7 +19,7 @@ Java 基本功（二）。
 
 - I/O 设备包括鼠标、键盘、显示器、磁盘、网卡等。
 
-- I/O（输入/输出），输入是从 I/O 设备复制数据到主存，输出是从主存复制数据到 I/O 设备。
+- I/O（输入/输出），**输入是从 I/O 设备复制数据到主存，输出是从主存复制数据到 I/O 设备。**
 
 从一个计算机角度来看，网络（适配器）是它的一个 I/O 设备。当计算机系统从主存复制字节序列到网络适配器时，数据流经过网络到达另一台机器，同理，计算机系统可以从网络适配器复制字节序列到主存。
 
@@ -37,7 +37,7 @@ Java 基本功（二）。
 
 - Socket 是进程与传输层的中间层。
 
-- Socket 包含五元组（client ip, client port, server ip, server port, protocol）。
+- Socket 包含五元组**（client ip, client port, server ip, server port, protocol）**。
 
 同在传输层的 [UDP](https://en.wikipedia.org/wiki/User_Datagram_Protocol) 不如 TCP 可靠，但是轻量级，因为它没有确认、重传、超时的概念，也没有拥塞控制，而且无连接，从而能广播。你看，人类是可以接受网络视频或网络游戏偶尔卡顿的。
 
@@ -216,7 +216,7 @@ Java NIO 有三大核心组件：
 
 - Buffers。可以从 Channel 直接读取或直接写入 Channel 的类似数组的对象。
 
-- Selectors。监听一组 Channel 中哪些发生了用户感兴趣的 I/O 事件。
+- Selectors。判断一组 Channel 中哪些发生了用户感兴趣的 I/O 事件。
 
 还有一些不容忽视：
 
@@ -254,11 +254,11 @@ Channel 已提供直接从中读取 ByteBuffer 或直接写入其中的方法。
 
 ![ByteBuffer-Channel](/img/network_nio/ByteBuffer-Channel.png)
 
-值得一提的是，ByteBuffer 支持分配直接的字节缓存区，即堆外内存（下文将予以解释）。
+值得一提的是，ByteBuffer 支持分配直接的字节缓存区，即堆外内存。
 
 #### Reactor
 
-根据上文的知识，足以实现典型的 Java NIO 服务器端程序，但是我把它删掉了，因为它表现得不如上文典型的 Java BIO 的服务器端程序，更因为我读到了 [Doug Lea](https://en.wikipedia.org/wiki/Doug_Lea) 讲的 Reactor 模式（链接在文章末尾），常翻 JDK 源码可以发现他是大部分并发数据结构的作者。
+根据上文的知识，足以实现典型的 Java NIO 服务器端程序，但是我把它删掉了，因为它表现得不如上文典型的 Java BIO 的服务器端程序，更因为我读到了 [Doug Lea](https://en.wikipedia.org/wiki/Doug_Lea) 讲的 **Reactor 模式**（链接在文章末尾），常翻 JDK 源码可以发现他是大部分并发数据结构的作者。
 
 ##### 单线程版
 
@@ -391,7 +391,7 @@ class Reactor implements Runnable {
 
 （6）Handler 运行方法。在分派循环中，若可读的 socketChannel 对应的键被选中，则该键的附件，即 Handler 对象的 `run` 方法被调用，对 Channel 进行非阻塞读写操作，中间还有 process 方法，写完之后取消该键关联的 socketChannel 对 selector 的注册。
 
-在 Java NIO 中，对 Channel 的读写是非阻塞方法，通常要判断输入是否完成（inputCompleted），完成后进行具体处理（process），以及判断输出是否完成（outputCompleted），完成后注销（短连接）。
+在 Java NIO 中，对 Channel 的读写是非阻塞方法，通常要判断输入是否完成（inputCompleted），完成后进行业务逻辑处理（process），以及判断输出是否完成（outputCompleted），完成后注销（短连接）。
 
 ```java
 public interface ChannelHandler {
@@ -547,9 +547,48 @@ executorService.execute(new Reactor(port, Executors.newCachedThreadPool(), new D
 
 ![Using-Multiple-Reactors](/img/network_nio/Using-Multiple-Reactors.png)
 
-一般的开发人员直接使用 Java NIO 编写 C/S 程序非常容易出错，到了主角登场的时候。
+一般的开发人员直接使用 Java NIO 编写服务器端或客户端，既要保证可靠，又要保证高性能，实属不易，终于到了主角登场的时候。
 
 ### Netty
+
+[Netty](https://netty.io/) 是异步事件驱动网络应用程序框架，用于快速开发可维护的高性能协议服务器端和客户端。
+
+![netty-components](/img/network_nio/netty-components.png)
+
+如何使用 Netty，参考 [Netty # User guide for 4.x](https://netty.io/wiki/user-guide-for-4.x.html) 和 [netty/netty/tree/4.1/example](https://github.com/netty/netty/tree/4.1/example) 以及 [normanmaurer/netty-in-action](https://github.com/normanmaurer/netty-in-action) 足矣。下文则更关注如何理解 Netty 的核心（Core）。
+
+#### 事件模型
+
+![event-loop](/img/network_nio/event-loop.png)
+
+[EventLoop](https://netty.io/4.1/api/io/netty/channel/EventLoop.html)，敬请期待。
+
+![ChannelPipeline](/img/network_nio/ChannelPipeline.png)
+
+[ChannelPipeline](https://netty.io/4.1/api/io/netty/channel/ChannelPipeline.html)。敬请期待。
+
+```java
+public class CustomFilter implements Filter {
+ 
+    public void doFilter(
+      ServletRequest request,
+      ServletResponse response,
+      FilterChain chain)
+      throws IOException, ServletException {
+ 
+        // process the request
+ 
+        // pass the request (i.e. the command) along the filter chain
+        chain.doFilter(request, response);
+    }
+}
+```
+
+#### 最少化内存复制
+
+[io.netty.buffer](https://netty.io/4.1/api/io/netty/buffer/package-summary.html)。Netty 高性能的原因之一是使用 Java NIO 和 Reactor 模式，更重要的原因是减少不必要的内存复制。敬请期待。
+
+### I/O 模型
 
 敬请期待。
 
@@ -559,18 +598,43 @@ executorService.execute(new Reactor(port, Executors.newCachedThreadPool(), new D
 
 > 本文首发于 https://h2cone.github.io
 
-## 学习更多
+## 认知更多
+
+- [Non-blocking I/O (Java) - Wikipedia](https://en.wikipedia.org/wiki/Non-blocking_I/O_(Java)#Channels)
 
 - [Scalable IO in Java - Doug Lea](http://gee.cs.oswego.edu/dl/cpjslides/nio.pdf)
 
 - [Java NIO trick and trap](http://www.blogjava.net/killme2008/archive/2010/11/22/338420.html)
 
+- [UNP # Chapter 6. I/O Multiplexing: The select and poll Functions](https://notes.shichao.io/unp/ch6/#io-models)
+
+- [6.2 I/O Models - MASTERRAGHU](http://www.masterraghu.com/subjects/np/introduction/unix_network_programming_v1.3/ch06lev1sec2.html)
+
 - [It’s all about buffers: zero-copy, mmap and Java NIO](https://medium.com/@xunnan.xu/its-all-about-buffers-zero-copy-mmap-and-java-nio-50f2a1bfc05c)
 
-- [UNP # Chapter 6. I/O Multiplexing: The select and poll Functions](https://notes.shichao.io/unp/ch6/#io-models)
+- [Zero-copy - Wikipedia](https://en.wikipedia.org/wiki/Zero-copy)
+
+- [Build Your Own Netty — Reactor Pattern](https://medium.com/@kezhenxu94/in-the-previous-post-we-already-have-an-echoserver-that-is-implemented-with-java-nio-lets-check-ccf5b5b32da9)
+
+- [Reactor pattern - Wikipedia](https://en.wikipedia.org/wiki/Reactor_pattern)
+
+- [Event (computing) - Wikipedia](https://en.wikipedia.org/wiki/Event_(computing))
+
+- [Netty in Action # Chapter 7. EventLoop and threading model](https://livebook.manning.com/book/netty-in-action/chapter-7/)
+
+- [Netty in Action # Chapter 6. ChannelHandler and ChannelPipeline](https://livebook.manning.com/book/netty-in-action/chapter-6/)
+
+- [Chain-of-responsibility pattern - Wikipedia](https://en.wikipedia.org/wiki/Chain-of-responsibility_pattern)
+
+- [Chain of Responsibility Design Pattern in Java](https://www.baeldung.com/chain-of-responsibility-pattern)
+
+- [Core J2EE Patterns - Intercepting Filter](https://www.oracle.com/technetwork/java/interceptingfilter-142169.html)
 
 - [Java Tutorials # Basic I/O](https://docs.oracle.com/javase/tutorial/essential/io/index.html)
 
 - [Java Tutorials # Custom Networking](https://docs.oracle.com/javase/tutorial/networking/)
 
-- [Build Your Own Netty — Reactor Pattern](https://medium.com/@kezhenxu94/in-the-previous-post-we-already-have-an-echoserver-that-is-implemented-with-java-nio-lets-check-ccf5b5b32da9)
+- [Vert.x # Guide](https://vertx.io/docs/guide-for-java-devs/)
+
+- [一文读懂高性能网络编程中的I/O模型](https://mp.weixin.qq.com/s/saZl6PsVoYKF9QwGBGFJwg)
+
