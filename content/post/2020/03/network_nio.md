@@ -63,7 +63,7 @@ Java 的 BIO 是指 blocking I/O，通常指 [java.io](https://docs.oracle.com/j
 
 处理请求，通常都可以分解为：
 
-1. 读取请求（read）
+1. 读取请求（receive/read）
 2. 解码请求（deocode）
 3. 计算/处理（compute/process）
 4. 编码响应（encode）
@@ -206,7 +206,7 @@ Java 的 NIO 是指 non-blocking I/O 或 New I/O，通常指 [java.nio](https://
 
 ![javanio](/img/network_nio/javanio.webp)
 
-上图来自“点亮架构”公众号的文章插图。我在[旧文](https://h2cone.github.io/post/2019/12/implementing-rpc/)里说过，Java NIO 致力于用比 Java BIO 更少的线程处理更多的连接。非常符合人类的直觉，比如，一个不希望被老板开除的店小二将一个客人的订单交给后厨后，不会等待后厨做好后上菜，而是立即去接待其它客人入座、点餐、结账等，后厨做菜完成后自然会通知店小二上菜。
+上图来自“点亮架构”公众号的文章插图。我在[实现 RPC](https://h2cone.github.io/post/2019/12/implementing-rpc/)中说过，Java NIO 致力于用比 Java BIO 更少的线程处理更多的连接。非常符合人类的直觉，比如，一个不希望被老板开除的店小二将一个客人的订单交给后厨后，不会等待后厨做好后上菜，而是立即去接待其它客人入座、点餐、结账等，后厨做菜完成后自然会通知店小二上菜。
 
 #### 组件
 
@@ -226,11 +226,17 @@ Java NIO 有三大核心组件：
 
 - [SocketChannel](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/SocketChannel.html)。代替 Socket。
 
-[Selector](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/Selector.html) 是线程和 Channel 的中间层，多个连接由一个线程处理。
+[Selector](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/Selector.html) 是线程和 Channel 的中间层，多个连接可由一个线程处理。
 
 ![selector_mid_layer](/img/network_nio/selector_mid_layer.png)
 
-[SelectionKey](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/SelectionKey.html) 定义了四个常量来表示 I/O 事件： `OP_READ`、`OP_WRITE`、`OP_CONNECT`、`OP_ACCEPT`，均符合伯克利 Sockets 的语义，`OP_CONNECT` 为客户端专有，`OP_ACCEPT` 为服务器端专有。
+[SelectionKey](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/SelectionKey.html) 定义了四种 I/O 事件： `OP_READ`、`OP_WRITE`、`OP_CONNECT`、`OP_ACCEPT`，均符合伯克利 Sockets 的语义，`OP_CONNECT` 为客户端专有，`OP_ACCEPT` 为服务器端专有。
+
+- OP_ACCEPT。ServerSocketChannel 可以接受连接了。
+
+- OP_READ。例如，SocketChannel 可以读了。
+
+- OP_WRITE。例如，SocketChannel 可以写了。
 
 Buffer 维护了 position、limit、capacity 变量，具有写模式和读模式。
 
@@ -389,9 +395,9 @@ class Reactor implements Runnable {
 
 （5）Handler 构造器。用当前的 socketChannel 注册 selector 并添加感兴趣的 I/O 事件（`OP_READ`）和附件（Handler 对象的引用），但要注意唤醒 selector，使尚未返回的第一个 select 操作立即返回，理由是有新的 Channel 加入。
 
-（6）Handler 运行方法。在分派循环中，若可读的 socketChannel 对应的键被选中，则该键的附件，即 Handler 对象的 `run` 方法被调用，对 Channel 进行非阻塞读写操作，中间还有 process 方法，写完之后取消该键关联的 socketChannel 对 selector 的注册。
+（6）Handler 运行方法。在分派循环中，若可读的 socketChannel 对应的键被选中，则该键的附件，即 Handler 对象的 `run` 方法被调用，对 Channel 进行非阻塞读写操作，中间还有 process 方法（业务逻辑），写完之后取消该键关联的 socketChannel 对 selector 的注册。
 
-在 Java NIO 中，对 Channel 的读写是非阻塞方法，通常要判断输入是否完成（inputCompleted），完成后进行业务逻辑处理（process），以及判断输出是否完成（outputCompleted），完成后注销（短连接）。
+在 Java NIO 中，对 Channel 的读写是非阻塞方法（直接执行且立即返回，但稍后再执行），通常要判断输入是否完成（inputCompleted），完成后进行业务逻辑处理（process），以及判断输出是否完成（outputCompleted），完成后注销（短连接）。
 
 ```java
 public interface ChannelHandler {
@@ -406,6 +412,51 @@ public interface ChannelHandler {
 
     boolean outputCompleted(ByteBuffer outputBuf);
 
+}
+```
+
+```java
+public class DefaultChannelHandler implements ChannelHandler {
+    public static final String SEND = "i am %s";
+    public static final String RECEIVE = "%s receive '%s'";
+
+    @Override
+    public void read(SocketChannel socketChannel, ByteBuffer inputBuf) throws IOException {
+        socketChannel.read(inputBuf);
+    }
+
+    @Override
+    public boolean inputCompleted(ByteBuffer inputBuf) {
+        return inputBuf.position() > 2;
+    }
+
+    @Override
+    public void process(ByteBuffer inputBuf, ByteBuffer outputBuf) {
+        try {
+            inputBuf.flip();
+            String msg = Charset.defaultCharset().newDecoder().decode(inputBuf).toString();
+            System.out.printf(RECEIVE + "\n", Thread.currentThread().getName(), msg);
+
+            // consuming
+            Thread.sleep(BioServer.DELAY_TIME);
+
+            msg = String.format(SEND, Thread.currentThread().getName());
+            outputBuf.put(ByteBuffer.wrap(msg.getBytes()));
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void write(SocketChannel socketChannel, ByteBuffer outputBuf) throws IOException {
+        outputBuf.flip();
+        socketChannel.write(outputBuf);
+    }
+
+    @Override
+    public boolean outputCompleted(ByteBuffer outputBuf) {
+        return !outputBuf.hasRemaining();
+    }
 }
 ```
 
@@ -543,7 +594,7 @@ ExecutorService executorService = Executors.newSingleThreadExecutor();
 executorService.execute(new Reactor(port, Executors.newCachedThreadPool(), new DefaultChannelHandler()));
 ```
 
-进一步扩展，甚至可以同时运行两个 Boss 线程，大 Boss 线程负责 accept，小 Boss 线程负责 read 和 write，工作线程则负责 process。
+进一步扩展，甚至可以同时运行两个 Boss 线程，大 Boss 线程负责 accept，分派已接受的 Channel 给小 Boss 线程 read 和 write，命令工作线程 process。
 
 ![Using-Multiple-Reactors](/img/network_nio/Using-Multiple-Reactors.png)
 
@@ -551,21 +602,56 @@ executorService.execute(new Reactor(port, Executors.newCachedThreadPool(), new D
 
 ### Netty
 
-[Netty](https://netty.io/) 是异步事件驱动网络应用程序框架，用于快速开发可维护的高性能协议服务器端和客户端。
+[Netty](https://netty.io/) 是异步、事件驱动网络应用程序框架，用于快速开发可维护的高性能协议服务器端和客户端。
 
 ![netty-components](/img/network_nio/netty-components.png)
 
-如何使用 Netty，参考 [Netty # User guide for 4.x](https://netty.io/wiki/user-guide-for-4.x.html) 和 [netty/netty/tree/4.1/example](https://github.com/netty/netty/tree/4.1/example) 以及 [normanmaurer/netty-in-action](https://github.com/normanmaurer/netty-in-action) 足矣。下文则更关注如何理解 Netty 的核心（Core）。
+如何使用 Netty，参考 [Netty # User guide for 4.x](https://netty.io/wiki/user-guide-for-4.x.html) 和 [netty/netty/tree/4.1/example](https://github.com/netty/netty/tree/4.1/example) 以及 [normanmaurer/netty-in-action](https://github.com/normanmaurer/netty-in-action) 足矣。下文则更关注如何理解 Netty 4.x 的核心（Core）。
+
+- Bootstrapor or ServerBootstrap
+- **EventLoop**
+- EventLoopGroup
+- **ChannelPipeline**
+- Channel
+- Future or ChannelFuture
+- ChannelInitializer
+- ChannelHandler
 
 #### 事件模型
 
+##### EventLoop
+
 ![event-loop](/img/network_nio/event-loop.png)
 
-[EventLoop](https://netty.io/4.1/api/io/netty/channel/EventLoop.html)，敬请期待。
+[EventLoop](https://netty.io/4.1/api/io/netty/channel/EventLoop.html)，即事件循环，一个 EventLoop 通常将处理多个 [Channel](https://netty.io/4.1/api/io/netty/channel/Channel.html) 的事件，EventLoop 在它生命周期中只绑定单个线程，而 [EventLoopGroup](https://netty.io/4.1/api/io/netty/channel/EventLoopGroup.html) 包含一个或多个 EventLoop。
+
+EventLoop 类的族谱如下所示：
+
+![EventLoop-class-hierarchy](/img/network_nio/EventLoop-class-hierarchy.jpg)
+
+由此可见，EventLoop 的本源是 Executor（请先阅读[多线程·并发编程 # Java 多线程 # 线程池](https://h2cone.github.io/post/2020/02/thread_concurrent/#%E7%BA%BF%E7%A8%8B%E6%B1%A0)），那么 EventLoop 处理 Channel 的事件转换为执行（execute）相应的任务，
+
+![EventLoop-execution-logic](/img/network_nio/EventLoop-execution-logic.jpg)
+
+任务的基本实现是 [Runable](https://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html)，任务可能立即执行，也可能加入队列，取决于调用 execute 方法的线程是否是 EventLoop 绑定的线程。
+
+如下图所示，一个 [NioEventLoopGroup](https://netty.io/4.1/api/io/netty/channel/nio/NioEventLoopGroup.html) 通常维护多个 [NioEventLoop](https://netty.io/4.1/api/io/netty/channel/nio/NioEventLoop.html) 。
+
+![EventLoop-allocation-for-non-blocking-transports](/img/network_nio/EventLoop-allocation-for-non-blocking-transports.jpg)
+
+当一个 Channel 注册到一个 NioEventGroup，根据上文所说的 Java NIO 知识，该 Channel 注册到一个由某个 NioEventLoop 维护的 Selector，因此，NioEventLoop 通常将处理多个 Channel 的事件。
+
+##### ChannelPipeline
+
+事件分为入站（inbound）事件和出站（outbound）事件。一个事件被 EventLoop 作为任务执行之前，它流经 [ChannelPipeline](https://netty.io/4.1/api/io/netty/channel/ChannelPipeline.html) 中已安装的一个或多个 [ChannelHandler](https://netty.io/4.1/api/io/netty/channel/ChannelHandler.html)。
 
 ![ChannelPipeline](/img/network_nio/ChannelPipeline.png)
 
-[ChannelPipeline](https://netty.io/4.1/api/io/netty/channel/ChannelPipeline.html)。敬请期待。
+每个 Channel 都有各自的 ChannelPipeline，新建 Channel 时自动创建，使用 ChannelPipeline 添加或删除 ChannelHandler 是线程安全的。ChannelPipeline 的子接口有 [ChannelInboundHandler](https://netty.io/4.1/api/io/netty/channel/ChannelInboundHandler.html) 和 [ChannelOutboundHandler](https://netty.io/4.1/api/io/netty/channel/ChannelOutboundHandler.html)，分别用于 EventLoop 处理入站事件和出站事件。
+
+![ChannelHandlerAdapter-class-hierarchy](/img/network_nio/ChannelHandlerAdapter-class-hierarchy.jpg)
+
+ChannelPipeline 实现了 [Intercepting Filter](http://www.oracle.com/technetwork/java/interceptingfilter-142169.html) 模式的高级形式，所谓 Filter 模式，常常被认为属于**责任链模式**，比如 [Servlet](https://en.wikipedia.org/wiki/Java_servlet) 的请求过滤器：
 
 ```java
 public class CustomFilter implements Filter {
@@ -584,9 +670,15 @@ public class CustomFilter implements Filter {
 }
 ```
 
+一个 Filter 可以拦截请求，也可以转发请求给下一个 Filter。为了帮助理解，[HandlerChain](https://github.com/h2cone/java-examples/blob/master/network/src/main/java/io/h2cone/network/staff/HandlerChain.java) 演示了基于链表和多态的责任链模式。对于 [DefaultChannelPipeline](https://netty.io/4.1/api/io/netty/channel/DefaultChannelPipeline.html) 来说，其链表有一个头引用变量和尾引用变量，实际上结点是包装了 ChannelHandler 的 [ChannelHandlerContext](https://netty.io/4.1/api/io/netty/channel/ChannelHandlerContext.html)，ChannelHandlerContext 定义了事件传播方法（event propagation method），事件可转发，事件在 ChannelPipeline 中流动，以 “Channel 可以读了“ 事件为例，它属于入站事件，输入的数据也在 ChannelPipeline 中流动。
+
+![Event-propagation-via-the-Channel-or-the-ChannelPipeline](/img/network_nio/Event-propagation-via-the-Channel-or-the-ChannelPipeline.jpg)
+
 #### 最少化内存复制
 
-[io.netty.buffer](https://netty.io/4.1/api/io/netty/buffer/package-summary.html)。Netty 高性能的原因之一是使用 Java NIO 和 Reactor 模式，更重要的原因是减少不必要的内存复制。敬请期待。
+Netty 高性能的原因之一是使用 Java NIO 和 Reactor 模式，为什么这么说，这里提供一个线索，Netty 中的 ServerBootstrap 的 group 方法有两个类型均为 EventLoopGroup 的参数，回想一下上文“Reactor 多线程版” 最后一张图。但是，Netty 高性能的更重要原因是**减少不必要的内存复制**。
+
+[io.netty.buffer](https://netty.io/4.1/api/io/netty/buffer/package-summary.html)。敬请期待。
 
 ### I/O 模型
 
@@ -598,7 +690,7 @@ public class CustomFilter implements Filter {
 
 > 本文首发于 https://h2cone.github.io
 
-## 认知更多
+## 更多经验
 
 - [Non-blocking I/O (Java) - Wikipedia](https://en.wikipedia.org/wiki/Non-blocking_I/O_(Java)#Channels)
 
@@ -627,8 +719,6 @@ public class CustomFilter implements Filter {
 - [Chain-of-responsibility pattern - Wikipedia](https://en.wikipedia.org/wiki/Chain-of-responsibility_pattern)
 
 - [Chain of Responsibility Design Pattern in Java](https://www.baeldung.com/chain-of-responsibility-pattern)
-
-- [Core J2EE Patterns - Intercepting Filter](https://www.oracle.com/technetwork/java/interceptingfilter-142169.html)
 
 - [Java Tutorials # Basic I/O](https://docs.oracle.com/javase/tutorial/essential/io/index.html)
 
