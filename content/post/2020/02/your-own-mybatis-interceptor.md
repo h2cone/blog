@@ -176,7 +176,7 @@ public class InterceptorChain {
 }
 ```
 
-难道这就是 **Chain-of-responsibility pattern**？注意 `pluginAll` 方法，终于还是回到了 `Interceptor`:
+这种设计是 **Chain-of-responsibility pattern**。注意 `pluginAll` 方法，终于还是回到了 `Interceptor`:
 
 ```java
 public interface Interceptor {
