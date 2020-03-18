@@ -144,7 +144,7 @@ io.h2cone.springfox.swagger2.spring.boot.autoconfigure.SpringFoxSwagger2AutoConf
 
 > Auto-configurations must be loaded that way only. Make sure that they are defined in a specific package space and that they are never the target of component scanning. Furthermore, auto-configuration classes should not enable component scanning to find additional components. Specific @Imports should be used instead.
 
-特别是第三句，自动配置类不应启用组件扫描（例如 `@ComponentScan`）以查找其他组件，应该使用指定的 `@Imports` 代替。一般情况下，自动配置类只能间接启用组件扫描，在自动配置类上声明导入了一些配置类（`@Configuration`），利用这些配置类可以启动组件扫描，查找标注了 `@Component`、`@Controller`、`@Repository`、`@Service`、`@Aspect` 等注解的类。除非，自定义注解、扫描、处理。
+特别是第三句，自动配置类不应启用组件扫描以查找其他组件，比如 `@ComponentScan`，应该使用指定的 `@Imports` 代替。一般情况下，自动配置类只能间接启用组件扫描，在自动配置类上声明导入了一些配置类（@Configuration），利用这些配置类可以启动组件扫描，查找标注了 `@Component`、`@Controller`、`@Repository`、`@Service`、`@Aspect` 等注解的类。除非，自定义注解、扫描、处理。
 
 以上代码来源于 [springfox-swagger2-spring-boot](https://github.com/h2cone/springfox-swagger2-spring-boot)，其中有如下三个模块:
 
