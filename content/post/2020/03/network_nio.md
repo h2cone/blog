@@ -51,9 +51,9 @@ Unix 的主题是“一切都是文件”。当进程申请访问 Socket 时，�
 
 ### BIO
 
-#### 准备
-
 Java 的 BIO 是指 blocking I/O，通常指 [java.io](https://docs.oracle.com/javase/8/docs/api/java/io/package-summary.html) 包组合 [java.net](https://docs.oracle.com/javase/8/docs/api/java/net/package-summary.html) 包。
+
+#### 准备
 
 ![javabio](/img/network_nio/javabio.webp)
 
@@ -69,7 +69,7 @@ Java 的 BIO 是指 blocking I/O，通常指 [java.io](https://docs.oracle.com/j
 4. 编码响应（encode）
 5. 发送响应（send/wirte）
 
-其中 1 和 5 必定是 I/O 操作，回想前文所说的 I/O 操作的本质，即字节序列的来向和去向，来向与去向在 `java.io` 中的常见类型是 [InputStream](https://docs.oracle.com/javase/8/docs/api/java/io/InputStream.html) 和 [OutputStream](https://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html).
+其中 1 和 5 必定是 I/O 操作，回想前文所说的 I/O 操作的本质，即字节序列的来向和去向，来向与去向在 java.io 中的常见类型是 [InputStream](https://docs.oracle.com/javase/8/docs/api/java/io/InputStream.html) 和 [OutputStream](https://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html).
 
 ![byte[]-Stream](/img/network_nio/byte[]-Stream.png)
 
@@ -77,7 +77,7 @@ Java 的 BIO 是指 blocking I/O，通常指 [java.io](https://docs.oracle.com/j
 
 #### Server
 
-以上内容结合 `java.net` 的 Socket API，足以编写典型的 Java BIO 服务器端程序：
+以上内容结合 java.net 的 Socket API，足以编写典型的 Java BIO 服务器端程序：
 
 ```java
 class Server implements Runnable {
@@ -126,9 +126,9 @@ class Server implements Runnable {
 }
 ```
 
-注意 Server 的 run 方法，为什么使用 [ServerSocket](https://docs.oracle.com/javase/8/docs/api/java/net/ServerSocket.html) 循环？	首先 `accept()` 是阻塞方法，表现为一个线程（Acceptor）调用该方法时“暂停执行”，直到 `ServerSocket` 准备好接受（accpet）客户端发起的连接（connect）时方法返回，该线程“恢复执行”，返回值的类型是 [Socket](https://docs.oracle.com/javase/8/docs/api/java/net/Socket.html)，表示客户端的 Socket 副本。然后，该线程命令工作线程处理 Socket，这里用 `Handler` 的 `run` 方法作为工作线程的任务，根据 `Executor` 的一般实现，`execute()` 非阻塞，立即返回。最后，继续循环。因此，如果没有工作线程且只有一个线程，容易出现该线程正在处理一个 Socket 而无法脱身去处理其它客户端的请求（供不应求）。
+注意 Server 的 run 方法，为什么使用 [ServerSocket](https://docs.oracle.com/javase/8/docs/api/java/net/ServerSocket.html) 循环？首先 accept() 是阻塞方法，表现为一个线程（Acceptor）调用该方法时“暂停执行”，直到 ServerSocket 准备好接受（accpet）客户端发起的连接（connect）时方法返回，该线程“恢复执行”，返回值的类型是 [Socket](https://docs.oracle.com/javase/8/docs/api/java/net/Socket.html)，表示客户端的 Socket 副本。然后，该线程命令工作线程处理 Socket，这里用 Handler 的 run 方法作为工作线程的任务，根据 Executor 的一般实现，execute() 非阻塞，立即返回。最后，继续循环。因此，如果没有工作线程且只有一个线程，容易出现该线程正在处理一个 Socket 而无法脱身去处理其它客户端的请求（供不应求）。
 
-建议使用日志框架代替 `e.printStackTrace()` 和 `System.out.print*`，还有合理设置线程池的参数。仅仅为了方便展示，采用以下方式启动 Server：
+建议使用日志框架代替 e.printStackTrace() 和 System.out.print*，还有合理设置线程池的参数，仅仅为了方便展示，采用以下方式启动 Server：
 
 ```java
 public static void main(String[] args) {
@@ -159,7 +159,7 @@ public static void main(String[] args) {
 }
 ```
 
-处理 Socket 的过程首先是使用 `Socket` 得到 `InputStream` 和 `OutputStream`，然后从中读取字节数组，解码为字符串，打印表示收到了客户端发送的数据，最后以“自我介绍”回复客户端。注意，调用 `read` 方法将阻塞，直到输入数据可用或检测到 [EOF](https://en.wikipedia.org/wiki/End-of-file) 或引发异常为止。
+处理 Socket 的过程首先是使用 Socket 得到 InputStream 和 OutputStream，然后从中读取字节数组，解码为字符串，打印表示收到了客户端发送的数据，最后以“自我介绍”回复客户端。注意，调用 read 方法将阻塞，直到输入数据可用或检测到 [EOF](https://en.wikipedia.org/wiki/End-of-file) 或引发异常为止。
 
 多客户端可以用多线程模拟。客户端先向服务器端发送“自我介绍”，然后尝试读取来自服务器端的消息：
 
@@ -230,7 +230,7 @@ Java NIO 有三大核心组件：
 
 ![selector_mid_layer](/img/network_nio/selector_mid_layer.png)
 
-[SelectionKey](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/SelectionKey.html) 定义了四种 I/O 事件： `OP_READ`、`OP_WRITE`、`OP_CONNECT`、`OP_ACCEPT`，均符合伯克利 Sockets 的语义，`OP_CONNECT` 为客户端专有，`OP_ACCEPT` 为服务器端专有。
+[SelectionKey](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/SelectionKey.html) 定义了四种 I/O 事件： `OP_READ`、`OP_WRITE`、`OP_CONNECT`、`OP_ACCEPT`，均符合伯克利 Sockets 的语义，OP_CONNECT 为客户端专有，OP_ACCEPT 为服务器端专有。
 
 - OP_ACCEPT。ServerSocketChannel 可以接受连接了。
 
@@ -254,7 +254,7 @@ Buffer 维护了 position、limit、capacity 变量，具有写模式和读模�
 
 3. 从 ByteBuffer 读取字节数组。
 
-4. 调用 `clear()` 或 `compact()` 清空 ByteBuffer。
+4. 调用 clear() 或 compact() 清空 ByteBuffer。
 
 Channel 已提供直接从中读取 ByteBuffer 或直接写入其中的方法。
 
@@ -385,15 +385,15 @@ class Reactor implements Runnable {
 }
 ```
 
-（1）Reactor 构造器。使用 serverSocketChannel 注册 selector 并添加感兴趣的 I/O 事件（`OP_ACCEPT`）之后，返回得到一个 selectionKey，selectionKey 可添加一个附件，这个附件是 Acceptor 对象的引用。
+（1）Reactor 构造器。使用 serverSocketChannel 注册 selector 并添加感兴趣的 I/O 事件（OP_ACCEPT）之后，返回得到一个 selectionKey，selectionKey 可添加一个附件，这个附件是 Acceptor 对象的引用。
 
-（2）分派循环。首先，调用 `selector.select()` 时阻塞，直到选中了一组已准备好进行 I/O 操作的 Channel 所对应的键（SelectionKey），初始只对 `OP_ACCEPT` 感兴趣。然后，迭代得到相应的键，因为一开始只有一个 Channel，所以当前键集合大小为 1，调用 dispatch 时得到的键的附件即是 Acceptor 对象的引用。
+（2）分派循环。首先，调用 `selector.select()` 时阻塞，直到选中了一组已准备好进行 I/O 操作的 Channel 所对应的键（SelectionKey），初始只对 OP_ACCEPT 感兴趣。然后，迭代得到相应的键，因为一开始只有一个 Channel，所以当前键集合大小为 1，调用 dispatch 时得到的键的附件即是 Acceptor 对象的引用。
 
 （3）分派方法。由（2）可知，Acceptor 的 `run` 方法被调用，但不直接启动新线程。
 
 （4）Acceptor 运行方法。传递 selector 和 socketChannel 来新建 Handler 对象，不直接调用其 `run` 方法，而是返回到分派循环。
 
-（5）Handler 构造器。用当前的 socketChannel 注册 selector 并添加感兴趣的 I/O 事件（`OP_READ`）和附件（Handler 对象的引用），但要注意唤醒 selector，使尚未返回的第一个 select 操作立即返回，理由是有新的 Channel 加入。
+（5）Handler 构造器。用当前的 socketChannel 注册 selector 并添加感兴趣的 I/O 事件（OP_READ）和附件（Handler 对象的引用），但要注意**唤醒** selector，使尚未返回的第一个 select 操作立即返回，理由是有新的 Channel 加入。
 
 （6）Handler 运行方法。在分派循环中，若可读的 socketChannel 对应的键被选中，则该键的附件，即 Handler 对象的 `run` 方法被调用，对 Channel 进行非阻塞读写操作，中间还有 process 方法（业务逻辑），写完之后取消该键关联的 socketChannel 对 selector 的注册。
 
@@ -678,11 +678,61 @@ public class CustomFilter implements Filter {
 
 Netty 高性能的原因之一是使用 Java NIO 和 Reactor 模式，为什么这么说，这里提供一个线索，Netty 中的 ServerBootstrap 的 group 方法有两个类型均为 EventLoopGroup 的参数，回想一下上文“Reactor 多线程版” 最后一张图。但是，Netty 高性能的更重要原因是**减少不必要的内存复制**。
 
-[io.netty.buffer](https://netty.io/4.1/api/io/netty/buffer/package-summary.html)。敬请期待。
+Netty 使用它自己的 [buffer](https://netty.io/4.1/api/io/netty/buffer/package-summary.html) API 代替 Java NIO 的 ByteBuffer 来表示字节序列。Netty 新的缓冲区类型，名为 [ByteBuf](https://netty.io/4.1/api/io/netty/buffer/ByteBuf.html)，它具有如下特性：
 
-### I/O 模型
+- 您可以根据需要定义缓冲区类型。
+- 透明的**零复制**是通过内置的聚合缓冲区类型实现的。
+- 开箱即有，动态扩容。
+- 不需要调用 flip() 了。
+- 它通常比 ByteBuffer 快。
 
-敬请期待。
+聚合缓冲区类型是指 [CompositeByteBuf](https://netty.io/4.1/api/io/netty/buffer/CompositeByteBuf.html)。
+
+![CompositeByteBuf-holding-a-header-and-body](/img/network_nio/CompositeByteBuf-holding-a-header-and-body.jpg)
+
+假设有两个字节数组，header 和 body，在模块化系统中，这两个字节数组可以由不同的模块生产，然后在消息发送后聚合。如果用 Java NIO 的 ByteBuffer 来聚合两个字节数组，一般人可能考虑新建一个缓冲区数组并持有两个字节数组，或者新建一个缓冲区并插入两个字节数组。
+
+```java
+// Use an array to composite them
+ByteBuffer[] message = new ByteBuffer[] { header, body };
+```
+
+```java
+// Use copy to merge both
+ByteBuffer message = ByteBuffer.allocate(header.remaining()+ body.remaining();
+message.put(header);
+message.put(body);
+message.flip();
+```
+
+以上两种方式不仅有复制内存复制的开销，而且第一种方式还引入了不兼容或复杂的缓冲区数组类型。
+
+```java
+// The composite type is incompatible with the component type.
+ByteBuf message = Unpooled.wrappedBuffer(header, body);
+
+// Therefore, you can even create a composite by mixing a composite and an
+// ordinary buffer.
+ByteBuf messageWithFooter = Unpooled.wrappedBuffer(message, footer);
+```
+
+如果使用 Netty 的 ByteBuf 实现，则内存复制操作的次数几乎为零，因为缓冲区引用了两个或多个数组（指针）。
+
+```java
+CompositeByteBuf compBuf = Unpooled.compositeBuffer();
+ByteBuf headerBuf = ...;    // can be backing or direct
+ByteBuf bodyBuf = ...;      // can be backing or direct
+compBuf.addComponent(headerBuf, bodyBuf);
+```
+
+同理，聚合两个缓冲区，使用指针而不是复制原缓冲区。
+
+```java
+ByteBuf buf = Unpooled.copiedBuffer("Hello, World!", StandardCharsets.UTF_8);
+ByteBuf sliced = buf.slice(0, 14);
+```
+
+除此之外，缓冲区的切片，返回的切片引用了原缓冲区的子数组。
 
 ## 文中代码
 
@@ -716,6 +766,8 @@ Netty 高性能的原因之一是使用 Java NIO 和 Reactor 模式，为什么�
 
 - [Netty in Action # Chapter 6. ChannelHandler and ChannelPipeline](https://livebook.manning.com/book/netty-in-action/chapter-6/)
 
+- [Netty in Action # Chapter 5. ByteBuf](https://livebook.manning.com/book/netty-in-action/chapter-5/)
+
 - [Chain-of-responsibility pattern - Wikipedia](https://en.wikipedia.org/wiki/Chain-of-responsibility_pattern)
 
 - [Chain of Responsibility Design Pattern in Java](https://www.baeldung.com/chain-of-responsibility-pattern)
@@ -727,4 +779,3 @@ Netty 高性能的原因之一是使用 Java NIO 和 Reactor 模式，为什么�
 - [Vert.x # Guide](https://vertx.io/docs/guide-for-java-devs/)
 
 - [一文读懂高性能网络编程中的I/O模型](https://mp.weixin.qq.com/s/saZl6PsVoYKF9QwGBGFJwg)
-
