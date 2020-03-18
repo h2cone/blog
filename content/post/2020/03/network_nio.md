@@ -53,7 +53,7 @@ Unix 的主题是“一切都是文件”。当进程申请访问 Socket 时，�
 
 Java 的 BIO 是指 blocking I/O，通常指 [java.io](https://docs.oracle.com/javase/8/docs/api/java/io/package-summary.html) 包组合 [java.net](https://docs.oracle.com/javase/8/docs/api/java/net/package-summary.html) 包。
 
-#### 准备
+#### 模型
 
 ![javabio](/img/network_nio/javabio.webp)
 
@@ -204,11 +204,11 @@ public class BioClient {
 
 Java 的 NIO 是指 non-blocking I/O 或 New I/O，通常指 [java.nio](https://docs.oracle.com/javase/8/docs/api/java/nio/package-summary.html) 包组合 [java.net](https://docs.oracle.com/javase/8/docs/api/java/net/package-summary.html) 包。
 
+#### 模型
+
 ![javanio](/img/network_nio/javanio.webp)
 
 上图来自“点亮架构”公众号的文章插图。我在[实现 RPC](https://h2cone.github.io/post/2019/12/implementing-rpc/)中说过，Java NIO 致力于用比 Java BIO 更少的线程处理更多的连接。非常符合人类的直觉，比如，一个不希望被老板开除的店小二将一个客人的订单交给后厨后，不会等待后厨做好后上菜，而是立即去接待其它客人入座、点餐、结账等，后厨做菜完成后自然会通知店小二上菜。
-
-#### 组件
 
 Java NIO 有三大核心组件：
 
@@ -218,13 +218,15 @@ Java NIO 有三大核心组件：
 
 - Selectors。判断一组 Channel 中哪些发生了用户感兴趣的 I/O 事件。
 
-还有一些不容忽视：
+一些不容忽视：
 
 - SelectionKeys。维护 I/O 事件状态和附件。
 
 - [ServerSocketChannel](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/ServerSocketChannel.html)。代替 ServerSocket。
 
 - [SocketChannel](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/SocketChannel.html)。代替 Socket。
+
+#### Channel&Selector
 
 [Selector](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/Selector.html) 是线程和 Channel 的中间层，多个连接可由一个线程处理。
 
@@ -237,6 +239,8 @@ Java NIO 有三大核心组件：
 - OP_READ。例如，SocketChannel 可以读了。
 
 - OP_WRITE。例如，SocketChannel 可以写了。
+
+#### Buffer
 
 Buffer 维护了 position、limit、capacity 变量，具有写模式和读模式。
 
@@ -260,7 +264,29 @@ Channel 已提供直接从中读取 ByteBuffer 或直接写入其中的方法。
 
 ![ByteBuffer-Channel](/img/network_nio/ByteBuffer-Channel.png)
 
-值得一提的是，ByteBuffer 支持分配直接的字节缓存区，即堆外内存。
+值得一提的是，ByteBuffer 支持分配直接字节缓冲区，即堆外内存。
+
+```java
+public static ByteBuffer allocateDirect(int capacity) {
+    return new DirectByteBuffer(capacity);
+}
+```
+
+```java
+public static ByteBuffer allocate(int capacity) {
+    if (capacity < 0)
+        throw new IllegalArgumentException();
+    return new HeapByteBuffer(capacity, capacity);
+}
+```
+
+DirectByteBuffer 通常比 HeapByteBuffer 内存复制次数更少。以写 Socket 为例，JVM 先从堆中复制数据到进程缓冲区，操作系统内核再从进程缓冲区复制数据到内核缓冲区，然后从内核缓冲区复制数据到 I/O 设备。如果分配直接缓冲区，那么就减去了从堆复制数据到进程缓冲区的操作。`allocateDirect` 方法使用了 `sun.misc.Unsafe#allocateMemory` 方法，这种方法返回的缓冲区通常比非直接缓冲区具有更高的分配和释放成本，因为堆外内存在 GC 范围之外，即使 `java.nio.DirectByteBuffer` 实现了自己的缓冲区对象管理，仍然有堆外内存泄露的风险，通常要考虑以下的 JVM 选项：
+
+```java
+-XX:MaxDirectMemorySize=size
+```
+
+一个直接字节缓冲区也可以通过将文件区域直接 [mapping](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/FileChannel.html#map-java.nio.channels.FileChannel.MapMode-long-long-) 到内存中来创建，原理是 [mmap](https://en.wikipedia.org/wiki/Mmap)。
 
 #### Reactor
 
@@ -676,8 +702,6 @@ public class CustomFilter implements Filter {
 
 #### 最少化内存复制
 
-Netty 高性能的原因之一是使用 Java NIO 和 Reactor 模式，为什么这么说，这里提供一个线索，Netty 中的 ServerBootstrap 的 group 方法有两个类型均为 EventLoopGroup 的参数，回想一下上文“Reactor 多线程版” 最后一张图。但是，Netty 高性能的更重要原因是**减少不必要的内存复制**。
-
 Netty 使用它自己的 [buffer](https://netty.io/4.1/api/io/netty/buffer/package-summary.html) API 代替 Java NIO 的 ByteBuffer 来表示字节序列。Netty 新的缓冲区类型，名为 [ByteBuf](https://netty.io/4.1/api/io/netty/buffer/ByteBuf.html)，它具有如下特性：
 
 - 您可以根据需要定义缓冲区类型。
@@ -685,6 +709,8 @@ Netty 使用它自己的 [buffer](https://netty.io/4.1/api/io/netty/buffer/packa
 - 开箱即有，动态扩容。
 - 不需要调用 flip() 了。
 - 它通常比 ByteBuffer 快。
+
+注意，上面的零复制并不是操作系统级零复制，操作系统级零复制是指 CPU 不执行将数据从一个存储区域复制到另一个存储区域的任务，详情见 [zero-copy](https://en.wikipedia.org/wiki/Zero-copy)。如果 I/O 设备支持 [DMA](https://en.wikipedia.org/wiki/Direct_memory_access) 的 [scatter-gather](https://en.wikipedia.org/wiki/Vectored_I/O) 操作，那么 Java NIO 提供操作系统级零复制方法是 [transferTo](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/FileChannel.html#transferTo-long-long-java.nio.channels.WritableByteChannel-)。
 
 聚合缓冲区类型是指 [CompositeByteBuf](https://netty.io/4.1/api/io/netty/buffer/CompositeByteBuf.html)。
 
@@ -699,13 +725,13 @@ ByteBuffer[] message = new ByteBuffer[] { header, body };
 
 ```java
 // Use copy to merge both
-ByteBuffer message = ByteBuffer.allocate(header.remaining()+ body.remaining();
+ByteBuffer message2 = ByteBuffer.allocate(header.remaining() + body.remaining());
 message.put(header);
 message.put(body);
 message.flip();
 ```
 
-以上两种方式不仅有复制内存复制的开销，而且第一种方式还引入了不兼容或复杂的缓冲区数组类型。
+以上两种方式不仅有内存复制的成本，而且第一种方式还引入了不兼容或复杂的缓冲区数组类型。
 
 ```java
 // The composite type is incompatible with the component type.
@@ -716,7 +742,7 @@ ByteBuf message = Unpooled.wrappedBuffer(header, body);
 ByteBuf messageWithFooter = Unpooled.wrappedBuffer(message, footer);
 ```
 
-如果使用 Netty 的 ByteBuf 实现，则内存复制操作的次数几乎为零，因为缓冲区引用了两个或多个数组（指针）。
+如果使用 Netty 的 ByteBuf 实现，则内存复制次数几乎为零，因为缓冲区引用了两个或多个数组（指针）。
 
 ```java
 CompositeByteBuf compBuf = Unpooled.compositeBuffer();
@@ -725,14 +751,54 @@ ByteBuf bodyBuf = ...;      // can be backing or direct
 compBuf.addComponent(headerBuf, bodyBuf);
 ```
 
-同理，聚合两个缓冲区，使用指针而不是复制原缓冲区。
+同理，聚合两个缓冲区，使用指针而不是从原缓冲区复制。
 
 ```java
 ByteBuf buf = Unpooled.copiedBuffer("Hello, World!", StandardCharsets.UTF_8);
 ByteBuf sliced = buf.slice(0, 14);
 ```
 
-除此之外，缓冲区的切片，返回的切片引用了原缓冲区的子数组。
+同理，缓冲区的切片，返回的切片引用了原缓冲区的子数组。
+
+#### 为什么高性能
+
+为什么 Netty 吞吐量更高、延迟更低、资源消耗更少？
+
+- 使用 Java NIO 和 Reactor 模式。为什么 Java NIO 高效，下文 “I/O 模型” 将给出操作系统层解释。为什么说 Netty 使用了 Reactor 模式，这里提供一个线索，Netty 中的 ServerBootstrap 的 group 方法有两个类型均为 EventLoopGroup 的参数，回想一下上文“Reactor 多线程版” 最后一张图。
+
+- GC 优化。例如，使用缓冲区对象池，复用缓冲区对象避免了频繁新建和回收的延迟，且使用直接缓冲区，详情见 [Netty 4 at Twitter: Reduced GC Overhead](https://blog.twitter.com/engineering/en_us/a/2013/netty-4-at-twitter-reduced-gc-overhead.html) 和 [PooledByteBufAllocator.java](https://github.com/netty/netty/blob/4.1/buffer/src/main/java/io/netty/buffer/PooledByteBufAllocator.java)。
+
+- 减少不必要的内存复制。如上文所说。
+
+- ...
+
+## I/O 模型
+
+经典的 《UNIX Network Programming》已经完美诠释了五种 I/O 模型。
+
+![unix-io-model](/img/network_nio/unix-io-model.png)
+
+- blocking I/O
+- nonblocking I/O
+- I/O multiplexing (`select` and `poll`)
+- signal driven I/O (`SIGIO`)
+- asynchronous I/O (the POSIX `aio_` functions)
+
+目前来说，signal driven I/O 和 asynchronous I/O 在 Linux 的应用较为罕见，因此本文只关注前三种。
+
+回想开头所说的 I/O 的本质，但别忘了操作系统是应用程序和硬件的中间层。
+
+- 输入是从 I/O 设备复制字节序列到内核缓冲区，然后从内核缓冲区复制字节序列到进程缓冲区。
+
+- 输出是从进程缓冲区复制字节序列到内核缓冲区，然后从内核缓冲区复制字节序列到 I/O 设备。
+
+### blocking I/O & nonblocking I/O
+
+### I/O multiplexing
+
+#### select & poll
+
+#### epoll
 
 ## 文中代码
 
@@ -742,19 +808,11 @@ ByteBuf sliced = buf.slice(0, 14);
 
 ## 更多经验
 
-- [Non-blocking I/O (Java) - Wikipedia](https://en.wikipedia.org/wiki/Non-blocking_I/O_(Java)#Channels)
-
 - [Scalable IO in Java - Doug Lea](http://gee.cs.oswego.edu/dl/cpjslides/nio.pdf)
 
 - [Java NIO trick and trap](http://www.blogjava.net/killme2008/archive/2010/11/22/338420.html)
 
-- [UNP # Chapter 6. I/O Multiplexing: The select and poll Functions](https://notes.shichao.io/unp/ch6/#io-models)
-
-- [6.2 I/O Models - MASTERRAGHU](http://www.masterraghu.com/subjects/np/introduction/unix_network_programming_v1.3/ch06lev1sec2.html)
-
 - [It’s all about buffers: zero-copy, mmap and Java NIO](https://medium.com/@xunnan.xu/its-all-about-buffers-zero-copy-mmap-and-java-nio-50f2a1bfc05c)
-
-- [Zero-copy - Wikipedia](https://en.wikipedia.org/wiki/Zero-copy)
 
 - [Build Your Own Netty — Reactor Pattern](https://medium.com/@kezhenxu94/in-the-previous-post-we-already-have-an-echoserver-that-is-implemented-with-java-nio-lets-check-ccf5b5b32da9)
 
@@ -772,10 +830,24 @@ ByteBuf sliced = buf.slice(0, 14);
 
 - [Chain of Responsibility Design Pattern in Java](https://www.baeldung.com/chain-of-responsibility-pattern)
 
-- [Java Tutorials # Basic I/O](https://docs.oracle.com/javase/tutorial/essential/io/index.html)
+- [High Performance JVM Networking with Netty - Speaker Deck](https://speakerdeck.com/daschl/high-performance-jvm-networking-with-netty)
 
-- [Java Tutorials # Custom Networking](https://docs.oracle.com/javase/tutorial/networking/)
+- [七种WebSocket框架的性能比较](https://colobu.com/2015/07/14/performance-comparison-of-7-websocket-frameworks/)
+
+- [Oracle # Enhancements in Java I/O](https://docs.oracle.com/javase/8/docs/technotes/guides/io/enhancements.html)
+
+- [Netty # Native transports](https://netty.io/wiki/native-transports.html)
 
 - [Vert.x # Guide](https://vertx.io/docs/guide-for-java-devs/)
 
+- [UNP # Chapter 6. I/O Multiplexing: The select and poll Functions](https://notes.shichao.io/unp/ch6/#io-models)
+
+- [6.2 I/O Models - MASTERRAGHU](http://www.masterraghu.com/subjects/np/introduction/unix_network_programming_v1.3/ch06lev1sec2.html)
+
 - [一文读懂高性能网络编程中的I/O模型](https://mp.weixin.qq.com/s/saZl6PsVoYKF9QwGBGFJwg)
+
+- [select、poll、epoll之间的区别总结[整理]](https://www.cnblogs.com/anker/p/3265058.html)
+
+- [Java Tutorials # Basic I/O](https://docs.oracle.com/javase/tutorial/essential/io/index.html)
+
+- [Java Tutorials # Custom Networking](https://docs.oracle.com/javase/tutorial/networking/)
