@@ -35,7 +35,7 @@ Java 基本功（一）。
 
 ![4_01_ThreadDiagram](/img/thread_concurrent/4_01_ThreadDiagram.jpg)
 
-多线程执行任务更多或更快，如果主线程阻塞在耗时任务，整个程序可能会卡顿或长时间无响应，解决办法之一便是新建一个工作线程专门执行这个耗时任务，而主线程则继续执行其它任务。例如，前面提到的手机 APP（特别是 Android APP），UI 线程被阻塞后很有可能无法正常人机交互了，用户体验极差。更进一步，单进程的多线程之间的协作有可能提高 client-server 系统的性能，譬如异步调用缩短了请求响应时间（也许总延迟几乎没变）。最重要的是，虽然一个传统的 CPU 只能交错执行一个进程的多个线程，但随着多核处理器和超线程（hyperthreading）的普及，面对多任务或大任务的执行，多线程程序的性能上限具有更高的天花板，因为减少了执行多个任务需要模拟并发的开销，还因为处理器可以并行执行多个线程。
+多线程执行任务更多或更快，如果主线程阻塞在耗时任务，整个程序可能会卡顿或长时间无响应，解决办法之一便是新建一个工作线程专门执行这个耗时任务，而主线程则继续执行其它任务。例如，前面提到的手机 APP（特别是 Android APP），UI 线程被阻塞后很有可能无法正常人机交互了，用户体验极差。更进一步，单进程的多线程之间的协作有可能提高 client-server 系统的性能，譬如异步调用缩短了请求响应时间（也许总延迟几乎没变）。最重要的是，虽然一个传统的 CPU 只能交错执行一个进程的多个线程，但随着多核处理器和超线程（hyperthreading）的普及，面对多任务或大任务的执行，多线程程序的性能上限具有更高的天花板，因为减少了执行多个任务需要模拟并发的开销，还因为处理器可以并行运行多个线程。
 
 ## 并发与并行
 
@@ -53,7 +53,7 @@ Java 基本功（一）。
 
 由此可见，如果上下文切换的耗时可以忽略不计，单处理器并发不仅执行总时间近似于串行执行总时间，还有一个优点是同时执行两个任务的假象。并行的方式非常快，但也取决于最耗时的任务。
 
-既然在多处理器计算机系统中，多线程交错执行或并行执行都有可能发生，下文将”交错或并行“统称为为”并发“。
+在多处理器计算机系统中，多线程交错执行或并行执行都有可能出现，下文将”交错或并行“统称为”并发“。
 
 ## Java 多线程
 
@@ -105,11 +105,11 @@ public class HelloRunnable implements Runnable {
 }
 ```
 
-Java 8 以上的用户也许更倾向于使用匿名内部类实现 `java.lang.Runnable` 或 Lambda 表达式简化以上代码，但都是通过调用 `java.lang.Thread#start` 方法来启动新线程，对应的本地线程（内核线程）在启动 Java 线程时创建，并在终止时回收。其中，`run` 方法是 Java 线程启动后执行的代码，即人类要求它执行的任务，而 `main` 方法的代码是 Java 用户直接或间接通过命令行启动 JVM 后执行。
+Java 8 以上的用户也许更倾向于使用匿名内部类实现 `java.lang.Runnable` 或 Lambda 表达式简化以上代码，但都是通过调用 `java.lang.Thread#start` 方法来启动新线程，对应的本地线程（内核线程）在启动 Java 线程时创建，并在终止时回收。其中，`run` 方法是 Java 线程启动后执行的语句组，即人类要求它执行的任务，而 `main` 方法的语句是 Java 用户直接或间接通过命令行启动 JVM 后执行。
 
 ![main-thread-in-java](/img/thread_concurrent/main-thread-in-java.jpeg)
 
-如上图所示，即使运行一个简单的 "Hello World" 程序，也可能在 JVM 或操作系统创建十几个或更多线程。例如执行 `main` 方法需要的主线程，主线程能启动子线程并执行后续代码，子线程也能启动其子线程并执行后续代码，而且还有其它由 HotSpot 为了内部目的而创建的线程，如 VM thread、Periodic task thread、GC threads、Compiler threads、Signal dispatcher thread。
+如上图所示，即使运行一个简单的 "Hello World" 程序，也可能在 JVM 或操作系统创建十几个或更多线程。例如执行 `main` 方法的语句需要的主线程，主线程能启动子线程并执行后续语句，子线程也能启动其子线程并执行后续语句，而且还有其它由 HotSpot 为了内部目的而创建的线程，如 VM thread、Periodic task thread、GC threads、Compiler threads、Signal dispatcher thread。
 
 ### ThreadLocal
 
@@ -141,7 +141,7 @@ public class TransactionId {
 
 - New。尚未启动的线程处于此状态。
 
-- Runnable。Java 虚拟机中执行的线程处于此状态。
+- Runnable。Java 虚拟机中正在执行的线程处于此状态。
 
 - Blocked。等待获得监视器锁（monitor lock）而被阻塞的线程处于此状态。
 
@@ -149,7 +149,7 @@ public class TransactionId {
 
 - Timed Waiting。有限期地等待另一个线程执行特定操作的线程处于此状态。
 
-- Terminated。退出的线程处于此状态。
+- Terminated。终止的线程处于此状态。
 
 如状态机所示，当线程执行不同操作时，线程状态发生转换，这些操作对应于 JDK 已提供的方法。注意上图的 o 表示 Object，t 表示 Thread。
 
@@ -256,7 +256,7 @@ Future<?> future = executorService.submit(() -> {
 Runnable runnable = new FutureTask<>(callable);
 ```
 
-[Future](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html) 表示异步结果。主线程调用 `Future#get` 方法时被迫等待，直到子线程完成相应的任务后，主线程从 `Future#get` 方法返回得到结果并执行后续代码。
+[Future](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html) 表示异步结果。主线程调用 `Future#get` 方法时被迫等待，直到子线程完成相应的任务后，主线程从 `Future#get` 方法返回得到结果并执行后续语句。
 
 ```java
 CompletableFuture<Object> future = CompletableFuture.supplyAsync(() -> {
@@ -518,7 +518,7 @@ public void testIncrementSyncMethod() throws InterruptedException {
 
 防止线程干扰和内存一致性错误的机制是**同步（Synchronization）**。关键字 `synchronized`，翻译为已同步。当只有一个线程调用一个同步方法，它会隐式获得该方法的对象的内置锁（intrinsic lock）或监视器锁（monitor lock），并在该方法返回时隐式释放该对象的内置锁（即使返回是由未捕获异常引起的）。如果是用 `synchronized` 修饰的静态方法，这个线程会获得该静态方法所属的类所关联的 Class 对象的内置锁，因此，通过不同于该类的任何实例的锁来控制对该类的静态字段的访问。
 
-这足以解释上面的两个线程读写同一个变量重复百万次，最后结果仍然正确的原因。两个线程调用同一个同步方法，一个线程快于另一个线程获得了这个方法的对象的内置锁，较慢的线程则被迫等待或被阻塞，已拥有该对象的内置锁的线程执行该方法的代码，修改共享实例字段，该方法返回时隐式释放了该对象的内置锁，另一个线程有机会拥有该对象的内置锁......即使重复多次，一个时刻只能有一个线程正在访问共享实例字段，另一个线程被迫等待或被阻塞，也就是说这个两个线程对于共享实例字段的访问是**互斥**的，也就不会出现线程干扰和内存一致性错误。
+这足以解释上面的两个线程读写同一个变量重复百万次，最后结果仍然正确的原因。两个线程调用同一个同步方法，一个线程快于另一个线程获得了这个方法的对象的内置锁，较慢的线程则被迫等待或被阻塞，已拥有该对象的内置锁的线程执行该方法的语句，修改共享实例字段，该方法返回时隐式释放了该对象的内置锁，另一个线程有机会拥有该对象的内置锁......即使重复多次，一个时刻只能有一个线程正在访问共享实例字段，另一个线程被迫等待或被阻塞，也就是说这个两个线程对于共享实例字段的访问是**互斥**的，也就不会出现线程干扰和内存一致性错误。
 
 线程 1 | 线程 2 | &nbsp; | 整数值
 :---: | :---: | :---: | :---:
@@ -595,7 +595,7 @@ public void testIncrementSyncStmt() throws InterruptedException {
 }
 ```
 
-采用同步语句需要显式指定一个提供内置锁的对象，同步语句包裹的代码块（临界区），多线程互斥访问该对象的状态（实例字段或静态字段）。
+采用同步语句需要显式指定一个提供内置锁的对象，同步语句建立临界区，多线程互斥访问该对象的状态（实例字段或静态字段）。
 
 #### 膨胀
 
@@ -696,7 +696,7 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 }
 ```
 
-如上所示，代码在某方法体内，因为 sb 是本地变量，所以调用 `append` 方法可以省略锁，这叫做锁消除（lock elision）。
+如上所示，语句在某方法体内，因为 sb 是本地变量，所以调用 `append` 方法可以省略锁，这叫做锁消除（lock elision）。
 
 #### 粗化
 
@@ -977,7 +977,7 @@ public final native boolean compareAndSwapInt(Object var1, long var2, int var4, 
 public final native boolean compareAndSwapLong(Object var1, long var2, long var4, long var6);
 ```
 
-注意其中的 `native`，也就是说，下层的 `compareAndSwap` 函数由 C/C++ 实现，而 Java 代码可通过 [JNI](https://en.wikipedia.org/wiki/Java_Native_Interface) 调用这个函数。
+注意其中的 `native`，也就是说，下层的 `compareAndSwap` 函数由 C/C++ 实现，而 Java 程序可通过 [JNI](https://en.wikipedia.org/wiki/Java_Native_Interface) 调用这个函数。
 虽然 JDK 没有包含 `sun.misc.Unsafe` 的源文件，但是通过对 `Unsafe.class`反编译，可以确定 `incrementAndGet` 方法同样使用了 CAS 函数，并且也使用 CAS 循环。
 
 ```java
