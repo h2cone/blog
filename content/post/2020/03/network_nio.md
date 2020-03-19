@@ -698,9 +698,38 @@ public class CustomFilter implements Filter {
 }
 ```
 
-一个 Filter 可以拦截请求，也可以转发请求给下一个 Filter。为了帮助理解，[HandlerChain](https://github.com/h2cone/java-examples/blob/master/network/src/main/java/io/h2cone/network/staff/HandlerChain.java) 演示了基于链表和多态的责任链模式。对于 [DefaultChannelPipeline](https://netty.io/4.1/api/io/netty/channel/DefaultChannelPipeline.html) 来说，其链表有一个头引用变量和尾引用变量，实际上结点是包装了 ChannelHandler 的 [ChannelHandlerContext](https://netty.io/4.1/api/io/netty/channel/ChannelHandlerContext.html)，ChannelHandlerContext 定义了事件传播方法（event propagation method），事件可转发，事件在 ChannelPipeline 中流动，以 Channel 读就绪为例，它属于入站事件，输入的数据也在 ChannelPipeline 中流动。
+一个 Filter 可以拦截请求，也可以转发请求给下一个 Filter。为了帮助理解，[HandlerChain](https://github.com/h2cone/java-examples/blob/master/network/src/main/java/io/h2cone/network/staff/HandlerChain.java) 演示了基于链表和多态的责任链模式。
+
+对于 [DefaultChannelPipeline](https://netty.io/4.1/api/io/netty/channel/DefaultChannelPipeline.html) 来说，其链表有一个头引用变量和尾引用变量，实际上结点是包装了 ChannelHandler 的 [ChannelHandlerContext](https://netty.io/4.1/api/io/netty/channel/ChannelHandlerContext.html)，ChannelHandlerContext 定义了事件传播方法（event propagation method），例如 [ChannelHandlerContext.fireChannelRead(Object)](https://netty.io/4.1/api/io/netty/channel/ChannelHandlerContext.html#fireChannelRead-java.lang.Object-) 和 [ChannelOutboundInvoker.write(Object)](https://netty.io/4.1/api/io/netty/channel/ChannelOutboundInvoker.html#write-java.lang.Object-)，事件在 ChannelPipeline 中流动。
+
+以 Channel 读就绪为例，它属于入站事件，输入的数据也在 ChannelPipeline 中流动。
 
 ![Event-propagation-via-the-Channel-or-the-ChannelPipeline](/img/network_nio/Event-propagation-via-the-Channel-or-the-ChannelPipeline.jpg)
+
+若以服务器端接受请求和发送响应为例，假设 RequestDecoder 和 BussinessHandler 都继承了 [ChannelInboundHandlerAdapter](https://netty.io/4.1/api/io/netty/channel/ChannelInboundHandlerAdapter.html)，ResponseEncoder 继承了 [ChannelOutboundHandlerAdapter](https://netty.io/4.1/api/io/netty/channel/ChannelOutboundHandlerAdapter.html)。
+
+```java
+ChannelPipeline pipeline = channel.pipeline();
+pipeline.addLast(new RequestDecoder());
+pipeline.addLast(new ResponseEncoder());
+pipeline.addLast(new BussinessHandler());
+```
+
+（1）接受请求。
+
+```
+-> RequestDecoder（解码）-> ResponseEncoder（非触发）-> BussinessHandler（处理）->
+```
+
+（2）业务逻辑。
+
+假设处理完成后调用 [ChannelOutboundInvoker.writeAndFlush(Object)](https://netty.io/4.1/api/io/netty/channel/ChannelOutboundInvoker.html#writeAndFlush-java.lang.Object-) 来写回复消息。
+
+（3）发送响应。
+
+```
+-> BussinessHandler（写消息）-> ResponseEncoder（编码）-> RequestDecoder（非触发）->
+```
 
 #### 最少化内存复制
 
