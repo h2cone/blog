@@ -23,6 +23,8 @@ Java 基本功（二）。
 
 从一个计算机角度来看，网络（适配器）是它的一个 I/O 设备。当计算机系统从主存复制字节序列到网络适配器时，数据流经过网络到达另一台机器，同理，计算机系统可以从网络适配器复制字节序列到主存。
 
+![计算机系统硬件组成](/img/csapp/计算机系统硬件组成.webp)
+
 ## Socket
 
 从人类的角度来看，计算机网络由一台或多台机器组成，网络中，数据从一台机器传输到另一个机器的方式通常是[分组交换](https://en.wikipedia.org/wiki/Packet_switching)，即数据被切分成适合传输的小块数据，小块数据都有各自的编号，它们从一个端点分道扬镳，但殊途同归，到另一个端点时，重新排列组合成完整数据。分组交换的好处之一是充分利用网络带宽。
@@ -126,7 +128,7 @@ class Server implements Runnable {
 }
 ```
 
-注意 Server 的 run 方法，为什么使用 [ServerSocket](https://docs.oracle.com/javase/8/docs/api/java/net/ServerSocket.html) 循环？首先 accept() 是阻塞方法，表现为一个线程（Acceptor）调用该方法时“暂停执行”，直到 ServerSocket 准备好接受（accpet）客户端发起的连接（connect）时方法返回，该线程“恢复执行”，返回值的类型是 [Socket](https://docs.oracle.com/javase/8/docs/api/java/net/Socket.html)，表示客户端的 Socket 副本。然后，该线程命令工作线程处理 Socket，这里用 Handler 的 run 方法作为工作线程的任务，根据 Executor 的一般实现，execute() 非阻塞，立即返回。最后，继续循环。因此，如果没有工作线程且只有一个线程，容易出现该线程正在处理一个 Socket 而无法脱身去处理其它客户端的请求（供不应求）。
+注意 Server 的 run 方法，为什么使用 [ServerSocket](https://docs.oracle.com/javase/8/docs/api/java/net/ServerSocket.html) 循环？首先 accept() 是阻塞方法，表现为一个线程调用该方法时被阻塞在该方法，直到 ServerSocket 准备好接受（accpet）客户端发起的连接（connect）时方法返回，该线程退出该方法，返回值的类型是 [Socket](https://docs.oracle.com/javase/8/docs/api/java/net/Socket.html)，表示客户端的 Socket 副本。然后，该线程命令工作线程处理 Socket，这里用 Handler 的 run 方法作为工作线程的任务，根据 Executor 的一般实现，execute() 非阻塞，立即返回。最后，继续循环。因此，如果没有工作线程且只有一个线程，容易出现该线程正在处理一个 Socket 而无法脱身去处理其它客户端的请求（供不应求）。
 
 建议使用日志框架代替 e.printStackTrace() 和 System.out.print*，还有合理设置线程池的参数，仅仅为了方便展示，采用以下方式启动 Server：
 
@@ -198,7 +200,7 @@ public class BioClient {
 }
 ```
 
-基于 Java NIO 的服务器端程序，虽然使用了线程池，但是处理 Socket 普遍存在阻塞 I/O，工作线程被阻塞或被迫等待较长时间，且一个 Socket 由一个线程处理，即工作线程工时利用率较低，单个这种服务器端程序应对负载增加的能力并不是最优化。
+基于 Java NIO 的服务器端程序，虽然使用了线程池，但是处理 Socket 普遍存在阻塞 I/O，工作线程被阻塞或被迫等待较长时间，且一个 Socket 由一个线程处理，即线程工时利用率较低，单个这种服务器端程序应对负载增加的能力并不是最优化。
 
 ### NIO
 
@@ -208,7 +210,7 @@ Java 的 NIO 是指 non-blocking I/O 或 New I/O，通常指 [java.nio](https://
 
 ![javanio](/img/network_nio/javanio.webp)
 
-上图来自“点亮架构”公众号的文章插图。我在[实现 RPC](https://h2cone.github.io/post/2019/12/implementing-rpc/)中说过，Java NIO 致力于用比 Java BIO 更少的线程处理更多的连接。非常符合人类的直觉，比如，一个不希望被老板开除的店小二将一个客人的订单交给后厨后，不会等待后厨做好后上菜，而是立即去接待其它客人入座、点餐、结账等，后厨做菜完成后自然会通知店小二上菜。
+上图来自“点亮架构”公众号的文章插图。我在[实现 RPC](https://h2cone.github.io/post/2019/12/implementing-rpc/)中说过，Java NIO 致力于用比 Java BIO 更少的线程处理更多的连接。非常符合人类的直觉，比如，一个不希望被老板开除的店小二将一位客人的订单交给后厨后，不会只等待后厨做好相应的菜然后上菜，而是立即去接待其它客人入座、点餐、结账等，若店小二观察到后厨做菜完成后则上菜或者后厨做菜完成后通知店小二上菜。
 
 Java NIO 有三大核心组件：
 
@@ -234,11 +236,11 @@ Java NIO 有三大核心组件：
 
 [SelectionKey](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/SelectionKey.html) 定义了四种 I/O 事件： `OP_READ`、`OP_WRITE`、`OP_CONNECT`、`OP_ACCEPT`，均符合伯克利 Sockets 的语义，OP_CONNECT 为客户端专有，OP_ACCEPT 为服务器端专有。
 
-- OP_ACCEPT。ServerSocketChannel 可以接受连接了。
+- OP_ACCEPT。ServerSocketChannel **接受就绪**。
 
-- OP_READ。例如，SocketChannel 可以读了。
+- OP_READ。例如，SocketChannel **读就绪**。
 
-- OP_WRITE。例如，SocketChannel 可以写了。
+- OP_WRITE。例如，SocketChannel **写就绪**。
 
 #### Buffer
 
@@ -544,7 +546,7 @@ public class Client {
 
 ![Using-Worker-Thread-Pools](/img/network_nio/Using-Worker-Thread-Pools.png)
 
-仔细审视单线程版可以发现，accept、read、process、write 都只由一个线程执行，但是应对高并发时单线程工作能力有限。如果它读完了一个 Channel 后在 process 方法中执行耗时任务，那么就没有空闲时间进行其它 Channel 的 accept、read、write 操作。因此，使用 Boss 线程执行非阻塞的 accept、read、write 操作，命令工作线程执行耗时的 process 操作，充分消费多处理器来提高程序性能。
+仔细审视单线程版可以发现，accept、read、process、write 都只由一个线程执行，但是应对高并发时单线程工作能力有限。如果它读完了一个 Channel 后在 process 中执行耗时任务，那么就没有空闲时间进行其它 Channel 的 accept、read、write 操作。因此，使用 Boss 线程执行非阻塞的 accept、read、write 操作，命令工作线程执行耗时的 process 操作，充分消费多处理器来提高程序性能。
 
 ```java
 static class Handler implements Runnable {
@@ -696,7 +698,7 @@ public class CustomFilter implements Filter {
 }
 ```
 
-一个 Filter 可以拦截请求，也可以转发请求给下一个 Filter。为了帮助理解，[HandlerChain](https://github.com/h2cone/java-examples/blob/master/network/src/main/java/io/h2cone/network/staff/HandlerChain.java) 演示了基于链表和多态的责任链模式。对于 [DefaultChannelPipeline](https://netty.io/4.1/api/io/netty/channel/DefaultChannelPipeline.html) 来说，其链表有一个头引用变量和尾引用变量，实际上结点是包装了 ChannelHandler 的 [ChannelHandlerContext](https://netty.io/4.1/api/io/netty/channel/ChannelHandlerContext.html)，ChannelHandlerContext 定义了事件传播方法（event propagation method），事件可转发，事件在 ChannelPipeline 中流动，以 “Channel 可以读了“ 事件为例，它属于入站事件，输入的数据也在 ChannelPipeline 中流动。
+一个 Filter 可以拦截请求，也可以转发请求给下一个 Filter。为了帮助理解，[HandlerChain](https://github.com/h2cone/java-examples/blob/master/network/src/main/java/io/h2cone/network/staff/HandlerChain.java) 演示了基于链表和多态的责任链模式。对于 [DefaultChannelPipeline](https://netty.io/4.1/api/io/netty/channel/DefaultChannelPipeline.html) 来说，其链表有一个头引用变量和尾引用变量，实际上结点是包装了 ChannelHandler 的 [ChannelHandlerContext](https://netty.io/4.1/api/io/netty/channel/ChannelHandlerContext.html)，ChannelHandlerContext 定义了事件传播方法（event propagation method），事件可转发，事件在 ChannelPipeline 中流动，以 Channel 读就绪为例，它属于入站事件，输入的数据也在 ChannelPipeline 中流动。
 
 ![Event-propagation-via-the-Channel-or-the-ChannelPipeline](/img/network_nio/Event-propagation-via-the-Channel-or-the-ChannelPipeline.jpg)
 
@@ -762,25 +764,25 @@ ByteBuf sliced = buf.slice(0, 14);
 
 #### 为什么高性能
 
-为什么 Netty 吞吐量更高、延迟更低、资源消耗更少？
+为什么 Netty 吞吐量更高、延迟更低、资源消耗更少？比如 [RxNetty vs Tomcat](https://github.com/Netflix-Skunkworks/WSPerfLab/blob/master/test-results/RxNetty_vs_Tomcat_April2015.pdf) 和 [七种 WebSocket 框架的性能比较](https://colobu.com/2015/07/14/performance-comparison-of-7-websocket-frameworks/)。
 
-- 使用 Java NIO 和 Reactor 模式。为什么 Java NIO 高效，下文 “I/O 模型” 将给出操作系统层解释。为什么说 Netty 使用了 Reactor 模式，这里提供一个线索，Netty 中的 ServerBootstrap 的 group 方法有两个类型均为 EventLoopGroup 的参数，回想一下上文“Reactor 多线程版” 最后一张图。
+- 使用 Java NIO 和 Reactor 模式。为什么 Java NIO 高效，上文的解释是“以阻塞时间换工作时间”，下文将补充操作系统层解释。为什么说 Netty 使用了 Reactor 模式，这里提供一个线索，Netty 中的 ServerBootstrap 的 group 方法有两个类型均为 EventLoopGroup 的参数，回想一下上文“Reactor 多线程版” 最后一张图。
 
 - GC 优化。例如，使用缓冲区对象池，复用缓冲区对象避免了频繁新建和回收的延迟，且使用直接缓冲区，详情见 [Netty 4 at Twitter: Reduced GC Overhead](https://blog.twitter.com/engineering/en_us/a/2013/netty-4-at-twitter-reduced-gc-overhead.html) 和 [PooledByteBufAllocator.java](https://github.com/netty/netty/blob/4.1/buffer/src/main/java/io/netty/buffer/PooledByteBufAllocator.java)。
 
 - 减少不必要的内存复制。如上文所说。
 
-- ...
+- ......
 
 ## I/O 模型
 
 经典的 《UNIX Network Programming》已经完美诠释了五种 I/O 模型。
 
-![unix-io-model](/img/network_nio/unix-io-model.png)
+![unix-io-model](/img/unp/unix-io-models.png)
 
 - blocking I/O
 - nonblocking I/O
-- I/O multiplexing (`select` and `poll`)
+- I/O multiplexing (`select` and `poll` and `epoll`)
 - signal driven I/O (`SIGIO`)
 - asynchronous I/O (the POSIX `aio_` functions)
 
@@ -794,11 +796,42 @@ ByteBuf sliced = buf.slice(0, 14);
 
 ### blocking I/O & nonblocking I/O
 
+![Blocking-IO-Model](/img/unp/Blocking-IO-Model.png)
+
+以读 Socket 为例，线程调用 `recvfrom` 函数并传递目标 Socket 文件描述符，该线程被阻塞在该函数，当目标 Socket 读就绪，内核复制数据报，复制完成后该函数返回 OK，该线程退出该函数并执行后续语句。
+
+![Nonblocking-IO-Model](/img/unp/Nonblocking-IO-Model.png)
+
+仍以读 Socket 为例，线程调用 `recvfrom` 函数并传递目标 Socket 文件描述符，该线程没被阻塞在该函数，该函数返回错误码，表示目标 Socket 非读就绪，线程重复调用该函数（轮询），当目标 Socket 读就绪，该线程被阻塞在该函数，内核复制数据报，复制完成后该函数返回 OK，该线程退出该函数并执行后续语句。
+
+注意，blocking I/O 模型和 nonblocking I/O 模型都出现了线程被阻塞在函数的现象。
+
+最后以先读 Socket 后写 Socket 为例，下面这张来自 [Shawn Xu](https://medium.com/@xunnan.xu) 的文章（文末有链接）的图详细描述了 Java BIO 的底层行为。
+
+![java-bio-under-the-hood](/img/network_nio/java-bio-under-the-hood.png)
+
+注意，JVM 发起 2 次系统调用，内核执行 2 次数据复制。
+
 ### I/O multiplexing
 
-#### select & poll
+![IO-Multiplexing-Model](/img/unp/IO-Multiplexing-Model.png)
 
-#### epoll
+继续以读 Socket 为例，线程在调用 `recvfrom` 函数前，先调用 `select` 函数并传递目标 Socket 文件描述符列表，该线程被阻塞在 `select` 函数，直到一个或多个目标 Socket 读就绪，内核对列表中可读的 Socket 文件描述符做了标记，然后 `select` 函数返回，线程执行循环语句遍历这个列表，查找已标记的 Socket 文件描述符，每命中一个 Socket 文件描述符就调用 `recvfrom` 函数并传递 Socket 文件描述符，该线程被阻塞在 `recvfrom` 函数，当目标 Socket 读就绪，内核复制数据报，复制完成后该函数返回 OK，该线程退出该函数并继续执行循环语句。`select` 函数的实现细节有明显可优化的地方，比如，内核只需回复一个只存储就绪的 Socket 文件描述符列表，可节省顺序查找的开销。
+
+虽然以上三种 I/O 模型均出现了线程被阻塞在函数的现象，但是 I/O multiplexing 模型的优势在于单一线程在相同时间内能够处理更多的连接或请求，同时组合多线程模型，例如 Reactor 模式，所以才说，一个基于 I/O multiplexing 的 Java NIO 服务器端应对负载增加的能力通常高于一个 Java BIO 服务器端。
+
+## 尾声
+
+早在 JDK 6 就已经包括了基于 Linux [epoll](https://en.wikipedia.org/wiki/Epoll) 全新的 [SelectorProvider](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/spi/SelectorProvider.html)，当检测到内核 2.6 以及更高版本时，默认使用基于 epoll 的实现，当检测到 2.6 之前的内核版本时，将使用基于 [poll](https://en.wikipedia.org/wiki/Poll_(Unix)) 的实现。
+
+Netty 则提供了特别的 JNI 传输，与基于 NIO 的传输相比，产生更少的垃圾，通常可以提高性能。
+
+- NioEventLoopGroup → EpollEventLoopGroup
+- NioEventLoop → EpollEventLoop
+- NioServerSocketChannel → EpollServerSocketChannel
+- NioSocketChannel → EpollSocketChannel
+
+详情请见 [Netty # Native transports](https://netty.io/wiki/native-transports.html)。
 
 ## 文中代码
 
@@ -832,11 +865,7 @@ ByteBuf sliced = buf.slice(0, 14);
 
 - [High Performance JVM Networking with Netty - Speaker Deck](https://speakerdeck.com/daschl/high-performance-jvm-networking-with-netty)
 
-- [七种WebSocket框架的性能比较](https://colobu.com/2015/07/14/performance-comparison-of-7-websocket-frameworks/)
-
 - [Oracle # Enhancements in Java I/O](https://docs.oracle.com/javase/8/docs/technotes/guides/io/enhancements.html)
-
-- [Netty # Native transports](https://netty.io/wiki/native-transports.html)
 
 - [Vert.x # Guide](https://vertx.io/docs/guide-for-java-devs/)
 
