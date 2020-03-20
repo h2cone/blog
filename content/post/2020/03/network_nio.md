@@ -894,9 +894,9 @@ Netty 则提供了特别的 JNI 传输，与基于 NIO 的传输相比，产生�
 
 - [High Performance JVM Networking with Netty - Speaker Deck](https://speakerdeck.com/daschl/high-performance-jvm-networking-with-netty)
 
-- [Oracle # Enhancements in Java I/O](https://docs.oracle.com/javase/8/docs/technotes/guides/io/enhancements.html)
+- [Netty # Dealing with a Stream-based Transport](https://netty.io/wiki/user-guide-for-4.x.html#wiki-h3-10)
 
-- [Vert.x # Guide](https://vertx.io/docs/guide-for-java-devs/)
+- [Oracle # Enhancements in Java I/O](https://docs.oracle.com/javase/8/docs/technotes/guides/io/enhancements.html)
 
 - [UNP # Chapter 6. I/O Multiplexing: The select and poll Functions](https://notes.shichao.io/unp/ch6/#io-models)
 
@@ -909,3 +909,5 @@ Netty 则提供了特别的 JNI 传输，与基于 NIO 的传输相比，产生�
 - [Java Tutorials # Basic I/O](https://docs.oracle.com/javase/tutorial/essential/io/index.html)
 
 - [Java Tutorials # Custom Networking](https://docs.oracle.com/javase/tutorial/networking/)
+
+- [Vert.x # Guide](https://vertx.io/docs/guide-for-java-devs/)
