@@ -357,6 +357,7 @@ future.whenComplete((response, e) -> {
 
 ## 缺少
 
+- 解决粘包/拆包问题。
 - 编码和解码的类型转换。
 - JSON 和 Protobuf。
 - 同步调用和异步调用。
