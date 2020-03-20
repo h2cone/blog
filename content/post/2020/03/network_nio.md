@@ -700,7 +700,7 @@ public class CustomFilter implements Filter {
 
 一个 Filter 可以拦截请求，也可以转发请求给下一个 Filter。为了帮助理解，[HandlerChain](https://github.com/h2cone/java-examples/blob/master/network/src/main/java/io/h2cone/network/staff/HandlerChain.java) 演示了基于链表和多态的责任链模式。
 
-对于 [DefaultChannelPipeline](https://netty.io/4.1/api/io/netty/channel/DefaultChannelPipeline.html) 来说，其链表有一个头引用变量和尾引用变量，实际上结点是包装了 ChannelHandler 的 [ChannelHandlerContext](https://netty.io/4.1/api/io/netty/channel/ChannelHandlerContext.html)，ChannelHandlerContext 定义了事件传播方法（event propagation method），例如 [ChannelHandlerContext.fireChannelRead(Object)](https://netty.io/4.1/api/io/netty/channel/ChannelHandlerContext.html#fireChannelRead-java.lang.Object-) 和 [ChannelOutboundInvoker.write(Object)](https://netty.io/4.1/api/io/netty/channel/ChannelOutboundInvoker.html#write-java.lang.Object-)，事件在 ChannelPipeline 中流动。
+对于 [DefaultChannelPipeline](https://netty.io/4.1/api/io/netty/channel/DefaultChannelPipeline.html) 来说，其链表通常有一个特别的头（HeadContext）和尾（TailContext），实际上结点是包装了 ChannelHandler 的 [ChannelHandlerContext](https://netty.io/4.1/api/io/netty/channel/ChannelHandlerContext.html)。ChannelHandlerContext 定义了事件传播方法（event propagation method），例如 [ChannelHandlerContext.fireChannelRead(Object)](https://netty.io/4.1/api/io/netty/channel/ChannelHandlerContext.html#fireChannelRead-java.lang.Object-) 和 [ChannelOutboundInvoker.write(Object)](https://netty.io/4.1/api/io/netty/channel/ChannelOutboundInvoker.html#write-java.lang.Object-)，事件在 ChannelPipeline 中流动。
 
 以 Channel 读就绪为例，它属于入站事件，输入的数据也在 ChannelPipeline 中流动。
 
@@ -802,6 +802,10 @@ ByteBuf sliced = buf.slice(0, 14);
 - 减少不必要的内存复制。如上文所说。
 
 - ......
+
+#### 应用程序优化
+
+敬请期待。
 
 ## I/O 模型
 
