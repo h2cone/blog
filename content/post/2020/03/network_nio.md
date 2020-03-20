@@ -59,7 +59,7 @@ Java 的 BIO 是指 blocking I/O，通常指 [java.io](https://docs.oracle.com/j
 
 ![javabio](/img/network_nio/javabio.webp)
 
-这是“点亮架构”公众号的[服务化基石之远程通信系列三：I/O模型](https://mp.weixin.qq.com/s/uDgueoMIEjl-HCE_fcSmSw)中的插图。基于 Java BIO 的服务器端程序，通常一个客户端（Client）向服务器端（Server）发起的请求由一个线程处理，回想前文的 TCP Socket 基本流程图，那么线程与 Socket 的关系如下：
+上图来自[服务化基石之远程通信系列三：I/O模型](https://mp.weixin.qq.com/s/uDgueoMIEjl-HCE_fcSmSw)。基于 Java BIO 的服务器端程序，通常一个客户端（Client）向服务器端（Server）发起的请求由一个线程处理，回想前文的 TCP Socket 基本流程图，那么线程与 Socket 的关系如下：
 
 ![one-socket-per-thread](/img/network_nio/one-socket-per-thread.png)
 
@@ -210,7 +210,7 @@ Java 的 NIO 是指 non-blocking I/O 或 New I/O，通常指 [java.nio](https://
 
 ![javanio](/img/network_nio/javanio.webp)
 
-上图来自“点亮架构”公众号的文章插图。我在[实现 RPC](https://h2cone.github.io/post/2019/12/implementing-rpc/)中说过，Java NIO 致力于用比 Java BIO 更少的线程处理更多的连接。非常符合人类的直觉，比如，一个不希望被老板开除的店小二将一位客人的订单交给后厨后，不会只等待后厨做好相应的菜然后上菜，而是立即去接待其它客人入座、点餐、结账等，若店小二观察到后厨做菜完成后则上菜或者后厨做菜完成后通知店小二上菜。
+上图来自[服务化基石之远程通信系列三：I/O模型](https://mp.weixin.qq.com/s/uDgueoMIEjl-HCE_fcSmSw)。Java NIO 致力于用比 Java BIO 更少的线程处理更多的连接。非常符合人类的直觉，比如，一个不希望被老板开除的店小二将一位客人的订单交给后厨后，不会只等待后厨做好相应的菜然后上菜，而是立即去接待其它客人入座、点餐、结账等，若店小二观察到后厨做菜完成后则上菜或者后厨做菜完成后通知店小二上菜。
 
 Java NIO 有三大核心组件：
 
