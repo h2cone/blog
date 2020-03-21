@@ -634,7 +634,7 @@ executorService.execute(new Reactor(port, Executors.newCachedThreadPool(), new D
 
 ![netty-components](/img/network_nio/netty-components.png)
 
-如何使用 Netty，参考 [Netty # User guide for 4.x](https://netty.io/wiki/user-guide-for-4.x.html) 和 [netty/netty/tree/4.1/example](https://github.com/netty/netty/tree/4.1/example) 以及 [normanmaurer/netty-in-action](https://github.com/normanmaurer/netty-in-action) 足矣。下文则更关注如何理解 Netty 4.x 的核心（Core）。
+如何使用 Netty，参考 [Netty # Wiki](https://github.com/netty/netty/wiki)、[netty/netty/tree/4.1/example](https://github.com/netty/netty/tree/4.1/example)、[normanmaurer/netty-in-action](https://github.com/normanmaurer/netty-in-action) 。下文则更关注如何理解 Netty 4.x 的核心（Core）。
 
 - Bootstrapor or ServerBootstrap
 - **EventLoop**
@@ -805,6 +805,8 @@ ByteBuf sliced = buf.slice(0, 14);
 
 #### 应用程序优化
 
+S0. 优化业务逻辑。
+
 S1. 避免阻塞 parentGroup 和 childGroup 中的线程。执行耗时任务（如访问数据库），考虑新建给定线程数的 EventGroup 对象，添加它和业务逻辑的 ChannelHandler 到 ChannelPipeline。
 
 S2. 复用 ByteBuf 对象，减少 GC 引起的延迟。
@@ -944,7 +946,7 @@ Netty 则提供了特别的 JNI 传输，与基于 NIO 的传输相比，产生�
 
 - [High Performance JVM Networking with Netty - Speaker Deck](https://speakerdeck.com/daschl/high-performance-jvm-networking-with-netty)
 
-- [Netty # Dealing with a Stream-based Transport](https://netty.io/wiki/user-guide-for-4.x.html#wiki-h3-10)
+- [Netty # Wiki # Reference counted objects](https://github.com/netty/netty/wiki/Reference-counted-objects)
 
 - [Oracle # Enhancements in Java I/O](https://docs.oracle.com/javase/8/docs/technotes/guides/io/enhancements.html)
 
