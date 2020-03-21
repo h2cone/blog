@@ -847,7 +847,7 @@ S2.2 继承 [SimpleChannelInboundHandler](https://netty.io/4.1/api/io/netty/chan
 
 > Be aware that depending of the constructor parameters it will release all handled messages by passing them to ReferenceCountUtil.release(Object). In this case you may need to use ReferenceCountUtil.retain(Object) if you pass the object to the next handler in the ChannelPipeline.
 
-S2.3 使用事件传播方法，转发其它结点释放。
+S2.3 使用事件传播方法，转发给其它结点释放。
 
 A1. [ChannelOption](https://netty.io/4.1/api/io/netty/channel/ChannelOption.html) 配置或参数调优。
 
