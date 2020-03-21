@@ -797,7 +797,7 @@ ByteBuf sliced = buf.slice(0, 14);
 
 - 使用 Java NIO 和 Reactor 模式。为什么 Java NIO 高效，上文的解释是“以阻塞时间换工作时间”，下文将补充操作系统层解释。为什么说 Netty 使用了 Reactor 模式，这里提供一个线索，Netty 中的 ServerBootstrap 的 group 方法有两个类型均为 EventLoopGroup 的参数，回想一下上文“Reactor 多线程版” 最后一张图。
 
-- GC 优化。例如，使用缓冲区对象池，复用缓冲区对象避免了频繁新建和回收的延迟，且使用直接缓冲区，详情见 [Netty 4 at Twitter: Reduced GC Overhead](https://blog.twitter.com/engineering/en_us/a/2013/netty-4-at-twitter-reduced-gc-overhead.html) 和 [PooledByteBufAllocator.java](https://github.com/netty/netty/blob/4.1/buffer/src/main/java/io/netty/buffer/PooledByteBufAllocator.java)。
+- GC 优化。例如，使用缓冲区对象池，复用缓冲区对象减少了频繁新建对象和收集垃圾引起的延迟，且使用直接缓冲区，详情见 [Netty 4 at Twitter: Reduced GC Overhead](https://blog.twitter.com/engineering/en_us/a/2013/netty-4-at-twitter-reduced-gc-overhead.html) 和 [PooledByteBufAllocator.java](https://github.com/netty/netty/blob/4.1/buffer/src/main/java/io/netty/buffer/PooledByteBufAllocator.java)。
 
 - 减少不必要的内存复制。如上文所说。
 
@@ -805,7 +805,53 @@ ByteBuf sliced = buf.slice(0, 14);
 
 #### 应用程序优化
 
-敬请期待。
+S1. 避免阻塞 parentGroup 和 childGroup 中的线程。执行耗时任务（如访问数据库），考虑新建给定线程数的 EventGroup 对象，添加它和业务逻辑的 ChannelHandler 到 ChannelPipeline。
+
+S2. 复用 ByteBuf 对象，减少 GC 引起的延迟。
+
+> ByteBuf is a reference-counted object which has to be released explicitly via the release() method. Please keep in mind that it is the handler's responsibility to release any reference-counted object passed to the handler
+
+S2.1 使用 [release()](https://netty.io/4.1/api/io/netty/util/ReferenceCounted.html#release--)，回收对象后将隐式复用对象。
+
+```java
+@Override
+public void channelRead(ChannelHandlerContext ctx, Object msg) {
+    // Do something with msg
+    ((ByteBuf) msg).release();
+}
+```
+
+```java
+@Override
+public void channelRead(ChannelHandlerContext ctx, Object msg) {
+    try {
+        // Do something with msg
+    } finally {
+        ReferenceCountUtil.release(msg);
+    }
+}
+```
+
+```java
+@Override
+public void channelRead(ChannelHandlerContext ctx, Object msg) {
+    // Do something with msg
+    ctx.write(msg);
+    ctx.flush();
+}
+```
+
+> It is because Netty releases it for you when it is written out to the wire.
+
+S2.2 继承 [SimpleChannelInboundHandler](https://netty.io/4.1/api/io/netty/channel/SimpleChannelInboundHandler.html)。
+
+> Be aware that depending of the constructor parameters it will release all handled messages by passing them to ReferenceCountUtil.release(Object). In this case you may need to use ReferenceCountUtil.retain(Object) if you pass the object to the next handler in the ChannelPipeline.
+
+S2.3 使用事件传播方法，转发其它结点释放。
+
+A1. [ChannelOption](https://netty.io/4.1/api/io/netty/channel/ChannelOption.html) 配置或参数调优。
+
+A2. 复用自定义的 ChannelHandler 对象。使用 [@ChannelHandler.Sharable](https://netty.io/4.1/api/io/netty/channel/ChannelHandler.Sharable.html)，但要注意是否存在多线程访问共享变量的安全问题。
 
 ## I/O 模型
 
