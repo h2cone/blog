@@ -7,7 +7,7 @@ tags: [java, thread, concurrent]
 categories: []
 ---
 
-Java 基本功（一）。
+说来话长。
 
 <!--more-->
 

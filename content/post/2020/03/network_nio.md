@@ -7,7 +7,7 @@ tags: [java, network, i/o, netty, thread, async, event-driven]
 categories: []
 ---
 
-Java 基本功（二）。
+长话短说。
 
 <!--more-->
 
