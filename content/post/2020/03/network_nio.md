@@ -731,7 +731,7 @@ pipeline.addLast(new BussinessHandler());
 -> BussinessHandler（写消息）-> ResponseEncoder（编码）-> RequestDecoder（非触发）->
 ```
 
-#### 最少化内存复制
+#### 最小化内存复制
 
 Netty 使用它自己的 [buffer](https://netty.io/4.1/api/io/netty/buffer/package-summary.html) API 代替 Java NIO 的 ByteBuffer 来表示字节序列。Netty 新的缓冲区类型，名为 [ByteBuf](https://netty.io/4.1/api/io/netty/buffer/ByteBuf.html)，它具有如下特性：
 

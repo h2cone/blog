@@ -49,11 +49,11 @@ Redis 集群不使用[一致性哈希](https://en.wikipedia.org/wiki/Consistent_
 
 ![hash-slot](/img/distributed-cache/hash-slot.png)
 
-如上图所示，Redis 集群中的结点（node）负责哈希槽的子集，向集群插入一个键（key）时，只是计算给定键的 [CRC16](https://en.wikipedia.org/wiki/Cyclic_redundancy_check) 并取 16384 的模来将给定键映射到哈希槽的一个子集。
+如上图所示，Redis 集群中的结点（node）负责各自的哈希槽，向集群插入一个键（key）时，只是计算给定键的 [CRC16](https://en.wikipedia.org/wiki/Cyclic_redundancy_check) 并取 16384 的模来将给定键映射到哈希槽。
 
 使用哈希槽可以“轻松”在集群中添加结点到删除结点。若增加一个结点 D，则从 A、B、C 移动一些哈希槽到 D，同理，若删除一个结点 A，则从 A 移动哈希槽到结点 B、C、D，当 A 为空可被完全从集群移除。而且，添加结点、删除结点、更改结点的哈希槽的百分比都不要求集群暂停运作，不需要任何停机时间。
 
-值得注意的是，Redis 集群支持多个键的操作，前提是单个命令执行或整个事务或 Lua 脚本执行中涉及的所有键属于同一个哈希槽的子集。我们可以使用称为 hash tags 的概念来强制多个 key 映射到同一个哈希槽的子集。
+值得注意的是，Redis 集群支持多个键的操作，前提是单个命令执行或整个事务或 Lua 脚本执行中涉及的所有键属于同一个哈希槽。我们可以使用称为 hash tags 的概念来强制多个 key 映射到同一个哈希槽。
 
 ### 可用性与一致性
 
@@ -89,7 +89,7 @@ Redis 集群不保证**强一致性（strong consistency）**。[Kafka](https://
 
 这里所说的不一致与[非线程安全](https://h2cone.github.io/post/2020/02/thread_concurrent/#%E9%9D%9E%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8)中所说的内存一致性错误为同一本质，未来将开新篇章谈谈分布系统的一致性和可用性。
 
-### 创建集群
+### 最小的集群
 
 #### 试验
 
@@ -181,7 +181,7 @@ redis-cli -p 30003
 "bar"
 ```
 
-当然，redis-cli 支持自动重定向。
+当然，redis-cli 支持重定向。
 
 ```shell
 % redis-cli -c -p 30002
@@ -193,7 +193,7 @@ redis-cli -p 30003
 "world"
 ```
 
-访问 Redis 集群的应用程序无法直接使用命令行工具，应用程序的 Redis 客户端需要以 Redis 集群的协议与 Redis 实例通信，比如处理路由。在 Java 生态中，[Jedis](https://github.com/xetorthio/jedis) 已支持 Redis 集群。
+访问 Redis 集群的应用程序无法直接使用命令行工具，应用程序的 Redis 客户端需要以 Redis 集群的协议与 Redis 实例通信。在 Java 生态中，[Jedis](https://github.com/xetorthio/jedis) 已支持 Redis 集群。
 
 ```java
 Set<HostAndPort> jedisClusterNodes = new HashSet<HostAndPort>();
@@ -204,7 +204,19 @@ jc.set("foo", "bar");
 String value = jc.get("foo");
 ```
 
-敬请期待。
+一个严肃的客户端除了实现重定向或路由，还应该缓存哈希槽与结点地址之间的映射（进程内缓存或本地缓存），直接连接正确的结点（减小重定向频率）。发生故障转移之后或系统管理员增加或删除结点之后，客户端需要刷新映射。
+
+![redis-client](/img/distributed-cache/redis-client.png)
+
+客户端与一群 Redis 实例交流能否简化成与单一 Redis 实例交流？答案是增加一个中间层。
+
+![redis-proxy](/img/distributed-cache/redis-proxy.png)
+
+代理，比如 [Redis Cluster Proxy](https://github.com/RedisLabs/redis-cluster-proxy) 和 [CodisLabs/codis](https://github.com/CodisLabs/codis)，但是，代理通常也要保证一定程度的可用性。
+
+#### 容器化
+
+为了使 Docker 与 Redis 集群兼容，需要使用 Docker 的 **host networking mode**，详情请见 [docker # network](https://docs.docker.com/network/)。
 
 ## 参考资料
 
@@ -213,9 +225,5 @@ String value = jc.get("foo");
 - [Redis Cluster Specification](https://redis.io/topics/cluster-spec)
 
 - [生产环境下的 redis 集群一般是如何部署的？](https://www.v2ex.com/t/654087)
-
-- [Redis Cluster Proxy](https://github.com/RedisLabs/redis-cluster-proxy)
-
-- [CodisLabs/codis](https://github.com/CodisLabs/codis)
 
 - [A Few Notes on Kafka and Jepsen](https://blog.empathybox.com/post/62279088548/a-few-notes-on-kafka-and-jepsen)
