@@ -3,11 +3,11 @@ title: "分布式缓存"
 date: 2020-03-24T17:40:48+08:00
 draft: false
 description: ""
-tags: [redis, distributed, cache]
+tags: [distributed, cache, redis, cdn]
 categories: []
 ---
 
-玩 Redis 集群。
+从 Redis 集群到 CDN。
 
 <!--more-->
 
@@ -218,6 +218,30 @@ String value = jc.get("foo");
 
 为了使 Docker 与 Redis 集群兼容，需要使用 Docker 的 **host networking mode**，详情请见 [docker # network](https://docs.docker.com/network/)。
 
+#### 组合拳
+
+在高负载下的分布式系统中，我们通常考虑使用 Redis 作为 MySQL 等关系型数据库的（高速）缓存，虽然应用程序都要与它们通信，但是 Redis 访问内存要比数据库访问磁盘快得多，转而解决开头所说的三大问题，但仍然不是最优方案，再如开头所说，我们可以利用更上层的（高速）缓存，应用程序与 Redis 集群的网络开销可以通过进程内缓存或本地缓存进一步降低。
+
+例如，[J2Cache](https://gitee.com/ld/J2Cache)，它将 Java 进程缓存框架作为一级缓存（比如 [Ehcache](http://www.ehcache.org/)），将 Redis 作为二级缓存，查找键时，先查找一级缓存，若一级缓存未命中则查找二级缓存。那么它如何解决一致性问题和可靠性问题？
+
+![j2cache](/img/distributed-cache/j2cache.jpg)
+
+它可以使用 Redis 的[发布/订阅](https://redis.io/topics/pubsub)（类似消息中间件的特性）来保证多个应用程序实例之间一定程度的缓存一致性，一定程度是因为 Redis 官方说将来有计划支持更可靠的消息传递，所谓可靠的消息传递，类比 TCP 可靠传输的基本思想，即**确认、重传、超时**等概念。
+
+## CDN
+
+[Content delivery network](https://en.wikipedia.org/wiki/Content_delivery_network)，即内容分发网络，不容忽视的大规模分布式多级缓存系统。
+
+![NCDN_-_CDN](/img/distributed-cache/NCDN_-_CDN.png)
+
+如上面这张来自维基百科的插图所示，左手边是单服务器分发，右手边是 CDN 分发。CDN 结点通常部署在多个位置，CDN 系统能够在算法上将浏览器的请求导向离用户最近或最佳的 CDN 结点，浏览器则配合系统**就近访问**结点，使用 CDN 至少具有如下优势：
+
+- 降低带宽成本。
+- 缩短响应时间。
+- 提高内容的的全球性。
+
+CDN 系统是（回）源主机及其 Web 服务器的（高速）缓存，CDN 系统适合缓存的内容是文件（非频繁变化的动态内容）。
+
 ## 参考资料
 
 - [Redis cluster tutorial](https://redis.io/topics/cluster-tutorial)
@@ -227,3 +251,17 @@ String value = jc.get("foo");
 - [生产环境下的 redis 集群一般是如何部署的？](https://www.v2ex.com/t/654087)
 
 - [A Few Notes on Kafka and Jepsen](https://blog.empathybox.com/post/62279088548/a-few-notes-on-kafka-and-jepsen)
+
+- [Guava's cache](https://github.com/google/guava/wiki/CachesExplained)
+
+- [Spring cache](https://docs.spring.io/spring/docs/current/spring-framework-reference/integration.html#cache)
+
+- [J2Cache 和普通缓存框架有何不同，它解决了什么问题？](https://my.oschina.net/javayou/blog/1931381)
+
+- [扒掉红薯的内裤-深入剖析J2Cache](https://my.oschina.net/tinyframework/blog/538363?fromerr=36lauytc)
+
+- [Redis # documentation](https://redis.io/documentation)
+
+- [redisson/redisson](https://github.com/redisson/redisson)
+
+- [CDN是什么？使用CDN有什么优势？](https://www.zhihu.com/question/36514327)
