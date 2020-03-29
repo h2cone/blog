@@ -7,7 +7,7 @@ tags: [distributed, cache, redis, cdn]
 categories: []
 ---
 
-从 Redis 集群到 CDN。
+从 Redis 到 CDN。
 
 <!--more-->
 
@@ -90,8 +90,6 @@ Redis 集群不保证**强一致性（strong consistency）**。[Kafka](https://
 这里所说的不一致与[非线程安全](https://h2cone.github.io/post/2020/02/thread_concurrent/#%E9%9D%9E%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8)中所说的内存一致性错误为同一本质，未来将开新篇章谈谈分布系统的一致性和可用性。
 
 ### 最小的集群
-
-#### 试验
 
 从 [antirez/redis](https://github.com/antirez/redis) 克隆。
 
@@ -214,11 +212,11 @@ String value = jc.get("foo");
 
 代理，比如 [Redis Cluster Proxy](https://github.com/RedisLabs/redis-cluster-proxy) 和 [CodisLabs/codis](https://github.com/CodisLabs/codis)，但是，代理通常也要保证一定程度的可用性。
 
-#### 容器化
+### 容器化
 
 为了使 Docker 与 Redis 集群兼容，需要使用 Docker 的 **host networking mode**，详情请见 [docker # network](https://docs.docker.com/network/)。
 
-#### 组合拳
+### 组合拳
 
 在高负载下的分布式系统中，我们通常考虑使用 Redis 作为 MySQL 等关系型数据库的（高速）缓存，虽然应用程序都要与它们通信，但是 Redis 访问内存要比数据库访问磁盘快得多，转而解决开头所说的三大问题，但仍然不是最优方案，再如开头所说，我们可以利用更上层的（高速）缓存，应用程序与 Redis 集群的网络开销可以通过进程内缓存或本地缓存进一步降低。
 
