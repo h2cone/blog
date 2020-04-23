@@ -1194,6 +1194,8 @@ JDK 8 在 `HashMap` 中引入红黑树以优化查找算法。当一个桶的大
 
 - [Understand the object internally](https://www.javaspring.net/java/jvm-works-architecture)
 
+- [单例模式--双重检验锁真的线程安全吗](http://ibat.xyz/2017/03/10/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F--%E5%8F%8C%E9%87%8D%E6%A3%80%E9%AA%8C%E9%94%81%E7%9C%9F%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E5%90%97/)
+
 - [Know Thy Java Object Memory Layout](http://psy-lob-saw.blogspot.com/2013/05/know-thy-java-object-memory-layout.html)
 
 - [【基本功】不可不说的Java“锁”事](https://mp.weixin.qq.com/s/E2fOUHOabm10k_EVugX08g)
