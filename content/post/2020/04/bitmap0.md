@@ -3,11 +3,11 @@ title: "初识 Bitmap"
 date: 2020-04-23T17:40:57+08:00
 draft: false
 description: ""
-tags: [interview, bitmap]
+tags: [bitmap, bitset, bitwise]
 categories: []
 ---
 
-记录一道面试题。
+又称 Bitset。
 
 <!--more-->
 
