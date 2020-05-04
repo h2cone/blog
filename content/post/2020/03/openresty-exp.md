@@ -74,7 +74,7 @@ http {
 }
 ```
 
-Nginx http server 监听 80 端口，为了方便展示，匹配的请求 URL 包含两个路径参数。Nginx 处理 HTTP 请求分成了若干阶段，详情请见 [Nginx # http phases](http://nginx.org/en/docs/dev/development_guide.html#http_phases)，这里只关心正常生成响应的阶段（content）并使用 Lua 脚本处理业务逻辑。
+Nginx http server 监听 80 端口，为了方便展示，匹配的请求 URL 包含两个路径参数。Nginx 处理 HTTP 请求分成了若干阶段，详情请见 [Nginx # http phases](http://nginx.org/en/docs/dev/development_guide.html#http_phases)，或则直接参考 [OpenResty # 执行阶段概念](https://moonbingbing.gitbooks.io/openresty-best-practices/ngx_lua/phase.html)，这里只关心正常生成响应的阶段（content）并使用 Lua 脚本处理业务逻辑。
 
 假设 HTTP 客户端发送包含键值对的请求到 Nginx server，Nginx server 先将键值对插入 Redis 实例，然后再从 Redis 实例查询相应的键所对应的值，最后发送包含键值对的响应到 HTTP 客户端。
 
@@ -156,5 +156,7 @@ Nginx server 响应正常。
 - [lua-resty-redis](https://github.com/openresty/lua-resty-redis)
 
 - [OpenResty 最佳实践](https://moonbingbing.gitbooks.io/openresty-best-practices/content/)
+
+- [OpenResty 不完全指南](https://mp.weixin.qq.com/s/ddgT0DX3WA45PqC-30A45A)
 
 - [Lua Style Guide](http://lua-users.org/wiki/LuaStyleGuide)
