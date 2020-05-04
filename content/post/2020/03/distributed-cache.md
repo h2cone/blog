@@ -3,7 +3,7 @@ title: "分布式缓存"
 date: 2020-03-24T17:40:48+08:00
 draft: false
 description: ""
-tags: [distributed, cache, redis, cdn]
+tags: [distributed, cache, redis, cluster, cdn]
 categories: []
 ---
 
