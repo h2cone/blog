@@ -35,6 +35,8 @@ categories: []
 
 比起使用 C 语言，使用 [Lua](https://www.lua.org/) 门槛要稍低一些，而且有 [LuaJIT](https://luajit.org/) 的性能优化。
 
+![nginx-lua](/img/openresty/nginx-lua.png)
+
 > OpenResty® 通过汇聚各种设计精良的 Nginx 模块（主要由 OpenResty 团队自主开发），从而将 Nginx 有效地变成一个强大的通用 Web 应用平台。这样，Web 开发人员和系统工程师可以使用 Lua 脚本语言调动 Nginx 支持的各种 C 以及 Lua 模块，快速构造出足以胜任 10K 乃至 1000K 以上单机并发连接的高性能 Web 应用系统。
 
 对于基于 I/O 多路复用（请见[网络·NIO # I/O 模型](https://h2cone.github.io/post/2020/03/network_nio/#i-o-%E6%A8%A1%E5%9E%8B)）的 Nginx 来说，单机 C1000K 不在话下，反而是受限于操作系统或配置。
