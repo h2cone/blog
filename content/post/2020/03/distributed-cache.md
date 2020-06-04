@@ -41,7 +41,7 @@ Redis 集群如何解决可靠性问题和扩展性问题？
 
 - Redis 集群可以在分区期间提供一定程度的**可用性（availability）**。
 
-- 水平扩展 Redis。
+- 水平扩展 Redis（scalability）。
 
 ### 数据分片
 
