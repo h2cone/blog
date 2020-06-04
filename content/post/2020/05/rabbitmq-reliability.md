@@ -49,7 +49,7 @@ Exchange 使用的路由算法取决于 exchange 类型和 binding 规则。
 
 #### Topic exchange
 
-它与 dirct exchange 类似，绑定时要求设置 routing key，不同在于路由时 topic exchange 支持模糊匹配或正则表达式匹配 routing key。
+它与 direct exchange 类似，绑定时要求设置 routing key，不同在于路由时 topic exchange 支持模糊匹配或正则表达式匹配 routing key。
 
 #### Headers exchange
 
@@ -108,9 +108,13 @@ RabbitMQ 事务将可能大幅降低吞吐量，故一般不推荐使用。
 
 ## 集群
 
-旧文提到过[软件系统三大问题](https://h2cone.github.io/post/2020/03/distributed-cache/#%E8%BD%AF%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%89%E5%A4%A7%E9%97%AE%E9%A2%98)，首先，RabbitMQ 集群如何保证可靠性？
+旧文提到过[软件系统三大问题](https://h2cone.github.io/post/2020/03/distributed-cache/#%E8%BD%AF%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%89%E5%A4%A7%E9%97%AE%E9%A2%98)，首先，RabbitMQ 集群如何保证可靠性？RabbitMQ 集群是一个或多个结点的逻辑分组，每个结点共享 exchanges、bindings、queues、virtual hosts、users（RabbitMQ 有 RBAC 特性）、runtime parameters 等运行时状态，且结点对等（P2P）。
 
-捣鼓中......
+![Cross-node_publishing_of_messages_in_a_cluster](/img/rabbitmq/Cross-node_publishing_of_messages_in_a_cluster.jpg)
+
+对于客户端来说，集群中的每个结点都可以绑定、发布、删除连接到首个结点时创建的 exchange。
+
+未完待续。
 
 ## 参考资料
 
@@ -131,3 +135,5 @@ RabbitMQ 事务将可能大幅降低吞吐量，故一般不推荐使用。
 - [RabbitMQ # Cluster Formation and Peer Discovery](https://www.rabbitmq.com/cluster-formation.html)
 
 - [harbur/docker-rabbitmq-cluster](https://github.com/harbur/docker-rabbitmq-cluster)
+
+- [RabbitMQ in Depth # Chapter 7. Scaling RabbitMQ with clusters](https://livebook.manning.com/book/rabbitmq-in-depth/chapter-7/1)
