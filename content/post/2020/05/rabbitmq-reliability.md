@@ -108,13 +108,11 @@ RabbitMQ 事务将可能大幅降低吞吐量，故一般不推荐使用。
 
 ## 集群
 
-旧文提到过[软件系统三大问题](https://h2cone.github.io/post/2020/03/distributed-cache/#%E8%BD%AF%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%89%E5%A4%A7%E9%97%AE%E9%A2%98)，首先，RabbitMQ 集群如何保证可靠性？RabbitMQ 集群是一个或多个结点的逻辑分组，每个结点共享 exchanges、bindings、queues、virtual hosts、users（RabbitMQ 有 RBAC 特性）、runtime parameters 等运行时状态，且结点对等（P2P）。
+旧文提到过[软件系统三大问题](https://h2cone.github.io/post/2020/03/distributed-cache/#%E8%BD%AF%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%89%E5%A4%A7%E9%97%AE%E9%A2%98)，首先，RabbitMQ 集群如何保证可靠性？RabbitMQ 集群是一个或多个结点的逻辑分组，每个结点共享 exchanges、bindings、queues、virtual hosts、users（RabbitMQ 有 RBAC 特性）、runtime parameters 等运行时状态，且结点对等（P2P）。对于客户端来说，集群中的每个结点都可以绑定、发布、删除连接到首个结点时创建的 exchange。
 
 ![Cross-node_publishing_of_messages_in_a_cluster](/img/rabbitmq/Cross-node_publishing_of_messages_in_a_cluster.jpg)
 
-对于客户端来说，集群中的每个结点都可以绑定、发布、删除连接到首个结点时创建的 exchange。
-
-未完待续。
+RabbitMQ 集群提供了创建高可用队列（HA queues）的方法来支持容错（fault tolerance）。高可用队列横跨多个集群结点并共享同步的队列状态，包括消息数据。任何具有高可用队列的结点发生故障，群集中的其它结点仍将包含消息和队列状态。当故障结点恢复并重新加入集群时，它将同步它下线时错过的消息。
 
 ## 参考资料
 
