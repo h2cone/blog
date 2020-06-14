@@ -71,7 +71,7 @@ Java 的 BIO 是指 blocking I/O，通常指 [java.io](https://docs.oracle.com/j
 4. 编码响应（encode）
 5. 发送响应（send/wirte）
 
-其中 1 和 5 必定是 I/O 操作，回想前文所说的 I/O 操作的本质，即字节序列的来向和去向，来向与去向在 java.io 中的常见类型是 [InputStream](https://docs.oracle.com/javase/8/docs/api/java/io/InputStream.html) 和 [OutputStream](https://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html).
+其中 1 和 5 必定是 I/O 操作，回想前文所说的 I/O 操作的本质，即字节序列的来向和去向，来向与去向在 java.io 中的常见类型是 [InputStream](https://docs.oracle.com/javase/8/docs/api/java/io/InputStream.html) 和 [OutputStream](https://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html)，I/O Stream 表示输入源或输出目的地。
 
 ![byte[]-Stream](/img/network_nio/byte[]-Stream.png)
 
@@ -649,7 +649,7 @@ executorService.execute(new Reactor(port, Executors.newCachedThreadPool(), new D
 
 ##### EventLoop
 
-![event-loop](/img/network_nio/event-loop.png)
+![event-loop](/img/vertx/event-loop.png)
 
 [EventLoop](https://netty.io/4.1/api/io/netty/channel/EventLoop.html)，即事件循环，一个 EventLoop 通常将处理多个 [Channel](https://netty.io/4.1/api/io/netty/channel/Channel.html) 的事件，EventLoop 在它生命周期中只绑定单个线程，而 [EventLoopGroup](https://netty.io/4.1/api/io/netty/channel/EventLoopGroup.html) 包含一个或多个 EventLoop。
 
