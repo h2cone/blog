@@ -795,7 +795,7 @@ if (lock.tryLock()) {
 
 #### ReadWriteLock
 
-`ReadWriteLock`，支持只有一个线程在写共享变量，其它线程同时读共享变量。
+`ReadWriteLock`，“读读共享，读写（写读）互斥，写写互斥”。
 
 ```java
 final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
@@ -1124,7 +1124,7 @@ JDK 8 在 `HashMap` 中引入红黑树以优化查找算法。当一个桶的大
 
 若只讨论 Java 单体应用承受高并发的场景，即使扩大线程池也不能显著提高性能或适得其反，相反，少量的线程就能处理更多的连接，比如，[Netty](https://netty.io/)。如果仍然认为重量级的 Java 线程是瓶颈，并且还想使用 Java 的话，不妨尝试 [Quasar](http://docs.paralleluniverse.co/quasar/)，它是一个提供[纤程](https://en.wikipedia.org/wiki/Fiber_(computer_science))和类似于 Go 的 [Channel](https://en.wikipedia.org/wiki/Channel_(programming)) 以及类似于 Erlang 的 [Actor](https://en.wikipedia.org/wiki/Actor_model) 的 Java 库。
 
-虽然进程之间不一定共享本机资源，但是线程之间的同步可以推广到进程之间的同步，比如，分布式锁。分布式系统中，代码一致的多个进程可能共享同一个数据库，数据库支持并发访问控制，比如，共享锁和排他锁以及 [MVCC](https://en.wikipedia.org/wiki/Multiversion_concurrency_control)。
+虽然进程之间不一定共享本机资源，但是线程之间的同步可以推广到进程之间的同步，比如，分布式锁。分布式系统中，代码一致的多个进程可能共享同一个数据库，数据库支持并发控制，比如，共享锁和排他锁以及 [MVCC](https://en.wikipedia.org/wiki/Multiversion_concurrency_control)。
 
 ## 文中代码
 
