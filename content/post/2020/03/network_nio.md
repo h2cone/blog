@@ -27,7 +27,7 @@ categories: []
 
 ## Socket
 
-从人类的角度来看，计算机网络由一台或多台机器组成，网络中，数据从一台机器传输到另一个机器的方式通常是[分组交换](https://en.wikipedia.org/wiki/Packet_switching)，即数据被切分成适合传输的小块数据，小块数据都有各自的编号，它们从一个端点分道扬镳，但殊途同归，到另一个端点时，重新排列组合成完整数据。分组交换的好处之一是充分利用网络带宽。
+从人类的角度来看，计算机网络由一台或多台机器组成，网络中，数据从一台机器传输到另一个机器的方式通常是[分组交换](https://en.wikipedia.org/wiki/Packet_switching)，即数据被切分成适合传输的小块数据，小块数据都有各自的编号，它们从一个端点分道扬镳，但殊途同归，到另一个端点时，重新排列组合成完整数据。分组交换的好处之一是充分利用网络带宽，而当 TCP 连接空闲时，通常不占用任何带宽。
 
 分组交换有可能出现数据的丢失、乱序、重复，如何检测、重传、缓存，实现可靠性传输是 [TCP](https://en.wikipedia.org/wiki/Transmission_Control_Protocol) 的目标。别问，问就是[三次握手](https://en.wikipedia.org/wiki/Transmission_Control_Protocol#Connection_establishment)、[四次挥手](https://en.wikipedia.org/wiki/Transmission_Control_Protocol#Connection_termination)、[滑动窗口协议](https://en.wikipedia.org/wiki/Sliding_window_protocol)、[拥塞控制算法](https://en.wikipedia.org/wiki/TCP_congestion_control)......
 
