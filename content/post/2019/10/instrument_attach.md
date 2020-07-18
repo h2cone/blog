@@ -49,7 +49,7 @@ public class Cat {
 }
 ```
 
-现在要利用 Java agent 测量 run 方法的执行时间，则需先构建 Java agent，因为它是 Jar 文件，要对被探测或追踪的程序起作用必然要先加载到 JVM，有两种方式，一是在 JVM 启动时通过命令行接口开启 agent，二是 JVM 启动后通过 Java Attach API 把 agent 附加到 JVM。
+现在要利用 Java agent 测量 run 方法的执行时间，则需先构建 Java agent，因为它是 Jar 文件，要对被探测或追踪的程序起作用必然要先加载到 JVM，有两种方式，一是在 JVM 启动时通过命令行接口开启 agent；二是 JVM 启动后通过 Java Attach API 把 agent 附加到 JVM。
 
 首先以第一种方式来考虑 agent 类：
 
@@ -62,7 +62,7 @@ public class ElapsedTimeAgent {
 }
 ```
 
-此类实现了一个 `premain` 方法，它与我们常见的 `main` 方法相似，不仅都是作为执行的入口点，而且第一个方法参数的值来源于命令行，不过参数类型是字符串而不是字符串数组，命令行参数的解析交由用户实现。第二个参数类型是 `Instrumentation`，有两种获得其实例的方式：
+此类实现了一个 `premain` 方法，它与我们常见的 `main` 方法相似，不仅都是作为执行的入口点，而且第一个方法参数的值来源于命令行，不过参数类型是字符串而不是字符串数组，命令行参数的解析交由用户实现；第二个参数类型是 `Instrumentation`，有两种获得其实例的方式：
 
 1. 当以指定了 Java agent 的方式启动 JVM，Instrumentation 实例将传递给 agent 类的 `premain` 方法。
 
@@ -111,7 +111,7 @@ public class ElapsedTimeTransformer implements ClassFileTransformer {
 }
 ```
 
-重写 `transform` 方法允许我们用修改后的类代替原类并加载，具体实现是使用 javassist 的 API 去更改已加载类的字节码，在类方法体的开头和结尾分别插入获取当前的纳秒级时间戳语句，并在最后插入计算结果的打印语句，新类的字节码作为 `transform` 方法的返回值。`transform` 方法什么时候被调用？每一个新类被类加载器加载时。
+重写 `transform` 方法允许我们用修改后的类代替原类并加载。具体实现是使用 javassist 的 API 去更改已加载类的字节码，在类方法体的开头和结尾分别插入获取当前的纳秒级时间戳语句，并在最后插入计算结果的打印语句，新类的字节码作为 `transform` 方法的返回值。`transform` 方法什么时候被调用？每一个新类被类加载器加载时。
 
 其次，新建 MANIFEST.MF 文件编写一些键值对告诉 JVM 这个 agent 类在哪里以及是否允许重定义类或重转换类：
 

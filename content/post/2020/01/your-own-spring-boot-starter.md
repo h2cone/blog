@@ -15,7 +15,7 @@ categories: []
 
 遥想以前，Spring 集成其它模块往往需要大量的 XML 配置和 Java 配置，经历过 SSM（Spring、Spring MVC、MyBatis）或者 SSH（Struts、Spring、Hibernate）框架搭建和填空的人们应该深有体会，特别费时费力，直到 Spring Boot 的流行才有所改善。
 
-Spring Boot 简化配置，开箱即用，得益于自动配置（auto-configuration），开启了自动配置的 Spring Boot 程序会尝试猜测和配置我们可能需要的 Bean。如果我们给一般的 Spring Boot Web 程序（添加了 `spring-boot-starter-web` 依赖的 Spring Boot 程序）关联的 application.yml 文件增加一行：
+Spring Boot 简化配置，开箱即用，得益于自动配置（auto-configuration）。开启了自动配置的 Spring Boot 程序会尝试猜测和配置我们可能需要的 Bean。如果我们给一般的 Spring Boot Web 程序（添加了 `spring-boot-starter-web` 依赖的 Spring Boot 程序）关联的 application.yml 文件增加一行：
 
 ```yml
 debug: true
@@ -144,7 +144,7 @@ io.h2cone.springfox.swagger2.spring.boot.autoconfigure.SpringFoxSwagger2AutoConf
 
 > Auto-configurations must be loaded that way only. Make sure that they are defined in a specific package space and that they are never the target of component scanning. Furthermore, auto-configuration classes should not enable component scanning to find additional components. Specific @Imports should be used instead.
 
-特别是第三句，自动配置类不应启用组件扫描以查找其他组件，比如 `@ComponentScan`，应该使用指定的 `@Imports` 代替。一般情况下，自动配置类只能间接启用组件扫描，在自动配置类上声明导入了一些配置类（@Configuration），利用这些配置类可以启动组件扫描，查找标注了 `@Component`、`@Controller`、`@Repository`、`@Service`、`@Aspect` 等注解的类。除非，自定义注解、扫描、处理。
+特别是第三句，自动配置类不应启用组件扫描以查找其他组件，比如 `@ComponentScan`，应该使用指定的 `@Imports` 代替。一般情况下，自动配置类只能间接启用组件扫描，在自动配置类上声明导入了一些配置类（@Configuration），利用这些配置类可以启动组件扫描，查找标注了 `@Component`、`@Controller`、`@Repository`、`@Service`、`@Aspect` 等注解的类，除非，自定义注解、扫描、处理。
 
 以上代码来源于 [springfox-swagger2-spring-boot](https://github.com/h2cone/springfox-swagger2-spring-boot)，其中有如下三个模块:
 

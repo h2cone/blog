@@ -27,7 +27,7 @@ categories: []
 
 ## Socket
 
-从人类的角度来看，计算机网络由一台或多台机器组成，网络中，数据从一台机器传输到另一个机器的方式通常是[分组交换](https://en.wikipedia.org/wiki/Packet_switching)，即数据被切分成适合传输的小块数据，小块数据都有各自的编号，它们从一个端点分道扬镳，但殊途同归，到另一个端点时，重新排列组合成完整数据。分组交换的好处之一是充分利用网络带宽，而当 TCP 连接空闲时，通常不占用任何带宽。
+从人类的角度来看，计算机网络由一台或多台机器组成。网络中，数据从一台机器传输到另一个机器的方式通常是[分组交换](https://en.wikipedia.org/wiki/Packet_switching)，即数据被切分成适合传输的小块数据，小块数据都有各自的编号；它们从一个端点分道扬镳，但殊途同归，到另一个端点时，重新排列组合成完整数据。分组交换的好处之一是充分利用网络带宽，而当 TCP 连接空闲时，通常不占用任何带宽。
 
 分组交换有可能出现数据的丢失、乱序、重复，如何检测、重传、缓存，实现可靠性传输是 [TCP](https://en.wikipedia.org/wiki/Transmission_Control_Protocol) 的目标。别问，问就是[三次握手](https://en.wikipedia.org/wiki/Transmission_Control_Protocol#Connection_establishment)、[四次挥手](https://en.wikipedia.org/wiki/Transmission_Control_Protocol#Connection_termination)、[滑动窗口协议](https://en.wikipedia.org/wiki/Sliding_window_protocol)、[拥塞控制算法](https://en.wikipedia.org/wiki/TCP_congestion_control)......
 
@@ -41,7 +41,7 @@ categories: []
 
 - Socket 包含五元组**（client ip, client port, server ip, server port, protocol）**。
 
-同在传输层的 [UDP](https://en.wikipedia.org/wiki/User_Datagram_Protocol) 不如 TCP 可靠，但是轻量级，因为它没有确认、重传、超时的概念，也没有拥塞控制，而且无连接，从而能广播。你看，人类是可以接受网络视频或网络游戏偶尔卡顿的。
+同在传输层的 [UDP](https://en.wikipedia.org/wiki/User_Datagram_Protocol) 不如 TCP 可靠，但是轻量级，因为它没有确认、重传、超时的概念，也没有拥塞控制，而且无连接，从而能广播。
 
 Socket 隐藏了下层具体实现的复杂性，并给上层提供了简单或统一的 API。下图是 TCP Socket 基本流程，使用 [伯克利 Sockets](https://en.wikipedia.org/wiki/Berkeley_sockets) 描述。
 
@@ -210,7 +210,7 @@ Java 的 NIO 是指 non-blocking I/O 或 New I/O，通常指 [java.nio](https://
 
 ![javanio](/img/network_nio/javanio.webp)
 
-上图来自[服务化基石之远程通信系列三：I/O模型](https://mp.weixin.qq.com/s/uDgueoMIEjl-HCE_fcSmSw)。Java NIO 致力于用比 Java BIO 更少的线程处理更多的连接。非常符合人类的直觉，比如，一个不希望被老板开除的店小二将一位客人的订单交给后厨后，不会只等待后厨做好相应的菜然后上菜，而是立即去接待其它客人入座、点餐、结账等，若店小二观察到后厨做菜完成后则上菜或者后厨做菜完成后通知店小二上菜。
+上图来自[服务化基石之远程通信系列三：I/O模型](https://mp.weixin.qq.com/s/uDgueoMIEjl-HCE_fcSmSw)。Java NIO 致力于用比 Java BIO 更少的线程处理更多的连接。比如，一个不希望被老板开除的店小二将一位客人的订单交给后厨后，不会只等待后厨做好相应的菜然后上菜，而是立即去接待其它客人入座、点餐、结账等，若店小二观察到后厨做菜完成后则上菜或者后厨做菜完成后通知店小二上菜。
 
 Java NIO 有三大核心组件：
 
@@ -292,7 +292,7 @@ DirectByteBuffer 通常比 HeapByteBuffer 内存复制次数更少。以写 Sock
 
 #### Reactor
 
-根据上文的知识，足以实现典型的 Java NIO 服务器端程序，但是我把它删掉了，因为它表现得不如上文典型的 Java BIO 的服务器端程序，更因为我读到了 [Doug Lea](https://en.wikipedia.org/wiki/Doug_Lea) 讲的 **Reactor 模式**（链接在文章末尾），常翻 JDK 源码可以发现他是大部分并发数据结构的作者。
+根据上文的知识，足以实现典型的 Java NIO 服务器端程序，但是我把它删掉了；因为它表现得不如上文典型的 Java BIO 的服务器端程序，更因为我读到了 [Doug Lea](https://en.wikipedia.org/wiki/Doug_Lea) 讲的 **Reactor 模式**（链接在文章末尾），常翻 JDK 源码可以发现他是大部分并发数据结构的作者。
 
 ##### 单线程版
 
@@ -546,7 +546,7 @@ public class Client {
 
 ![Using-Worker-Thread-Pools](/img/network_nio/Using-Worker-Thread-Pools.png)
 
-仔细审视单线程版可以发现，accept、read、process、write 都只由一个线程执行，但是应对高并发时单线程工作能力有限。如果它读完了一个 Channel 后在 process 中执行耗时任务，那么就没有空闲时间进行其它 Channel 的 accept、read、write 操作。因此，使用 Boss 线程执行非阻塞的 accept、read、write 操作，命令工作线程执行耗时的 process 操作，充分消费多处理器来提高程序性能。
+仔细审视单线程版可以发现，accept、read、process、write 都只由一个线程执行，但是应对高并发时单线程工作能力有限。如果它读完了一个 Channel 后在 process 中执行耗时任务，那么就没有空闲时间进行其它 Channel 的 accept、read、write 操作；因此，使用 Boss 线程执行非阻塞的 accept、read、write 操作，命令工作线程执行耗时的 process 操作，充分消费多处理器来提高程序性能。
 
 ```java
 static class Handler implements Runnable {
@@ -795,7 +795,7 @@ ByteBuf sliced = buf.slice(0, 14);
 
 为什么 Netty 吞吐量更高、延迟更低、资源消耗更少？比如 [RxNetty vs Tomcat](https://github.com/Netflix-Skunkworks/WSPerfLab/blob/master/test-results/RxNetty_vs_Tomcat_April2015.pdf) 和 [七种 WebSocket 框架的性能比较](https://colobu.com/2015/07/14/performance-comparison-of-7-websocket-frameworks/)。
 
-- 使用 Java NIO 和 Reactor 模式。为什么 Java NIO 高效，上文的解释是“以阻塞时间换工作时间”，下文将补充操作系统层解释。为什么说 Netty 使用了 Reactor 模式，这里提供一个线索，Netty 中的 ServerBootstrap 的 group 方法有两个类型均为 EventLoopGroup 的参数，回想一下上文“Reactor 多线程版” 最后一张图。
+- 使用 Java NIO 和 Reactor 模式。为什么 Java NIO 高效，上文的解释是“以阻塞时间换工作时间”，下文将补充操作系统层解释；为什么说 Netty 使用了 Reactor 模式，这里提供一个线索，Netty 中的 ServerBootstrap 的 group 方法有两个类型均为 EventLoopGroup 的参数，回想一下上文“Reactor 多线程版” 最后一张图。
 
 - GC 优化。例如，使用缓冲区对象池，复用缓冲区对象减少了频繁新建对象和收集垃圾引起的延迟，且使用直接缓冲区，详情见 [Netty 4 at Twitter: Reduced GC Overhead](https://blog.twitter.com/engineering/en_us/a/2013/netty-4-at-twitter-reduced-gc-overhead.html) 和 [PooledByteBufAllocator.java](https://github.com/netty/netty/blob/4.1/buffer/src/main/java/io/netty/buffer/PooledByteBufAllocator.java)。
 

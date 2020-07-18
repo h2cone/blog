@@ -48,7 +48,7 @@ public class Member {
 }
 ```
 
-如果被问到为什么怎么做，便美名其曰“面向对象编程”（不管重复多少遍，我都想回到过去抗议不翻译成**对象导向编程**的人），为了诠释什么是 Java 对象，于是把对象三大特征给搬了出来：状态、标识、行为。
+如果被问到为什么怎么做，便美名其曰“面向对象编程”（不管重复多少遍，我都想回到过去抗议不翻译成**对象导向编程**的人）；为了诠释什么是 Java 对象，于是把对象三大特征给搬了出来：状态、标识、行为。
 
 特征 | 解释
 --- | ---
@@ -61,8 +61,6 @@ public class Member {
 > All problems in computer science can be solved by another level of indirection.
 
 计算机科学领域的任何问题都可以通过增加一个中间层来解决，Getter 和 Setter 就是封装形成的中间层（私有变量不能直接访问，只能通过中间层访问，不过该中间层往往非常浅薄），最后甩来一个链接：[why-use-getters-and-setters-accessors](https://stackoverflow.com/questions/1568091/why-use-getters-and-setters-accessors)。
-
-哇哦。
 
 ## Project Lombok
 

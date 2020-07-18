@@ -15,9 +15,9 @@ categories: []
 
 想象一下，我们编写的代码块重复了两次或两次以上，理智的程序员可能会考虑重构，提取公共的部分抽象成函数或方法，通过重用函数或方法以此减少冗余，简化代码，甚至预防了“牵一发而动全身”的噩梦，这已经算得上是对 DRY 和 SoC 原则的践行。DRY（Don't repeat yourself）教导我们尽量减少重复代码，而 SoC（Separation of Concerns）指的是关注点分离，因为关注点混杂会极大地增强复杂性，好比把什么都混为一谈，堆积而成的祖传代码，这又是程序员们的另一个噩梦，所以才把复杂的问题分解成若干独立的小问题，模块化，极力追求“高内聚，低耦合”。
 
-AOP（Aspect-oriented programming）是对横向的重用，非常符合 DRY 和 SoC 的原则。直观上，代码总是从上往下执行，不妨称之为纵向，OOP（Object-oriented Programming）的继承也可看作是纵向，相对则是横向，从横跨多个类的角度来看，横向有着许许多多的统一逻辑可以切入，比如**安全检查、异常处理、日志输出、事务管理、追踪、监控**等等，这些统一逻辑能够被抽象成模块，重用它们甚至不需要显式使用或只需要编写简单的元数据进行声明，一次编写，到处执行，Java 程序员们已经体验过不少 Spring AOP 的魔术。
+AOP（Aspect-oriented programming）是对横向的重用，非常符合 DRY 和 SoC 的原则。直观上，代码总是从上往下执行，不妨称之为纵向，OOP（Object-oriented Programming）的继承也可看作是纵向；相对则是横向，从横跨多个类的角度来看，横向有着许许多多的统一逻辑可以切入，比如**安全检查、异常处理、日志输出、事务管理、追踪、监控**等等，这些统一逻辑能够被抽象成模块，重用它们甚至不需要显式使用或只需要编写简单的元数据进行声明，一次编写，到处执行，Java 程序员们已经体验过不少 Spring AOP 的魔术。
 
-AOP 能够使前文所述的统一逻辑模块化，这些统一逻辑可称之为横切关注点（crosscutting concerns），切面（Aspect）则作为模块，因此译为切面导向编程。切面的作用效果彷佛是往程序的执行点注入了新的代码，这些执行点被称之为接入点（Join Point），比如方法调用的前后。接入点的集合称之为切入点 （Pointcut），比如满足条件的一组方法。注入的代码称之为建议（Advice），比如在方法调用前后输出日志。其中代码注入的术语是编织（Weaving），既然把编织工作交给库或框架，那么可能是在**编译时编织（Compile-time weaving）**或**运行时编织（Run-Time weaving）**，还可能在**编译后编织（Post-compile weaving）** 或**加载时编织（Load-time weaving）**。
+AOP 能够使前文所述的统一逻辑模块化，这些统一逻辑可称之为横切关注点（crosscutting concerns），切面（Aspect）则作为模块，因此译为切面导向编程。切面的作用效果彷佛是往程序的执行点注入了新的代码，这些执行点被称之为接入点（Join Point），比如方法调用的前后；接入点的集合称之为切入点 （Pointcut），比如满足条件的一组方法；注入的代码称之为建议（Advice），比如在方法调用前后输出日志；其中代码注入的术语是编织（Weaving），既然把编织工作交给库或框架，那么可能是在**编译时编织（Compile-time weaving）**或**运行时编织（Run-Time weaving）**，还可能在**编译后编织（Post-compile weaving）** 或**加载时编织（Load-time weaving）**。
 
 虽说如此，那属于 Spring 核心的 Spring AOP 的魔术是怎么做到的呢？
 
@@ -185,7 +185,7 @@ cafe babe 0000 0034 0009 0700 0707 0008
 
 这就是 Java 字节码看起来的样子，这里表现为十六进制数据。Java 编译的过程是从源代码到字节码再到机器码（Machine code）。机器只理解机器码，而 JVM 只理解 Java 字节码，可以说 **Java 字节码是 JVM 的指令集**。既然 Class 文件包含了 Java 字节码，则修改类或生成类是由操作 Java 字节码开始，可是我们大部分都只擅长 Java 代码，操作 Java 字节码要怎么开始呢？
 
-不妨先试试从 Class 文件逆向到 Java 文件，利用反汇编命令行工具，例如在终端中敲下 `javap -v SimplePersonService.class`，你将得到 Class 文件格式（The class File Format）的直观认识。但是，操作 Java 字节码需要透彻理解 Java 虚拟机规范，比如 JVM 的指令集和 JVM 内幕，ASM 的出现使之成为可能。ASM 是一个 Java 字节码操作和分析框架，可用于修改已存在类或者动态生成类，程序员们不满足于此，利用 ASM 封装了更高层的 Java API，最终出现了 CGLIB。
+不妨先试试从 Class 文件逆向到 Java 文件，利用反汇编命令行工具，例如在终端中敲下 `javap -v SimplePersonService.class`，你将得到 Class 文件格式（The class File Format）的直观认识；但是，操作 Java 字节码需要透彻理解 Java 虚拟机规范，比如 JVM 的指令集和 JVM 内幕，ASM 的出现使之成为可能。ASM 是一个 Java 字节码操作和分析框架，可用于修改已存在类或者动态生成类，程序员们不满足于此，利用 ASM 封装了更高层的 Java API，最终出现了 CGLIB。
 
 我们来看看 CGLIB 仓库的维基的一段描述：
 
@@ -255,7 +255,7 @@ After invoke
 
 完整代码已发布，请参考 [proxy](https://github.com/h2cone/java-examples/tree/master/proxy)。
 
-综上所述，**JDK 动态代理只能通过接口生成代理类，代理类与被代理类是兄弟姐妹，而 CGLIB 还能通过基类生成代理类，代理类是被代理类的子类。** 除了能力上的区别，在性能上，似乎普遍认为 CGLIB 要快于 JDK 动态代理。前文提到了 Spring AOP 使用 JDK 动态代理或 CGLIB 在运行时生成代理类，那么 Spring AOP 在什么情况下采用 JDK 动态代理？又是在什么情况下次采用 CGLIB？如结论所说，如果被代理类或目标类实现了一个或多个接口，那么 Spring AOP 将采用 JDK 动态代理生成一个实现每个接口的代理类。如果被代理类或目标类没有实现接口，那么 Spring AOP 将采用 CGLIB 动态生成代理类，它是被代理类或目标类的子类。当然，Spring AOP 很可能也允许我们强制采用其中一种方式。
+综上所述，**JDK 动态代理只能通过接口生成代理类，代理类与被代理类是兄弟姐妹，而 CGLIB 还能通过基类生成代理类，代理类是被代理类的子类。** 除了能力上的区别，在性能上，似乎普遍认为 CGLIB 要快于 JDK 动态代理。前文提到了 Spring AOP 使用 JDK 动态代理或 CGLIB 在运行时生成代理类，那么 Spring AOP 在什么情况下采用 JDK 动态代理？又是在什么情况下次采用 CGLIB？如结论所说，如果被代理类或目标类实现了一个或多个接口，那么 Spring AOP 将采用 JDK 动态代理生成一个实现每个接口的代理类；如果被代理类或目标类没有实现接口，那么 Spring AOP 将采用 CGLIB 动态生成代理类，它是被代理类或目标类的子类。当然，Spring AOP 很可能也允许我们强制采用其中一种方式。
 
 虽然动态生成了代理类，但是如果不把代理类加载到 JVM 方法区，也就不能创建它的实例。回头看一下 JDK 动态代理的 `newProxyInstance` 方法的首要参数：
 
@@ -274,11 +274,11 @@ proxy class loader: sun.misc.Launcher$AppClassLoader@18b4aac2
 
 ![ClassLoaderFamily](/img/aop_proxy_bytecode/ClassLoaderFamily.png)
 
-其中没有双亲的 Bootstrap Class Loader 从 JRE/lib/rt.jar 加载类，它的孩子 Extension Class Loader 从 JRE/lib/ext 或 java.ext.dirs 加载类，它的子孙 System Class Loader 从 CLASSPATH、-classpath、-cp、Mainfest 加载类，不仅如此，类加载机制使用 **Parent Delegation Model** 处理类加载请求，先将请求委派给父母，若父母不能完成加载，则退回由孩子加载，且防止同一个类被同一个类加载器加载多次。当然，如果有需要自定义类加载器，则需要编写类直接或间接继承 `java.lang.ClassLoader` 并重写相应的方法（一般会继承 `java.net.URLClassLoader`）。
+其中没有双亲的 Bootstrap Class Loader 从 JRE/lib/rt.jar 加载类，它的孩子 Extension Class Loader 从 JRE/lib/ext 或 java.ext.dirs 加载类，它的子孙 System Class Loader 从 CLASSPATH、-classpath、-cp、Mainfest 加载类。类加载机制使用 **Parent Delegation Model** 处理类加载请求，先将请求委派给父母，若父母不能完成加载，则退回由孩子加载，且防止同一个类被同一个类加载器加载多次。当然，如果有需要自定义类加载器，则需要编写类直接或间接继承 `java.lang.ClassLoader` 并重写相应的方法（一般会继承 `java.net.URLClassLoader`）。
 
 ## 后记
 
-在 Spring AOP 的使用过程中，还发现一个叫做 AspectJ 的家伙。在编译时和运行时之间是编译后和加载时，它就在加载时做手脚......
+在 Spring AOP 的使用过程中，还发现一个叫做 AspectJ 的家伙；在编译时和运行时之间是编译后和加载时，它就在加载时做手脚......
 
 > 本文首发于 https://h2cone.github.io
 
