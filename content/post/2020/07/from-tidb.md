@@ -3,7 +3,7 @@ title: "来自 TiDB"
 date: 2020-07-11T11:21:03+08:00
 draft: false
 description: ""
-tags: [tidb, database, distributed]
+tags: [tidb, database, sql, distributed]
 categories: []
 ---
 
@@ -224,7 +224,7 @@ TiKV 数据分区的术语是 Region，使用 Raft 对写入数据在多个 TiKV
 
 ![tikv-overview.png](/img/tidb/tikv-overview.png)
 
-[同城多数据中心部署](https://pingcap.com/docs-cn/stable/multi-data-centers-in-one-city-deployment/)和[两地三中心部署](https://pingcap.com/docs-cn/stable/three-data-centers-in-two-cities-deployment)提供了更强大的容错能力。
+[同城多数据中心部署](https://pingcap.com/docs-cn/stable/multi-data-centers-in-one-city-deployment/)和[两地三中心部署](https://pingcap.com/docs-cn/stable/three-data-centers-in-two-cities-deployment)提供了更强大的容错（容灾）能力。
 
 ## 参考资料
 
