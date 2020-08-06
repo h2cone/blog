@@ -106,6 +106,8 @@ public @interface Slf4j {
 
 `@Retention` 是一个元注解（注解的注解），其唯一属性的类型是 `RetentionPolicy`, 这个枚举只有三个：`SOURCE`、`CLASS`、`RUNTIME`，分别表示注解只保留到源文件，还是只保留到类文件，抑或是保留到运行时。由此可见，Lombok 的特色注解只保留到源文件，那么 Lombok 不是在运行时生成代码，而是在编译时生成代码（进一步证实是反编译有 Lombok 特色注解的源文件编译后的类文件）。
 
+![javac-flow](/img/javac/javac-flow.png)
+
 ## Annotation Processor
 
 早在 Java 6 时期，开发人员就可以使用 Pluggable Annotation Processing API（JSR 269）定制注解处理器（Annotation Processor），处理源文件中的注解。比如，检查代码并发出自定义的错误或警告，就像 Java 编译器编译 Java 源文件时，它就会检查被 `@Override` 修饰的方法是否与父类或接口的方法签名相同，如果不同，就会报错（编译失败），又或者像 Lombok 那样，根据注解提供的信息在编译时修改代码（修改抽象语法树），而不会有运行时修改代码的开销。
