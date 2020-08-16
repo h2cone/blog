@@ -183,7 +183,7 @@ cafe babe 0000 0034 0009 0700 0707 0008
 0000 0100 0500 0000 0200 06
 ```
 
-这就是 Java 字节码看起来的样子，这里表现为十六进制数据。Java 编译的过程是从源代码到字节码再到机器码（Machine code）。机器只理解机器码，而 JVM 只理解 Java 字节码，可以说 **Java 字节码是 JVM 的指令集**。既然 Class 文件包含了 Java 字节码，则修改类或生成类是由操作 Java 字节码开始，可是我们大部分都只擅长 Java 代码，操作 Java 字节码要怎么开始呢？
+这就是 Java 字节码看起来的样子，这里表现为十六进制数据。Java 编译时从源代码到字节码，字节码也可动态编译（JIT）为机器码（native code）；机器只理解机器码，而 JVM 只理解 Java 字节码，可以说 **Java 字节码是 JVM 的指令集**。既然 Class 文件包含了 Java 字节码，则修改类或生成类是由操作 Java 字节码开始，可是我们大部分都只擅长 Java 代码，操作 Java 字节码要怎么开始呢？
 
 不妨先试试从 Class 文件逆向到 Java 文件，利用反汇编命令行工具，例如在终端中敲下 `javap -v SimplePersonService.class`，你将得到 Class 文件格式（The class File Format）的直观认识；但是，操作 Java 字节码需要透彻理解 Java 虚拟机规范，比如 JVM 的指令集和 JVM 内幕，ASM 的出现使之成为可能。ASM 是一个 Java 字节码操作和分析框架，可用于修改已存在类或者动态生成类，程序员们不满足于此，利用 ASM 封装了更高层的 Java API，最终出现了 CGLIB。
 
