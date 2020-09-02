@@ -67,9 +67,9 @@ categories: []
 
 ![JVM_Internal_Architecture](/img/jvm/JVM_Internal_Architecture.png)
 
-Java SE 最常用的虚拟机是 Oracle/Sun 研发的 Java HotSpot VM。HotSpot 基本的线程模型是 Java 线程与本地线程（native thread）之间 1:1 的映射。线程通常在操作系统层实现或在应用程序层实现，前者的线程称为内核线程，后者的线程可能称为用户线程。内核（kernel）是操作系统代码常驻主存的部分，而所谓用户，就是应用程序和应用程序开发者。
+Java SE 最常用的虚拟机是 Oracle/Sun 研发的 Java HotSpot VM。HotSpot 基本的线程模型是 Java 线程与原生线程（native thread）之间 1:1 的映射。线程通常在操作系统层实现或在应用程序层实现，前者的线程称为内核线程，后者的线程可能称为用户线程。内核（kernel）是操作系统代码常驻主存的部分，而所谓用户，就是应用程序和应用程序开发者。
 
-前文提到，充分利用多处理器能使多线程程序运行得更快。在操作系统层，消费多处理器的是内核线程，操作系统负责调度所有内核线程（本地线程）并派遣到任何可用的 CPU，因为 Java 线程与内核线程（本地线程）是一对一映射，所以充分利用多处理器能增强 Java 程序的性能。
+前文提到，充分利用多处理器能使多线程程序运行得更快。在操作系统层，消费多处理器的是内核线程，操作系统负责调度所有内核线程（原生线程）并派遣到任何可用的 CPU，因为 Java 线程与内核线程（原生线程）是一对一映射，所以充分利用多处理器能增强 Java 程序的性能。
 
 ### 启动线程
 
@@ -105,7 +105,7 @@ public class HelloRunnable implements Runnable {
 }
 ```
 
-Java 8 以上的用户也许更倾向于使用匿名内部类实现 `java.lang.Runnable` 或 Lambda 表达式简化以上代码，但都是通过调用 `java.lang.Thread#start` 方法来启动新线程，对应的本地线程（内核线程）在启动 Java 线程时创建，并在终止时回收。其中，`run` 方法是 Java 线程启动后执行的语句组，即人类要求它执行的任务，而 `main` 方法的语句是 Java 用户直接或间接通过命令行启动 JVM 后执行。
+Java 8 以上的用户也许更倾向于使用匿名内部类实现 `java.lang.Runnable` 或 Lambda 表达式简化以上代码，但都是通过调用 `java.lang.Thread#start` 方法来启动新线程，对应的原生线程（内核线程）在启动 Java 线程时创建，并在终止时回收。其中，`run` 方法是 Java 线程启动后执行的语句组，即人类要求它执行的任务，而 `main` 方法的语句是 Java 用户直接或间接通过命令行启动 JVM 后执行。
 
 ![main-thread-in-java](/img/thread_concurrent/main-thread-in-java.jpeg)
 
@@ -217,7 +217,9 @@ new Thread(r).start();
 
 ![Executor-execution-logic](/img/thread_concurrent/Executor-execution-logic.jpg)
 
-`Executor` 接口大部分实现都使用**线程池（Thread Pool）**，这就是理由之二。例如，一个一般的服务器端程序服务着多个客户端，如果每个客户端的请求都通过新建一个线程来处理，即线程数随着请求数增加而增加，虽然新建线程比新建进程便宜，但是当活跃的线程数太多时，不仅占用大量的内存，容易导致内存溢出，而且操作系统内核需要花费大量的时间在线程调度上（上下文切换），大量的线程“暂停”较长时间，还因频繁新建和终结执行短时任务的线程而引起的延迟，大量客户端长时间得不到响应。线程池就是为了解决此问题。
+`Executor` 接口大部分实现都使用**线程池（Thread Pool）**，这就是理由之二。例如，一个一般的服务器端程序服务着多个客户端，如果每个客户端的请求都通过新建一个线程来处理，即线程数随着请求数增加而增加，虽然新建线程比新建进程便宜，但是当活跃的线程数太多时，不仅占用大量的内存，容易导致内存溢出，而且操作系统内核需要花费大量的时间在线程调度上（上下文切换），大量的线程“暂停”较长时间，还因频繁新建和终结执行短时任务的线程而引起的延迟，大量客户端长时间得不到响应。
+
+对于 Java Hotspot VM 来说，大量线程的另一个问题是巨大的根集合（root set），因此 GC 停顿阶段（stop-the-world pause）更长。
 
 线程池由数量可控的**工作线程（worker thread）** 组成，每个工作线程的生命都被延长，以便用于执行多个任务，既减少了上下文切换引起的延迟，也减少了频繁新建和终结执行短暂任务的线程而引起的延迟。线程池的新建通常是预处理，即服务器端程序提供服务之前已准备好线程池，避免了临时新建大量线程的开销。
 
@@ -274,7 +276,7 @@ future.whenComplete((obj, e) -> {
 
 `Executors` 还提供了 `newCachedThreadPool` 和 `newSingleThreadExecutor` 等工厂方法，详情请见 [Executors # Method Summary](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#method.summary)。
 
-使用 `Executors` 新建线程池，需要注意的是，可能会因为任务队列堆积过多任务从而导致内存溢出，因为 `LinkedBlockingQueue` 可自动扩容，最大值为 `Integer.MAX_VALUE`。建议合理设置线程池的各个参数，例如使用 `new ThreadPoolExecutor(..., ..., ..., ..., ...)` 来新建线程池，详情见 [ThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ThreadPoolExecutor.html) 和 [ScheduledThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledThreadPoolExecutor.html)。
+使用 `Executors` 新建线程池，需要注意的是，可能会因为任务队列堆积过多任务从而导致内存溢出，因为 `LinkedBlockingQueue` 可自动扩容，最大值为 `Integer.MAX_VALUE`。建议合理设置线程池的各个参数，例如使用 new ThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, RejectedExecutionHandler handler) 来新建线程池，详情见 [ThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ThreadPoolExecutor.html) 和 [ScheduledThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledThreadPoolExecutor.html)。
 
 ### Fork/Join
 
@@ -1120,7 +1122,7 @@ JDK 8 在 `HashMap` 中引入红黑树以优化查找算法。当一个桶的大
 
 ## 后记
 
-单机可以运行数百万个 Go 协程（Goroutine），却只能运行数千个 Java 线程。现在的 Java HotSpot VM，默认一个 Java 线程占有 1 M 的栈（以前是 256K），而且是大小固定的栈，而 Go 协程的栈是大小可变的栈，即随着存储的数据量变化而变化，并且初始值仅为 4 KB。确实，运行过多的 Java 线程容易导致 [out of memory](https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/memleaks002.html#CIHHJDJE)，而且 Java 线程与内核线程（本地线程）是 1:1 映射，那么过多线程的上下文切换也会引起应用程序较大延迟；Go 协程与内核线程（本地线程）是多对一映射，Go 实现了自己的协程调度器，实际上要运行数百万个协程，Go 需要做得事情要复杂得多。
+单机可以运行数百万个 Go 协程（Goroutine），却只能运行数千个 Java 线程。现在的 Java HotSpot VM，默认一个 Java 线程占有 1 M 的栈（以前是 256K），而且是大小固定的栈，而 Go 协程的栈是大小可变的栈，即随着存储的数据量变化而变化，并且初始值仅为 4 KB。确实，运行过多的 Java 线程容易导致 [out of memory](https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/memleaks002.html#CIHHJDJE)，而且 Java 线程与内核线程（原生线程）是 1:1 映射，那么过多线程的上下文切换也会引起应用程序较大延迟；Go 协程与内核线程（原生线程）是多对一映射，Go 实现了自己的协程调度器，实际上要运行数百万个协程，Go 需要做得事情要复杂得多。
 
 若只讨论 Java 单体应用承受高并发的场景，即使扩大线程池也不能显著提高性能或适得其反，相反，少量的线程就能处理更多的连接，比如，[Netty](https://netty.io/)。如果仍然认为重量级的 Java 线程是瓶颈，并且还想使用 Java 的话，不妨尝试 [Quasar](http://docs.paralleluniverse.co/quasar/)，它是一个提供[纤程](https://en.wikipedia.org/wiki/Fiber_(computer_science))和类似于 Go 的 [Channel](https://en.wikipedia.org/wiki/Channel_(programming)) 以及类似于 Erlang 的 [Actor](https://en.wikipedia.org/wiki/Actor_model) 的 Java 库。
 

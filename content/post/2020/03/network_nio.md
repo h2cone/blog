@@ -200,7 +200,7 @@ public class BioClient {
 }
 ```
 
-基于 Java NIO 的服务器端程序，虽然使用了线程池，但是处理 Socket 普遍存在阻塞 I/O，工作线程被阻塞或被迫等待较长时间，且一个 Socket 由一个线程处理，即线程工时利用率较低，单个这种服务器端程序应对负载增加的能力并不是最优化。
+基于 Java NIO 的服务器端程序，虽然使用了线程池，但是处理 Socket 普遍存在阻塞 I/O，工作线程被阻塞或被迫等待较长时间，且一个 Socket 由一个线程处理，即线程工时利用率较低，单个这种服务器端程序应对负载增加（C10K ~ C100K）的能力并不是最优化。
 
 ### NIO
 
@@ -667,7 +667,7 @@ EventLoop 类的族谱如下所示：
 
 ![EventLoop-allocation-for-non-blocking-transports](/img/network_nio/EventLoop-allocation-for-non-blocking-transports.jpg)
 
-当一个 Channel 注册到一个 NioEventGroup，根据上文所说的 Java NIO 知识，该 Channel 注册到一个由某个 NioEventLoop 维护的 Selector，因此，NioEventLoop 通常将处理多个 Channel 的事件。
+当一个 Channel 注册到一个 NioEventLoopGroup，根据上文所说的 Java NIO 知识，该 Channel 注册到一个由某个 NioEventLoop 维护的 Selector，因此，NioEventLoop 通常将处理多个 Channel 的事件。
 
 ##### ChannelPipeline
 
@@ -805,15 +805,15 @@ ByteBuf sliced = buf.slice(0, 14);
 
 #### 应用程序优化
 
-S0. 优化业务逻辑。
+**S0** 优化业务逻辑。
 
-S1. 避免阻塞 parentGroup 和 childGroup 中的线程。执行耗时任务（如访问数据库），考虑新建给定线程数的 EventGroup 对象，添加它和业务逻辑的 ChannelHandler 到 ChannelPipeline。
+**S1** 避免阻塞 bossEventLoopGroup/parentGroup 和 workerEventLoopGroup/childGroup 中的线程。执行耗时任务（如访问数据库），考虑新建给定线程数的 EventLoopGroup 对象，添加它和业务逻辑的 ChannelHandler 到 ChannelPipeline。
 
-S2. 复用 ByteBuf 对象，减少 GC 引起的延迟。
+**S2** 复用 ByteBuf 对象，减少 GC 引起的延迟。
 
 > ByteBuf is a reference-counted object which has to be released explicitly via the release() method. Please keep in mind that it is the handler's responsibility to release any reference-counted object passed to the handler
 
-S2.1 使用 [release()](https://netty.io/4.1/api/io/netty/util/ReferenceCounted.html#release--)，回收对象后将隐式复用对象。
+**S2.1** 使用 [release()](https://netty.io/4.1/api/io/netty/util/ReferenceCounted.html#release--)，回收对象后将隐式复用对象。
 
 ```java
 @Override
@@ -845,15 +845,25 @@ public void channelRead(ChannelHandlerContext ctx, Object msg) {
 
 > It is because Netty releases it for you when it is written out to the wire.
 
-S2.2 继承 [SimpleChannelInboundHandler](https://netty.io/4.1/api/io/netty/channel/SimpleChannelInboundHandler.html)。
+**S2.2** 继承 [SimpleChannelInboundHandler](https://netty.io/4.1/api/io/netty/channel/SimpleChannelInboundHandler.html)。
 
 > Be aware that depending of the constructor parameters it will release all handled messages by passing them to ReferenceCountUtil.release(Object). In this case you may need to use ReferenceCountUtil.retain(Object) if you pass the object to the next handler in the ChannelPipeline.
 
-S2.3 使用事件传播方法，转发给其它结点释放。
+**S2.3** 使用事件传播方法，转发给其它结点释放。
 
-A1. [ChannelOption](https://netty.io/4.1/api/io/netty/channel/ChannelOption.html) 配置或参数调优。
+**A1** [ChannelOption](https://netty.io/4.1/api/io/netty/channel/ChannelOption.html) 配置或参数调优，例如调整 TCP 发送/接收缓冲区（TCP Send/Receive Buffers）的大小：
 
-A2. 复用自定义的 ChannelHandler 对象。使用 [@ChannelHandler.Sharable](https://netty.io/4.1/api/io/netty/channel/ChannelHandler.Sharable.html)，但要注意是否存在多线程访问共享变量的安全问题。
+```java
+ServerBootstrap bootstrap = new ServerBootstrap()
+        .channel(EpollServerSocketChannel.class)
+        .group(bossEventLoopGroup, workerEventLoopGroup)
+        .handler(new LoggingHandler(LogLevel.INFO))
+        .childHandler(new CustomChannelInitializer())
+        .childOption(ChannelOption.SO_SNDBUF, 1024 * 1024)
+        .childOption(ChannelOption.SO_RCVBUF, 32 * 1024);
+```
+
+**A2** 复用自定义的 ChannelHandler 对象。使用 [@ChannelHandler.Sharable](https://netty.io/4.1/api/io/netty/channel/ChannelHandler.Sharable.html)，但要注意是否存在多线程访问共享变量的安全问题。
 
 ## I/O 模型
 
@@ -901,7 +911,7 @@ A2. 复用自定义的 ChannelHandler 对象。使用 [@ChannelHandler.Sharable]
 
 虽然以上三种 I/O 模型均出现了线程被阻塞在函数的现象，但是 I/O multiplexing 模型的优势在于单一线程在相同时间内能够处理更多的连接或请求，同时组合多线程模型，例如 Reactor 模式，所以才说，一个基于 I/O multiplexing 的 Java NIO 服务器端应对负载增加的能力通常高于一个 Java BIO 服务器端。
 
-## 尾声
+## 原生传输
 
 早在 JDK 6 就已经包括了基于 Linux [epoll](https://en.wikipedia.org/wiki/Epoll) 全新的 [SelectorProvider](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/spi/SelectorProvider.html)，当检测到内核 2.6 以及更高版本时，默认使用基于 epoll 的实现，当检测到 2.6 之前的内核版本时，将使用基于 [poll](https://en.wikipedia.org/wiki/Poll_(Unix)) 的实现。
 
