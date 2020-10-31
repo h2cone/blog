@@ -69,7 +69,7 @@ Redis 集群使用**主从模型（master-slave model）** 实现故障转移。
 
 - 超过半数的结点发生了故障。
 
-Redis 集群不保证**强一致性（strong consistency）**。[Kafka](https://kafka.apache.org/) 的作者 Jay Kreps 曾经说过：
+Redis 集群无法保证**强一致性（strong consistency）**。[Kafka](https://kafka.apache.org/) 的作者 Jay Kreps 曾经说过：
 
 > Is it better to be alive and wrong or right and dead?
 
@@ -214,7 +214,7 @@ String value = jc.get("foo");
 
 ![redis-proxy](/img/distributed-cache/redis-proxy.png)
 
-代理（Proxy），比如 [Redis Cluster Proxy](https://github.com/RedisLabs/redis-cluster-proxy) 和 [CodisLabs/codis](https://github.com/CodisLabs/codis)，但是，代理通常也要保证一定程度的可用性。
+代理（Proxy），比如 [Redis Cluster Proxy](https://github.com/RedisLabs/redis-cluster-proxy) 和 [CodisLabs/codis](https://github.com/CodisLabs/codis)，但是，代理通常也要提供一定程度的可用性。
 
 ### 容器化
 

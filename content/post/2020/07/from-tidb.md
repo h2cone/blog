@@ -13,7 +13,9 @@ SQL 永生。
 
 ## MySQL 窘境
 
-数据以前所未有的速度增长，例如从 GB 到 TB，甚至到 PB；负载增加，例如单位时间请求数、I/O 次数、活跃用户数激增；引起单机 MySQL server 性能下降，甚至不可用。我们想尽办法扩展 MySQL，通常，要么采购更强大的机器作为数据库服务器，这是一种**纵向扩展（scale up）**；要么对 MySQL 的库或表进行分片（MySQL Sharding），即将数据集分离得到多个子数据集，任意两个子数据集可能存储在同一台机器上，也可能存储在不同机器上，这是一种**横向扩展（scale out）**。
+### *向扩展
+
+数据以前所未有的速度增长，例如从 GB 到 TB，甚至到 PB；负载增加，例如单位时间请求数、I/O 次数、活跃用户数激增；这可能引起单机 MySQL server 性能下降，甚至不可用。我们想尽办法扩展 MySQL，通常，要么采购更强大的机器作为数据库服务器，这是一种**纵向扩展（scale up）**；要么对 MySQL 的库或表进行分片（MySQL Sharding），即将数据集分离得到多个子数据集，任意两个子数据集可能存储在同一台机器上，也可能存储在不同机器上，这是一种**横向扩展（scale out）**。
 
 纵向扩展需要应对一些问题：
 
@@ -35,7 +37,7 @@ SQL 永生。
 
 实现以上目标至少需要分区，对于 Elasticsearch 和 SolrCloud 以及 MongoDB 来说是 shard；对于 Cassandra 和 HBase 分别是 vnode 和 region。
 
-为什么需要分区？
+### 为什么需要分区
 
 - 增强扩展性。海量数据分布在更多磁盘上，查询负载分布到更多处理器上。
 
@@ -51,7 +53,9 @@ SQL 永生。
 
 - 就近访问。将副本部署到距离用户更近的地方。
 
-如何对 MySQL 进行分区？我们通常使用垂直分区（vertical partitioning）和水平分区（horizontal partitioning），如下图所示：
+### 对 MySQL 进行分区
+
+我们通常使用垂直分区（vertical partitioning）和水平分区（horizontal partitioning），如下图所示：
 
 ![DB_image_1_cropped](/img/dbms/DB_image_1_cropped.png)
 
@@ -73,15 +77,21 @@ VP1 和 VP2 表现得像两张可通过 ID 关联起来的表，HP1 和 HP2 的 
 
 ![MySQL_Cluster_Scalability_v1](/img/mysql/MySQL_Cluster_Scalability_v1.png)
 
+### 主从复制
+
 MySQL 的数据复制模型是主从复制。传统主从复制图像：主结点（主副本、主库）处理读/写请求，若是写请求则通过同步复制或异步复制将数据变更日志或 **replicated log** 发送到所有从结点（从副本、从库），从结点按照日志写副本；一般情况，从结点只读，故障转移时从结点可提升为主结点。传统的同步复制侧重**一致性**，要求”短暂“的不可用，主结点需要等待从结点的确认；传统的异步复制侧重**可用性**，要求“短暂”的不一致，从结点滞后于主结点。
 
 如果把所有从结点配置为同步复制模式，那么任何失效或性能下降的从结点会导致系统阻塞。MySQL 支持设置半同步模式，某一个从结点配置为同步模式，其它从结点配置为异步模式；当同步模式的从结点失效时，另一个从结点从异步模式提升为同步模式，这么做的好处之一是保证至少有两个结点（主结点和同步模式的从结点）拥有最新的数据副本。半同步并非高枕无忧，微信后台团队在 [MySQL 半同步复制的数据一致性探讨](https://mp.weixin.qq.com/s/3DeXEd2ZjjutxRyo_3coaQ)中总结了 MySQL 的半同步复制和 Master 切换都存在一些不足，数据复制存在回滚难题，Master 切换存在多 Master 难题。
 
 主从复制模型不能保证同时满足强一致性和高可用性。如果出现结点失效、网络中断、延迟抖动等情况，多主结点复制方案会更加可靠，但是代价则是系统的高复杂度和弱一致性保证。多主结点复制适用于多数据中心，每个数据中心采用常规的主从复制方案，各个数据中心的主结点负责与其它数据中心的主结点交换 replicated log。
 
+### 小结
+
 面对**透明分片（transparent sharding）、弹性伸缩（auto-scaling）、自动恢复（auto-failover）、异地多活（multi-data center）**等需求，传统的解决方案使我们陷入窘境。
 
 ## SQL 和 NoSQL
+
+### ACID 和 BASE
 
 为什么不使用 [NoSQL](https://en.wikipedia.org/wiki/NoSQL) 数据库代替 MySQL 数据库呢？假设我们有了大刀阔斧迁移数据和重写应用程序的决心（基本不可能），但是许多 NoSQL 数据库都牺牲了一致性，而倾向于可用性，这种一致性模型往往被称为 BASE：
 
@@ -91,7 +101,7 @@ MySQL 的数据复制模型是主从复制。传统主从复制图像：主结�
 
 - 最终一致性（Eventual consistency）。
 
-BASE 模凌两可，太长或永远不一致的系统基本不可用。许多处理重要数据的系统（例如，财务、订单、互联网金融系统等）随着快速增长的数据和负载，常规的[关系数据库](https://en.wikipedia.org/wiki/Relational_database)扩展困难，而对于 [ACID](https://en.wikipedia.org/wiki/ACID) ，特别是一致性的要求 NoSQL 数据库难以满足。相较于 BASE 的承诺，关系数据库的 ACID 的承诺是五十步笑百步（一致性往往推卸给应用程序）：
+BASE 模凌两可，太长或永远不一致的系统基本不可用。许多处理重要数据的系统（例如，财务、订单、互联网金融系统等）随着快速增长的数据和负载，常规的[关系数据库](https://en.wikipedia.org/wiki/Relational_database)扩展困难，而对于 [ACID](https://en.wikipedia.org/wiki/ACID) ，特别是一致性的要求，NoSQL 数据库难以满足。相较于 BASE 的承诺，关系数据库的 ACID 的承诺是五十步笑百步（一致性往往推卸给应用程序）：
 
 - 原子性（Atomicity）。事务中的操作序列，要么全部执行完成（提交），要么全部不执行（回滚）。
 
@@ -101,7 +111,9 @@ BASE 模凌两可，太长或永远不一致的系统基本不可用。许多处
 
 - 持久性（Durability）。无完美或绝对的保证。
 
-NoSQL 数据库缺乏 JOIN 的能力，这是其文档模型的限制。关系数据库市场占有率一直居高不下，参考 [DB-Engines Ranking](https://db-engines.com/en/ranking)，原因之一是 [SQL](https://en.wikipedia.org/wiki/SQL) 是**声明式**语言的代表，它的简单与统一在于**指定结果所满足的模式**，除此之外，[关系模型](https://en.wikipedia.org/wiki/Relational_model)的理论足够优雅：
+### 数据模型与查询语言
+
+NoSQL 数据库缺乏 JOIN 的能力，这是其文档模型的限制。关系数据库市场占有率一直居高不下，参考 [DB-Engines Ranking](https://db-engines.com/en/ranking)，原因之一是 [SQL](https://en.wikipedia.org/wiki/SQL)（DDL、DML、DQL、DCL） 是**声明式**语言的代表，它的简单与统一在于**指定结果所满足的模式**，不仅如此，[关系模型](https://en.wikipedia.org/wiki/Relational_model)的理论足够优雅：
 
 - 关系是[笛卡尔积](https://en.wikipedia.org/wiki/Cartesian_product)的一个子集。
 
@@ -224,7 +236,7 @@ TiKV 数据分区的术语是 Region，使用 Raft 对写入数据在多个 TiKV
 
 ![tikv-overview.png](/img/tidb/tikv-overview.png)
 
-[同城多数据中心部署](https://pingcap.com/docs-cn/stable/multi-data-centers-in-one-city-deployment/)和[两地三中心部署](https://pingcap.com/docs-cn/stable/three-data-centers-in-two-cities-deployment)提供了更强大的容错（容灾）能力。
+[同城多数据中心部署](https://pingcap.com/docs-cn/stable/multi-data-centers-in-one-city-deployment/)和[两地三中心部署](https://pingcap.com/docs-cn/stable/three-data-centers-in-two-cities-deployment)则提供了更强大的容错（容灾）能力。
 
 ## 参考资料
 

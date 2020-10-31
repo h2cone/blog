@@ -225,20 +225,13 @@ new Thread(r).start();
 
 ![任务通过队列提交到池中](/img/thread_concurrent/任务通过队列提交到池中.png)
 
-线程池的一种常见类型是固定线程池（fixed thread pool），如果某个线程仍在使用中而被某种方式终止，那么就会有新的线程代替它。任务通过队列提交到池中，任务队列可以容纳超过线程池中线程数量的的任务。这样设计的好处是优雅降级（degrade gracefully）和削峰。
+线程池有一种类型是固定线程池（fixed thread pool），如果某个线程仍在使用中而被某种方式终止，那么就会有新的线程代替它。任务通过队列提交到池中，任务队列可以容纳超过线程池中线程数量的的任务。这样设计的好处是优雅降级（degrade gracefully）和削峰。
 
 ```java
 public static ExecutorService newFixedThreadPool(int nThreads) {
     return new ThreadPoolExecutor(nThreads, nThreads,
                                     0L, TimeUnit.MILLISECONDS,
                                     new LinkedBlockingQueue<Runnable>());
-}
-
-public static ExecutorService newFixedThreadPool(int nThreads, ThreadFactory threadFactory) {
-    return new ThreadPoolExecutor(nThreads, nThreads,
-                                    0L, TimeUnit.MILLISECONDS,
-                                    new LinkedBlockingQueue<Runnable>(),
-                                    threadFactory);
 }
 ```
 
@@ -276,7 +269,15 @@ future.whenComplete((obj, e) -> {
 
 `Executors` 还提供了 `newCachedThreadPool` 和 `newSingleThreadExecutor` 等工厂方法，详情请见 [Executors # Method Summary](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#method.summary)。
 
-使用 `Executors` 新建线程池，需要注意的是，可能会因为任务队列堆积过多任务从而导致内存溢出，因为 `LinkedBlockingQueue` 可自动扩容，最大值为 `Integer.MAX_VALUE`。建议合理设置线程池的各个参数，例如使用 new ThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, RejectedExecutionHandler handler) 来新建线程池，详情见 [ThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ThreadPoolExecutor.html) 和 [ScheduledThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledThreadPoolExecutor.html)。
+使用 `Executors` 新建线程池，需要注意的是，可能会因为任务队列堆积过多任务从而导致内存溢出，因为 `LinkedBlockingQueue` 可自动扩容，最大值为 `Integer.MAX_VALUE`。**建议合理设置线程池的各个参数**，例如使用构造器新建线程池：
+
+```java
+new ThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, RejectedExecutionHandler handler);
+```
+
+![ThreadPoolExecutor](/img/thread_concurrent/ThreadPoolExecutor.png)
+
+详情见 [ThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ThreadPoolExecutor.html) 和 [ScheduledThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledThreadPoolExecutor.html)。
 
 ### Fork/Join
 
@@ -664,7 +665,7 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
 - 据说，获得轻量锁的 CAS 在多处理器计算机系统上可能引起较大延迟，也许大多数对象在其生命周期中最多只能被一个线程锁定。早在 Java 6，此问题试图通过**偏向锁**优化。
 
-- 该对象被第一个线程锁定时，只执行一次 CAS 操作，以将该线程 ID 记录到该对象的 mark work 中。于是该对象偏向于该线程。将来该线程对该对象的锁定和解锁无需任何原子操作或 mark word 的更新，甚至该线程栈中的锁记录也不会初始化。
+- 该对象被第一个线程锁定时，只执行一次 CAS 操作，以将该线程 ID 记录到该对象的 mark word 中。于是该对象偏向于该线程。将来该线程对该对象的锁定和解锁无需任何原子操作或 mark word 的更新，甚至该线程栈中的锁记录也不会初始化。
 
 - 当一个线程锁定已偏向于另一个线程的对象，该对象的偏向会被撤销（此操作必须暂停所有线程）。一般由偏向锁转为轻量级锁。
 
@@ -870,6 +871,12 @@ final CyclicBarrier barrier = new CyclicBarrier(8);
 ```java
 barrier.await();
 ```
+
+### AQS
+
+它们最亲近的父类是 [AbstractQueuedSynchronizer](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/AbstractQueuedSynchronizer.html)。
+
+![SubClassOfAbstractQueuedSynchronizer](/img/thread_concurrent/SubClassOfAbstractQueuedSynchronizer.png)
 
 ### 原子
 
