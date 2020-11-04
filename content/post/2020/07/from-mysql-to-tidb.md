@@ -1,5 +1,5 @@
 ---
-title: "来自 TiDB"
+title: "从 MySQL 到 TiDB"
 date: 2020-07-11T11:21:03+08:00
 draft: false
 description: ""
@@ -238,6 +238,8 @@ TiKV 数据分区的术语是 Region，使用 Raft 对写入数据在多个 TiKV
 
 [同城多数据中心部署](https://pingcap.com/docs-cn/stable/multi-data-centers-in-one-city-deployment/)和[两地三中心部署](https://pingcap.com/docs-cn/stable/three-data-centers-in-two-cities-deployment)则提供了更强大的容错（容灾）能力。
 
+> 本文首发于 https://h2cone.github.io
+
 ## 参考资料
 
 - [Designing Data-Intensive Applications](https://dataintensive.net)
@@ -245,6 +247,8 @@ TiKV 数据分区的术语是 Region，使用 Raft 对写入数据在多个 TiKV
 - [Understanding Database Sharding](https://www.digitalocean.com/community/tutorials/understanding-database-sharding)
 
 - [“分库分表" ？选型和流程要慎重，否则会失控](https://mp.weixin.qq.com/s?__biz=MzA4MTc4NTUxNQ==&mid=2650519118&idx=1&sn=fc4b92154cb9ab6dcec5b5544c6274aa&chksm=8780b18ab0f7389c1bde56b5adfce265779a58314ef77b7645b1f189f2ba11691fac7d827894&scene=158#rd)
+
+- [MySQL 5.7 Reference Manual # Replication Implementation](https://dev.mysql.com/doc/refman/5.7/en/replication-implementation.html)
 
 - [SQL vs NoSQL: What's the difference?](https://www.guru99.com/sql-vs-nosql.html#:~:text=SQL%20databases%20are%20table%20based,dynamic%20schema%20for%20unstructured%20data.)
 

@@ -228,7 +228,7 @@ String value = jc.get("foo");
 
 ![j2cache](/img/distributed-cache/j2cache.jpg)
 
-它可以使用 Redis 的[发布/订阅](https://redis.io/topics/pubsub)（类似消息中间件的特性）来保证多个应用程序实例之间一定程度的缓存一致性，一定程度是因为 Redis 官方说将来有计划支持更可靠的消息传递；所谓可靠的消息传递，类比 TCP 可靠传输的基本思想，即**确认、重传、超时**等概念。
+它可以使用 Redis 的[发布/订阅](https://redis.io/topics/pubsub)（类似消息中间件的特性）来保证多个应用程序实例之间一定程度的缓存一致性，一定程度是因为 Redis 官方说将来有计划支持更可靠的消息传递；所谓可靠的消息传递，类比 TCP 可靠传输的基本思想，即**确认、超时、重传**等概念。
 
 ## CDN
 
@@ -243,6 +243,8 @@ String value = jc.get("foo");
 - 提高内容的的全球性。
 
 CDN 系统是（回）源主机及其 Web 服务器的（高速）缓存，CDN 系统适合缓存的内容是文件。
+
+> 本文首发于 https://h2cone.github.io
 
 ## 参考资料
 

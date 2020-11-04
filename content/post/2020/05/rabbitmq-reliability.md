@@ -59,7 +59,7 @@ Exchange 使用的路由算法取决于 exchange 类型和 binding 规则。
 
 > 即使 TCP 确认一个数据包已经发送到目标结点，但应用程序也可能在处理完成之前发生崩愤。如果你想知道一个请求是否执行成功，就需要应用级别的回复。
 
-所谓可靠的消息传递，参考底层 TCP 可靠传输的基本思想，应用层的 RabbitMQ 是否也有确认、重传、超时等概念？
+所谓可靠的消息传递，参考底层 TCP 可靠传输的基本思想，应用层的 RabbitMQ 是否也有确认、超时、重传等概念？
 
 ### 确认与回执
 
@@ -115,6 +115,8 @@ RabbitMQ 事务将可能大幅降低吞吐量，故一般不推荐使用。
 ![Cross-node_publishing_of_messages_in_a_cluster](/img/rabbitmq/Cross-node_publishing_of_messages_in_a_cluster.jpg)
 
 RabbitMQ 集群提供了创建高可用队列（HA queues）的方法来支持容错（fault tolerance）。高可用队列横跨多个集群结点并共享同步的队列状态，包括消息数据。任何具有高可用队列的结点发生故障，群集中的其它结点仍将包含消息和队列状态；当故障结点恢复并重新加入集群时，它将同步它下线时错过的消息。
+
+> 本文首发于 https://h2cone.github.io
 
 ## 参考资料
 

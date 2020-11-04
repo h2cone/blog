@@ -37,3 +37,5 @@ fmt.Println(x)  // "2"
 - Go 函数调用的参数传递是值传递，值可能是地址，拷贝地址往往更高效，且能操纵指向的变量的值或引用的数据结构。
 - Java 把指针 （Pointer）伪装成引用（Reference），创建一个对象，则产生了这个对象的引用。
 - Java 方法调用的参数传递估计是值传递，只不过原始类型 （primitive type）赋予的是原值而引用类型 （reference type）赋予的是地址。
+
+> 本文首发于 https://h2cone.github.io

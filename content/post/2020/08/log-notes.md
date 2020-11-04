@@ -39,7 +39,7 @@ categories: []
 
 计算机界明显的坑早已被前人填满。[Write-ahead logging](https://en.wikipedia.org/wiki/Write-ahead_logging) 是数据库系统中提供原子性与持久性的技术（日志先行技术），简称 **WAL**，一言蔽之，数据库系统首先将数据变更记录到日志中，然后将日志写入稳定存储（如磁盘），之后才将变更写入数据库。
 
-InnoDB（MySQL 默认存储引擎）的 [redo log](https://dev.mysql.com/doc/refman/5.7/en/innodb-redo-log.html) 和 [undo log](https://dev.mysql.com/doc/refman/5.7/en/innodb-undo-logs.html) 皆为磁盘数据结构：
+[InnoDB](https://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html)（MySQL 默认存储引擎）的 [redo log](https://dev.mysql.com/doc/refman/5.7/en/innodb-redo-log.html) 和 [undo log](https://dev.mysql.com/doc/refman/5.7/en/innodb-undo-logs.html) 皆为磁盘数据结构：
 
 - undo log 在崩溃恢复期间用于撤消或回滚未提交的事务。
 
@@ -71,9 +71,15 @@ commit T[i]       //（3）
 
 ### 逻辑日志
 
+前文 [MySQL 窘境 # 主从复制](https://h2cone.github.io/post/2020/07/from-mysql-to-tidb/#%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6) 中提到其数据复制需要数据变更日志，或则数据变更日志记录（事件）。MySQL Server 有[若干种日志](https://dev.mysql.com/doc/refman/5.7/en/server-logs.html)，其中二进制日志（Binary log，简称 binlog）包含描述数据变更的“事件”。
+
+在现代服务化的架构中，组合使用 MySQL 和 [Elasticsearch](https://www.elastic.co/products/elasticsearch) 时常常要求将 MySQL 数据同步到 Elasticsearch；常见的解决方案是使用 [logstash](https://www.elastic.co/logstash) 的插件：[Jdbc input plugin](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-jdbc.html)。
+
 ## 分布式系统日志
 
 ## 容器日志
+
+> 本文首发于 https://h2cone.github.io
 
 ## 参考资料
 
@@ -90,3 +96,9 @@ commit T[i]       //（3）
 - [Recovering from a system crash using undo/redo-log](http://www.mathcs.emory.edu/~cheung/Courses/554/Syllabus/6-logging/undo-redo2.html)
 
 - [undo log 与 redo log 原理分析](https://zhuanlan.zhihu.com/p/35574452)
+
+- [MySQL 5.7 Reference Manual # The Binary Log](https://dev.mysql.com/doc/refman/5.7/en/binary-log.html)
+
+- [MySQL 5.7 Reference Manual # mysqlbinlog — Utility for Processing Binary Log Files](https://dev.mysql.com/doc/refman/5.7/en/mysqlbinlog.html)
+
+- [阿里巴巴 MySQL binlog 增量订阅&消费组件](https://github.com/alibaba/canal)

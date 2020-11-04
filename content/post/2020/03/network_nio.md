@@ -39,9 +39,9 @@ categories: []
 
 - Socket 是进程与传输层的中间层。
 
-- Socket 包含五元组**（client ip, client port, server ip, server port, protocol）**。
+- Socket 包含五元组 (**client ip, client port, server ip, server port, protocol**)。
 
-同在传输层的 [UDP](https://en.wikipedia.org/wiki/User_Datagram_Protocol) 不如 TCP 可靠，但是轻量级，因为它没有确认、重传、超时的概念，也没有拥塞控制，而且无连接，从而能广播。
+同在传输层的 [UDP](https://en.wikipedia.org/wiki/User_Datagram_Protocol) 不如 TCP 可靠，但是轻量级，因为它没有确认、超时、重传的概念，也没有拥塞控制，而且无连接，从而能广播。
 
 Socket 隐藏了下层具体实现的复杂性，并给上层提供了简单或统一的 API。下图是 TCP Socket 基本流程，使用 [伯克利 Sockets](https://en.wikipedia.org/wiki/Berkeley_sockets) 描述。
 

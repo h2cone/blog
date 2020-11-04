@@ -11,4 +11,8 @@ Go fast.
 
 <!--more-->
 
+## 图片来自网络
+
 ![goodbye-spring](/img/spring/goodbye-spring.jpeg)
+
+> 本文首发于 https://h2cone.github.io
