@@ -616,7 +616,7 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 
 同步方法虽然使用一个名为 `ACC_SYNCHRONIZED` 的 flag，但从 Java 虚拟机规范可以知道，底层行为也应该是进入监视器和退出监视器。
 
-在 Java Hostspot VM 中，每一个 Java 对象的内存布局都有一个通用的**对象头（object header）**结构。对象头的第一个字是 mark word，第二字是 klass pointer。
+在 Java Hostspot VM 中，每一个 Java 对象的内存布局都有一个通用的**对象头（object header）～**结构。对象头的第一个字是 mark word，第二字是 klass pointer。
 
 ![ObjectHeader](/img/thread_concurrent/ObjectHeader.png)
 
