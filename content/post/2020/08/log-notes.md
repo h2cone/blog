@@ -52,7 +52,7 @@ Date:   Fri Jun 6 16:40:48 2014 -0700
 
 ### 预写日志
 
-老伙计 MySQL server 维护着持久化数据库对象，包括库、表、索引、视图等。根据经验，我们确信入库数据终将会被 MySQL server 写入磁盘，磁盘是一种 I/O 设备（参考 [网络·NIO # I/O](https://h2cone.github.io/post/2020/03/network_nio/#i-o)），从主存复制数据到 I/O 设备并不是一个原子操作，如果客户端发送请求后，MySQL server 处理请求中，系统[崩溃](https://en.wikipedia.org/wiki/Crash_(computing))或宕机抑或重启，MySQL 如何保证不丢失变更或者恢复到正确的数据？
+老伙计 MySQL server 维护着持久化数据库对象，包括库、表、索引、视图等。根据经验，我们确信入库数据终将会被 MySQL server 写入磁盘，磁盘是一种 I/O 设备（参考[网络·NIO # I/O](https://h2cone.github.io/post/2020/03/network_nio/#i-o)），从主存复制数据到 I/O 设备并不是一个原子操作，如果客户端发送请求后，MySQL server 处理请求中，系统[崩溃](https://en.wikipedia.org/wiki/Crash_(computing))或宕机抑或重启，MySQL 如何保证不丢失变更或者恢复到正确的数据？
 
 很久以前，存在着无原子性的非分布式数据库事务。张三账户有 1000 元，李四账户有 2000 元，张三向李四转账 200 元，数据库系统先将张三账户减少 200 元，然后将 800 元写回张三账户，接着将李四账户增加 200 元并且将 2200 元写回李四账户时，服务器突然发生故障；系统重启后，只有一个账户是对的，张三账户是 800 元，但是李四账户还是 2000 元，200 元不翼而飞。
 
@@ -90,13 +90,13 @@ commit T[i]       //（3）
 
 ### 逻辑日志
 
-前文 [MySQL 窘境 # 主从复制](https://h2cone.github.io/post/2020/07/from-mysql-to-tidb/#%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6) 中提到其数据复制需要数据变更日志，或则数据变更日志记录（事件）。MySQL Server 有[若干种日志](https://dev.mysql.com/doc/refman/5.7/en/server-logs.html)，其中二进制日志（Binary log，简称 binlog）包含描述数据变更的“事件”，例如创建表或对表数据的更改，**MySQL binlog 与存储引擎解耦**。
+前文[MySQL 窘境 # 主从复制](https://h2cone.github.io/post/2020/07/from-mysql-to-tidb/#%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6)中提到其数据复制需要数据变更日志，或则数据变更日志记录（事件）。MySQL Server 有[若干种日志](https://dev.mysql.com/doc/refman/5.7/en/server-logs.html)，其中二进制日志（Binary log，简称 binlog）包含描述数据变更的“事件”，例如创建表或对表数据的更改，**MySQL binlog 与存储引擎解耦**。
 
 在服务化架构中，组合使用 MySQL 和 [Elasticsearch](https://www.elastic.co/products/elasticsearch) 时常常要求将 MySQL 数据同步到 Elasticsearch；Elastic Stack 的解决方案是使用 [Logstash](https://www.elastic.co/logstash) 的插件：[Jdbc input plugin](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-jdbc.html)。
 
 ![jdbc-input-plugin](/img/elastic-stack/jdbc-input-plugin.png)
 
-Logstah 的 Jdbc input plugin 会根据配置文件定时/定期对 MySQL 进行轮询，可获取上一次询问之后插入或更改的记录。有人误以为 Jdbc input plugin 最快只能每分钟查询一次，实际上也能设置[秒级](https://github.com/logstash-plugins/logstash-input-jdbc/issues/265)。
+Logstash 的 Jdbc input plugin 会根据配置文件定时/定期对 MySQL 进行轮询，可获取上一次询问之后插入或更改的记录。有人误以为 Jdbc input plugin 最快只能每分钟查询一次，实际上也能设置[秒级](https://github.com/logstash-plugins/logstash-input-jdbc/issues/265)。
 
 监听 binlog 事件可以实现将 MySQL 数据同步到各种数据源，这种方案非常适合各种消息传递、数据流、实时数据处理。假设有一个中间件，根据 [MySQL 协议](https://dev.mysql.com/doc/internals/en/client-server-protocol.html)，它只要向 MySQL master 注册为 MySQL slave，持续接收并解析 binlog 事件，经过处理后又能作为消息传递给各种服务或组件以满足数据同步需求；比如 [alibaba/canal](https://github.com/alibaba/canal)，它是一个关于 MySQL binlog 增量订阅&消费的组件。
 
@@ -131,7 +131,7 @@ INSERT INTO t VALUES (NOW());
 log.dirs=/usr/local/var/lib/kafka-logs
 ```
 
-在磁盘上，一个分区是一个目录，例如名为 quickstart-events 的分区：
+在磁盘上，一个分区是一个目录，例如主题名为 quickstart-events 的一个分区：
 
 ```shell
 % tree /usr/local/var/lib/kafka-logs/quickstart-events-0/
