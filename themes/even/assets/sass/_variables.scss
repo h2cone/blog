@@ -11,7 +11,7 @@ $theme-color-config: 'Cobalt Blue';
 $theme-color-map: (
   'Default': #c05b4d #f8f5ec,
   'Mint Green': #16982B #f5f5f5,
-  'Cobalt Blue': #0047AB #f0f2f5,
+  'Cobalt Blue': #0047AB #f6f8fa,
   'Hot Pink': #FF69B4 #f8f5f5,
   'Dark Violet': #9932CC #f5f4fa
 );
@@ -188,7 +188,7 @@ $content-table-border-color: darken($deputy-color, 3%) !default;
 
 // ========== Code ========== //
 // Color of the code.
-$code-color: #c7254e !default;
+$code-color: #24292e !default;
 
 // Font size of code.
 $code-font-size: 0.9em !default;

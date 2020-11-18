@@ -1,7 +1,7 @@
 baseURL = "https://h2cone.github.io/"
 languageCode = "zh-CN"
-defaultContentLanguage = "zh-cn"                             # en / zh-cn / ... (This field determines which i18n file to use)
-title = "Huangh"
+defaultContentLanguage = "en"                             # en / zh-cn / ... (This field determines which i18n file to use)
+title = "Huangh's blog"
 preserveTaxonomyNames = true
 enableRobotsTXT = true
 enableEmoji = true
@@ -29,26 +29,26 @@ copyright = ""            # default: author.name ↓        # 默认为下面配
   filename = "sitemap.xml"
 
 [[menu.main]]             # config your menu              # 配置目录
-  # name = "Home"
-  name = "首页"
+  name = "Home"
+  # name = "首页"
   weight = 10
   identifier = "home"
   url = "/"
 [[menu.main]]
-  # name = "Archives"
-  name = "归档"
+  name = "Archives"
+  # name = "归档"
   weight = 20
   identifier = "archives"
   url = "/post/"
 [[menu.main]]
-  # name = "Tags"
-  name = "标签"
+  name = "Tags"
+  # name = "标签"
   weight = 30
   identifier = "tags"
   url = "/tags/"
 [[menu.main]]
-  # name = "Categories"
-  name = "分类"
+  name = "Categories"
+  # name = "分类"
   weight = 40
   identifier = "categories"
   url = "/categories/"

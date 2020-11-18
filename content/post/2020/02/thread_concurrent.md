@@ -113,7 +113,7 @@ Java 8 以上的用户也许更倾向于使用匿名内部类实现 `java.lang.R
 
 ### ThreadLocal
 
-前面提到了线程有若干的私有区域，其中之一能在 `java.lang.Thread` 中找到数据结构。`Thread` 维护了几个类型为 `java.lang.ThreadLocal.ThreadLocalMap` 的字段，`ThreadLocalMap` 是一个定制化的 HashMap，仅适用于维护线程本地变量，线程本地变量由 `ThreadLocal` 提供。
+前面提到了线程有若干的私有区域，其中之一能在 `java.lang.Thread` 中找到数据结构。`Thread` 维护了一个类型为 `java.lang.ThreadLocal.ThreadLocalMap` 的字段，`ThreadLocalMap` 是一个定制化的 HashMap，key 的类型是 `ThreadLocal`，value 指代线程本地变量的值。
 
 ```java
 public class TransactionId {
@@ -129,7 +129,7 @@ public class TransactionId {
 }
 ```
 
-如上所示，类型为 `ThreadLocal` 的字段初始化后，每个访问该字段（通过 get 或 set 方法）的线程都持有各自的 `ThreadLocal` 实例。
+如上所示，类型为 `ThreadLocal` 的字段初始化后，每个访问该字段（通过 get 或 set 方法）的线程访问的是各自 `ThreadLocalMap` 实例存储的 key/value，其中 key 相等，但 value 不一定相等。
 
 ### 线程状态
 
