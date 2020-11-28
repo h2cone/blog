@@ -1143,7 +1143,7 @@ JDK 8 在 `HashMap` 中引入红黑树以优化查找算法。当一个桶的大
 
 ## 吸收更多
 
-- 《深入理解计算机系统》
+- [深入理解计算机系统（原书第3版）](https://book.douban.com/subject/26912767)
 
 - [Thread (computing)](https://en.wikipedia.org/wiki/Thread_(computing))
 
@@ -1209,7 +1209,7 @@ JDK 8 在 `HashMap` 中引入红黑树以优化查找算法。当一个桶的大
 
 - [【基本功】不可不说的Java“锁”事](https://mp.weixin.qq.com/s/E2fOUHOabm10k_EVugX08g)
 
-- 《码农翻身》
+- [码农翻身：用故事给技术加点料](https://book.douban.com/subject/30231515)
 
 - [Java Tutorials # Concurrency # Atomic Access](https://docs.oracle.com/javase/tutorial/essential/concurrency/atomic.html)
 
