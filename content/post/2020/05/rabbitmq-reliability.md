@@ -63,7 +63,7 @@ Exchange 使用的路由算法取决于 exchange 类型和 binding 规则。
 
 ### 确认与回执
 
-Publisher confirms 允许消息代理向发布者表明消息已收到或已处理，Consumer acknowledgements 允许消费者向消息代理表明消息已收到或已处理。**Acknowledgement 即是回执，简称 ack，消息代理的 ack 就是 publisher confirms，消费者的 ack 就是 consumer acknowledgements。**使用发布者确认或消费者回执至少可以保证一次消息传递不丢失消息，建议关闭自动 ack 或开启手动模式。
+Publisher confirms 允许消息代理向发布者表明消息已收到或已处理，Consumer acknowledgements 允许消费者向消息代理表明消息已收到或已处理。Acknowledgement 即是回执，简称 **ack**，消息代理的 ack 就是 **publisher confirms**，消费者的 ack 就是 **consumer acknowledgements**。使用发布者确认或消费者回执至少可以保证一次消息传递不丢失消息，建议关闭自动 ack 或开启手动模式。
 
 #### Publisher confirms
 
