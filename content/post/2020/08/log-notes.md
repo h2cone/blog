@@ -160,7 +160,7 @@ baseOffset: 1 lastOffset: 1 count: 1 baseSequence: -1 lastSequence: -1 producerI
 
 对于消息消费者（consumer）来说，从分区读取消息就像从提交日志读取记录；消费者通过分区的偏移量（offset）区分已读消息和未读消息，偏移量作为元数据存储在 [Zookeeper 树或 Kafka 内置主题](https://elang2.github.io/myblog/posts/2017-09-20-Kafak-And-Zookeeper-Offsets.html)中。
 
-毫不夸张地说，Kafka 是一个分布式提交日志系统。
+毫不夸张地说，Kafka 是一个分布式提交日志系统，只不过官方更愿意称之为分布式事件[流](https://en.wikipedia.org/wiki/Streaming_data)平台。
 
 > 本文首发于 https://h2cone.github.io
 
