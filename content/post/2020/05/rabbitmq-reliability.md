@@ -15,7 +15,7 @@ categories: []
 
 众所周知，[RabbitMQ](https://www.rabbitmq.com/) 实现了 [AMQP（Advanced Message Queuing Protocol）](https://en.wikipedia.org/wiki/Advanced_Message_Queuing_Protocol)，准确来说是 AMQP 0-9-1；AMQP 是一种使符合要求的客户端可以与符合要求的消息代理（message broker）进行通信的一种消息传递协议，它的概念如下图所示：
 
-![amqp.png](/img/rabbitmq/amqp.png)
+![amqp.png](/img/rabbit-mq/amqp.png)
 
 生产者（producer）发布消息，消费者（consumer）消耗消息。生产者或发布者（publisher）通常无需关心以下几点：
 
@@ -31,7 +31,7 @@ Exchange 接收生产者发布的消息并路由到队列，exchange 根据什�
 
 当成功安装了 RabbitMQ 并正常启动后，可以通过后台管理界面去直观认识这种消息代理，不难发现 RabbitMQ 提供了 4 种 exchange 类型：
 
-![15672exchanges.png](/img/rabbitmq/15672exchanges.png)
+![15672exchanges.png](/img/rabbit-mq/15672exchanges.png)
 
 Exchange 使用的路由算法取决于 exchange 类型和 binding 规则。
 
@@ -39,13 +39,13 @@ Exchange 使用的路由算法取决于 exchange 类型和 binding 规则。
 
 如果一个 exchange 的类型是 direct，将一个 queue 绑定到该 exchange 时，要求附加一个名为 routing key 的参数；当一个携带 routing key 的消息到达该 exchange 时，该 exchange 将转发消息到相应的 queue（精确匹配 routing key）。
 
-![exchange-direct.webp](/img/rabbitmq/exchange-direct.webp)
+![exchange-direct.webp](/img/rabbit-mq/exchange-direct.webp)
 
 #### Fonout exchange
 
 类型为 fonout 的一个 exchange 忽略 routing key，将消息广播到所有与该 exhange 绑定的 queue。
 
-![exchange-fanout.png](/img/rabbitmq/exchange-fanout.webp)
+![exchange-fanout.png](/img/rabbit-mq/exchange-fanout.webp)
 
 #### Topic exchange
 
@@ -110,9 +110,9 @@ RabbitMQ 事务将可能大幅降低吞吐量，故一般不推荐使用。
 
 ## 集群
 
-旧文提到过[软件系统三大问题](https://h2cone.github.io/post/2020/03/distributed-cache/#%E8%BD%AF%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%89%E5%A4%A7%E9%97%AE%E9%A2%98)，首先，RabbitMQ 集群如何保证可靠性？RabbitMQ 集群是一个或多个结点的逻辑分组，每个结点共享 exchanges、bindings、queues、virtual hosts、users（RabbitMQ 有 RBAC 特性）、runtime parameters 等运行时状态，且结点对等（P2P）。对于客户端来说，集群中的每个结点都可以绑定、发布、删除连接到首个结点时创建的 exchange。
+旧文提到过[软件系统三大目标](https://h2cone.github.io/post/2020/03/distributed-cache/#%E8%BD%AF%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%89%E5%A4%A7%E7%9B%AE%E6%A0%87)，首先，RabbitMQ 集群如何保证可靠性？RabbitMQ 集群是一个或多个结点的逻辑分组，每个结点共享 exchanges、bindings、queues、virtual hosts、users（RabbitMQ 有 RBAC 特性）、runtime parameters 等运行时状态，且结点对等（P2P）。对于客户端来说，集群中的每个结点都可以绑定、发布、删除连接到首个结点时创建的 exchange。
 
-![Cross-node_publishing_of_messages_in_a_cluster](/img/rabbitmq/Cross-node_publishing_of_messages_in_a_cluster.jpg)
+![Cross-node_publishing_of_messages_in_a_cluster](/img/rabbit-mq/Cross-node_publishing_of_messages_in_a_cluster.jpg)
 
 RabbitMQ 集群提供了创建高可用队列（HA queues）的方法来支持容错（fault tolerance）。高可用队列横跨多个集群结点并共享同步的队列状态，包括消息数据。任何具有高可用队列的结点发生故障，群集中的其它结点仍将包含消息和队列状态；当故障结点恢复并重新加入集群时，它将同步它下线时错过的消息。
 

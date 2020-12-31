@@ -33,17 +33,17 @@ SQL 永生。
 
 - 不可靠的时钟。
 
-因为关心系统**应对负载增加的能力（扩展性）**，所以关心系统**容错能力（一致性与可用性）**。
+因为关心系统**应对负载增加的能力（可扩展性）**，所以关心系统**容错能力（一致性与可用性）**。
 
-实现以上目标至少需要分区，对于 Elasticsearch 和 SolrCloud 以及 MongoDB 来说是 shard；对于 Cassandra 和 HBase 分别是 vnode 和 region。
+达成以上目标至少需要分区，对于 Elasticsearch 和 SolrCloud 以及 MongoDB 来说是 shard；对于 Cassandra 和 HBase 分别是 vnode 和 region。
 
 ### 为什么分区
 
-- 增强扩展性。海量数据分布在更多磁盘上，查询负载分布到更多处理器上。
+- 增强可扩展性。海量数据分布在更多磁盘上，查询负载分布到更多处理器上。
 
 - 分区容错。[数据分区](https://en.wikipedia.org/wiki/Partition_(database))与[数据复制](https://en.wikipedia.org/wiki/Replication_(computing))通常结合使用，即每个分区在多个结点上存有**副本（replica）**。
 
-![data-partition](/img/dbms/data-partition.png)
+![data-partition](/img/database-system/data-partition.png)
 
 副本的优势：
 
@@ -62,7 +62,7 @@ SQL 永生。
 
 我们通常使用垂直分区（vertical partitioning）和水平分区（horizontal partitioning），如下图所示：
 
-![DB_image_1_cropped](/img/dbms/DB_image_1_cropped.png)
+![DB_image_1_cropped](/img/database-system/DB_image_1_cropped.png)
 
 VP1 和 VP2 表现得像两张可通过 ID 关联起来的表，HP1 和 HP2 的 scheme 和列（columns）相同，但行（rows）不同。行的增长速度通常快于列的增长速度，我们更关注水平分区，[数据库分片](https://en.wikipedia.org/wiki/Shard_(database_architecture))是数据库或搜索引擎的水平分区；但新问题随之而来：假设 HP1、HP2、HP3、HP4...... 包含了多张表的数据，且由多个 MySQL server 维护，如果客户端要查找满足给定条件的一行或多行记录，那么它应该向哪个或哪些 MySQL server 发起请求？如何合并多个结点返回的结果集？如何执行跨分区 JOIN、排序、分页、分组等操作？如何保证分布式事务？
 
@@ -118,7 +118,9 @@ BASE 模凌两可，太长或永远不一致的系统基本不可用。许多处
 
 ### 数据模型与查询语言
 
-NoSQL 数据库缺乏 JOIN 的能力，这是其文档模型的限制。关系数据库市场占有率一直居高不下，参考 [DB-Engines Ranking](https://db-engines.com/en/ranking)，原因之一是 [SQL](https://en.wikipedia.org/wiki/SQL)（DDL、DML、DQL、DCL） 是**声明式**语言的代表，它的简单与统一在于**指定结果所满足的模式**，不仅如此，[关系模型](https://en.wikipedia.org/wiki/Relational_model)的理论足够优雅：
+NoSQL 数据库缺乏 JOIN 的能力，这是其文档模型的限制。关系数据库市场占有率一直居高不下，参考 [DB-Engines Ranking](https://db-engines.com/en/ranking)，原因之一是 [SQL](https://en.wikipedia.org/wiki/SQL)（DDL、DML、DQL、DCL） 是**声明式**语言的代表，它的简单与统一在于**指定结果所满足的模式**，在不改变语句的前提下，SQL 优化器或底层引擎的迭代更新就有可能显著提高性能。
+
+SQL 的[关系模型](https://en.wikipedia.org/wiki/Relational_model)理论足够优雅：
 
 - 关系是[笛卡尔积](https://en.wikipedia.org/wiki/Cartesian_product)的一个子集。
 
@@ -126,15 +128,17 @@ NoSQL 数据库缺乏 JOIN 的能力，这是其文档模型的限制。关系�
 
 - 关系（表）经过运算以后，如 SELECT、JOIN、WHERE、交、并、差（[关系代数](https://en.wikipedia.org/wiki/Relational_algebra)），结果还是一个关系（表）。
 
-![1920px-Cartesian_Product_qtl1](/img/dbms/1920px-Cartesian_Product_qtl1.svg.png)
+![1920px-Cartesian_Product_qtl1](/img/database-system/1920px-Cartesian_Product_qtl1.svg.png)
 
 如上图所示，A 和 B 的笛卡尔积是 A✖B，得到元组的集合：{(x, 1), (x, 2), ..., (z, 2), (z, 3)}，即列的集合；这里的集合是无序的，而元组是有序的，因为列可交换位置，而行不可交换位置。
+
+流行开源组件提供类 SQL 的趋势越来越明显，例如 [Spark SQL](https://spark.apache.org/sql/)、[KSQL](https://www.confluent.io/blog/ksql-streaming-sql-for-apache-kafka/)、[Flink SQL](https://ci.apache.org/projects/flink/flink-docs-stable/dev/table/sql/)、[ClickHouse SQL](https://clickhouse.tech/docs/en/sql-reference/)...
 
 ## NewSQL 新在哪
 
 NewSQL 是一类关系数据库系统，旨在为 OLTP 提供 NoSQL 数据库系统的可扩展性，同时提供传统关系数据库系统的 ACID 保证。[OLTP](https://en.wikipedia.org/wiki/Online_transaction_processing) 与 OLAP 有时区分并不是那么明显，前者侧重 T（事务），后者侧重 A（分析）：
 
-![OLTP与OLAP](/img/dbms/OLTP与OLAP.png)
+![OLTP与OLAP](/img/database-system/OLTP与OLAP.png)
 
 NewSQL 数据库系统新在架构、存储引擎、共识算法。
 

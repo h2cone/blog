@@ -1113,7 +1113,7 @@ JDK 7 的 `HashMap` 是基于拉链法的散列表。
 
 如下面这张来自 [Java HashMap internals](https://deepakvadgama.com/blog/java-hashmap-internals/) 的图所示，在 `HashMap` 中，数组元素称为 bucket 或 bin，链表结点称为 entry。
 
-![hashmap](/img/hashmap/hashmap.jpg)
+![hashmap](/img/data-structure/hashmap.jpg)
 
 JDK 8 在 `HashMap` 中引入红黑树以优化查找算法。当一个桶的大小（链表大小）大于等于树化阈值（TREEIFY_THRESHOLD）且桶的数量（数组长度）大于等于 64，该桶将转化为一颗红黑树，当一个桶的大小小于等于解树阈值（TREEIFY_THRESHOLD），该桶将转化为链表。说到红黑二叉查找树，不得不先说二叉查找树和 2-3 查找树，未来将开启 `HashMap` 的新篇章。
 

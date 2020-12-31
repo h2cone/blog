@@ -546,7 +546,7 @@ public class Client {
 
 ![Using-Worker-Thread-Pools](/img/network_nio/Using-Worker-Thread-Pools.png)
 
-仔细审视单线程版可以发现，accept、read、process、write 都只由一个线程执行，但是应对高并发时单线程工作能力有限。如果它读完了一个 Channel 后在 process 中执行耗时任务，那么就没有空闲时间进行其它 Channel 的 accept、read、write 操作；因此，使用 Boss 线程执行非阻塞的 accept、read、write 操作，命令工作线程执行耗时的 process 操作，充分消费多处理器来提高程序性能。
+仔细审视单线程版可以发现，accept、read、process、write 都只由一个线程执行，但是应对高并发时单线程工作能力有限。如果它读完了一个 Channel 后在 process 中执行耗时任务，那么就没有空闲时间进行其它 Channel 的 accept、read、write 操作；因此，使用 Boss/Reactor 线程执行非阻塞的 accept、read、write 操作，命令工作线程执行耗时的 process 操作，充分消费多处理器来提高程序性能。
 
 ```java
 static class Handler implements Runnable {
@@ -622,7 +622,7 @@ ExecutorService executorService = Executors.newSingleThreadExecutor();
 executorService.execute(new Reactor(port, Executors.newCachedThreadPool(), new DefaultChannelHandler()));
 ```
 
-进一步扩展，甚至可以同时运行两个 Boss 线程，大 Boss 线程负责 accept，分派已接受的 Channel 给小 Boss 线程 read 和 write，命令工作线程 process。
+进一步扩展，甚至可以同时运行两个 Boss/Reactor 线程，主 Reactor 线程负责 accept，分派已接受的 Channel 给子 Reactor 线程 read 和 write，子 Reactor 线程命令工作线程 process。
 
 ![Using-Multiple-Reactors](/img/network_nio/Using-Multiple-Reactors.png)
 
@@ -957,6 +957,8 @@ Netty 则提供了特别的 JNI 传输，与基于 NIO 的传输相比，产生�
 - [High Performance JVM Networking with Netty - Speaker Deck](https://speakerdeck.com/daschl/high-performance-jvm-networking-with-netty)
 
 - [Netty # Wiki # Reference counted objects](https://github.com/netty/netty/wiki/Reference-counted-objects)
+
+- [Principles to Handle Thousands of Connections in Java Using Netty](https://dzone.com/articles/thousands-of-socket-connections-in-java-practical)
 
 - [Oracle # Enhancements in Java I/O](https://docs.oracle.com/javase/8/docs/technotes/guides/io/enhancements.html)
 

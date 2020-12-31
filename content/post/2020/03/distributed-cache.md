@@ -23,13 +23,13 @@ categories: []
 
 - **上层是下层的（高速）缓存**。
 
-### 软件系统三大问题
+### 软件系统三大目标
 
-问题 | 解释 | 期望
-:---: | :---: | :---:
-可靠性 | 容错能力 | 硬件故障、软件错误、人为失误发生时继续正常运作
-可扩展性 | 应对负载增加的能力 | 负载增加时保持良好性能或高性能
-可维护性 | 运维和开发的难易程度| 既简单又好拓展
+目标 | 解释 | 期望 | 战术
+--- | --- | --- | ---
+可靠性 | 容错能力 | 硬件故障、软件错误、人为失误发生时继续正常运作 | 熔断、降级、自动恢复、容灾、高可用、强一致性......
+可扩展性 | 应对负载增加的能力 | 负载增加时保持良好性能或高性能 | 低延迟、高吞吐、弹性伸缩......
+可维护性 | 运维和开发的难易程度| 既简单又好拓展 | DRY、SoC、DevOps......
 
 ## Redis cluster
 
@@ -47,7 +47,7 @@ Redis 集群如何解决可靠性问题和扩展性问题？
 
 Redis 集群不使用[一致性哈希](https://en.wikipedia.org/wiki/Consistent_hashing)，而是使用**哈希槽（hash slot）**。
 
-![hash-slot](/img/distributed-cache/hash-slot.png)
+![hash-slot](/img/redis/hash-slot.png)
 
 如上图所示，Redis 集群中的结点（node）负责各自的哈希槽。向集群插入一个键（key）时，只是计算给定键的 [CRC16](https://en.wikipedia.org/wiki/Cyclic_redundancy_check) 并取 16384 的模来将给定键映射到哈希槽。
 
@@ -59,7 +59,7 @@ Redis 集群不使用[一致性哈希](https://en.wikipedia.org/wiki/Consistent_
 
 Redis 集群使用**主从模型（master-slave model）** 实现故障转移。
 
-![failover_copy](/img/distributed-cache/failover_copy.png)
+![failover_copy](/img/redis/failover_copy.png)
 
 如上图所示，在集群创建时或稍后，我们给每个主结点添加从结点，例如 B 是主结点，B1 是它的从结点，B1 的哈希槽是 B 的哈希槽的副本。当 B 发生故障，集群将提升 B1 为新主结点，继续提供服务；以此类推，当有若干主结点发生故障时，它们的从结点将替代它们成为新主结点，以此提供一定程度的可用性。
 
@@ -206,13 +206,13 @@ String value = jc.get("foo");
 
 一个严肃的客户端除了实现重定向或路由，还应该缓存哈希槽与结点地址之间的映射（进程内缓存或本地缓存），直接连接正确的结点（减小重定向频率）。发生故障转移之后或系统管理员增加或删除结点之后，客户端需要刷新映射。
 
-![redis-client](/img/distributed-cache/redis-client.png)
+![redis-client](/img/redis/redis-client.png)
 
 #### 代理分发
 
 客户端与一群 Redis 实例交流能否简化成与单一 Redis 实例交流？答案是增加一个中间层。
 
-![redis-proxy](/img/distributed-cache/redis-proxy.png)
+![redis-proxy](/img/redis/redis-proxy.png)
 
 代理（Proxy），比如 [Redis Cluster Proxy](https://github.com/RedisLabs/redis-cluster-proxy) 和 [CodisLabs/codis](https://github.com/CodisLabs/codis)，但是，代理通常也要提供一定程度的可用性。
 
