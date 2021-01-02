@@ -1,9 +1,9 @@
 ---
 title: "Vert.x 与 Hazelcast"
 date: 2020-12-14T14:50:54+08:00
-draft: true
+draft: false
 description: ""
-tags: [vertx, hazelcast, cluster, distributed, cache, java, network, i/o, netty, thread, async, event-driven]
+tags: [vertx, reactive, hazelcast, cluster, distributed, cache, java, network, i/o, netty, thread, async, event-driven]
 categories: []
 ---
 
@@ -37,7 +37,7 @@ public class Server extends AbstractVerticle {
 }
 ```
 
-如上所示，使用 Vert.x 编写一个简单的 HTTP Server，其中 requestHandler 方法传入了用于处理请求事件的 Handler，Handler 表现为回调函数，即 [Call­back](https://en.wikipedia.org/wiki/Callback_(computer_programming))；其中 listen 方法是非阻塞方法，线程调用非阻塞方法不会被阻塞在该方法，而是继续执行其它代码；非阻塞函数有时被称为[异步](https://en.wikipedia.org/wiki/Asynchrony_(computer_programming))函数，返回值可以被称为异步结果，仅使用 Callback 处理异步结果可能导致嵌套和凌乱的代码，被称为[回调地狱](callback-hell)。Vert.x 支持 [Fu­tures/Promises](https://en.wikipedia.org/wiki/Futures_and_promises) 和 [RxJava](https://vertx.io/docs/vertx-rx/)，前者用于优雅地链式异步操作，后者用于高级反应式编程。
+如上所示，使用 Vert.x 编写一个简单的 HTTP Server，其中 requestHandler 方法传入了用于处理请求事件的 Handler，Handler 表现为回调函数，即 [Call­back](https://en.wikipedia.org/wiki/Callback_(computer_programming))；其中 listen 方法是非阻塞方法，线程调用非阻塞方法不会被阻塞在该方法，而是继续执行其它代码；非阻塞函数有时被称为[异步](https://en.wikipedia.org/wiki/Asynchrony_(computer_programming))函数，返回值可以被称为异步结果，仅使用 Callback 处理异步结果可能导致嵌套和凌乱的代码，被称为[回调地狱](callback-hell)。Vert.x 支持 [Fu­tures/Promises](https://en.wikipedia.org/wiki/Futures_and_promises) 和 [RxJava](https://vertx.io/docs/vertx-rx/java2/)，前者用于优雅地链式异步操作，后者用于高级反应式编程。
 
 Vert.x 的非阻塞 I/O 基于 [Netty](https://h2cone.github.io/post/2020/03/network_nio/#netty)，在此之上构建 [Vert.x Core](https://vertx.io/docs/vertx-core/java/) 和 Web 后端技术栈：反应式数据库驱动、消息传递、事件流、集群、指标度量、分布式追踪等，详情请见 [Vert.x Documentation](https://vertx.io/docs/)。
 
@@ -63,13 +63,13 @@ Hazelcast IMDG 的架构与分布式协调服务——[Zookeeper](https://zookee
 
 Hazelcast 集群（Hazelcast Cluster）成员（Hazelcast Member）之间为什么需要通信？
 
-Hazelcast 成员之间共享数据的机制是[数据分区](https://docs.hazelcast.org/docs/latest/manual/html-single/index.html#data-partitioning)与[数据复制](https://docs.hazelcast.org/docs/latest/manual/html-single/index.html#consistency-and-replication-model)，两者结合在一起的图像可以先参考[为什么分区](https://h2cone.github.io/post/2020/07/from-mysql-to-tidb/#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%88%86%E5%8C%BA)。默认情况下，Hazelcast 提供 271 个分区，为每个分区创建单一拷贝/副本，可配置为多副本。
+Hazelcast 成员之间**共享数据**的机制是[数据分区](https://docs.hazelcast.org/docs/latest/manual/html-single/index.html#data-partitioning)与[数据复制](https://docs.hazelcast.org/docs/latest/manual/html-single/index.html#consistency-and-replication-model)，两者结合在一起的图像可以先参考[为什么分区](https://h2cone.github.io/post/2020/07/from-mysql-to-tidb/#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%88%86%E5%8C%BA)。默认情况下，Hazelcast 提供 271 个分区，为每个分区创建单一拷贝/副本，可配置为多副本。
 
 ![4NodeCluster](/img/hazelcast/4NodeCluster.jpg)
 
 上图是 4 成员/结点的 Hazelcast 集群的示意图，假设分区编号从 P_1 到 P_136，黑色编号分区代表主副本（primary replicas），蓝色编号分区代表备副本（backup replicas），数据复制方向为主到备。
 
-数据分区与数据复制对用户透明是现代分布式存储的基本特性，添加成员到 Hazelcast 集群时[与 Redis 不同](https://h2cone.github.io/post/2020/03/distributed-cache/#%E6%95%B0%E6%8D%AE%E5%88%86%E7%89%87)，Hazelcast 使用[一致性哈希算法](https://en.wikipedia.org/wiki/Consistent_hashing)，仅移动最小数量的分区即可横向扩展。
+数据分区与数据复制对用户透明是现代分布式存储的基本特性。添加成员到 Hazelcast 集群时[与 Redis 不同](https://h2cone.github.io/post/2020/03/distributed-cache/#%E6%95%B0%E6%8D%AE%E5%88%86%E7%89%87)，Hazelcast 使用[一致性哈希算法](https://en.wikipedia.org/wiki/Consistent_hashing)，仅移动最小数量的分区即可横向扩展。
 
 Hazelcast 如何保证一致性与可用性？
 
@@ -77,7 +77,9 @@ Hazelcast 提供了具有不同数据结构实现的 AP 和 CP 功能。根据 C
 
 ## 使用 Hazelcast 实现 Vert.x 集群
 
-Vert.x 集群无需注册中心（Service Registry）即可建立，因为 Vert.x 实例之间可以通过 Hazelcast Client Library [发现（Discovery）](https://en.wikipedia.org/wiki/Service_discovery)彼此。
+Vert.x 集群无需注册中心（Service Registry）即可建立，因为 Vert.x 实例之间可以通过 Hazelcast Client Library 相互[发现（Discovery）](https://en.wikipedia.org/wiki/Service_discovery)。
+
+![Vert.x_Architecture_(Component)_Diagram](/img/vertx/Vert.x_Architecture_(Component)_Diagram.png)
 
 使用 [Hazelcast Cluster Manager](https://vertx.io/docs/vertx-hazelcast/java/) 可以降低 Vert.x 集成/整合 Hazelcast 的成本。默认情况下，如果不指定外部配置文件，那么集群管理器由打包在 vertx-hazelcast-4.0.0.jar 内的 [default-cluster.xml](https://github.com/vert-x3/vertx-hazelcast/blob/master/src/main/resources/default-cluster.xml) 配置，其中默认的发现机制是 [Multicast](https://en.wikipedia.org/wiki/Multicast)。
 
@@ -119,6 +121,225 @@ hazelcast:
 
 ![ccp](/img/pattern/ccp.png)
 
+首先是服务生产者，该 Verticle 的启动方法（start）内仅仅是订阅/消费（consumer）EventBus 中的特定事件。
+
+```java
+public class DefaultProvider extends AbstractVerticle {
+  private static final Logger log = LoggerFactory.getLogger(DefaultProvider.class);
+
+  @Override
+  public void start(Promise<Void> startPromise) throws Exception {
+    vertx.eventBus().<JsonObject>consumer(BusAddress.TEST_REQUEST, msg -> {
+      JsonObject body = msg.body();
+      log.debug("consume from {}, message body: {}", BusAddress.TEST_REQUEST, body);
+      if (Objects.nonNull(body)) {
+        body.put("consumed", true);
+      }
+      msg.reply(body);
+    });
+    vertx.eventBus().<JsonObject>consumer(BusAddress.TEST_SEND, msg -> {
+      JsonObject body = msg.body();
+      log.debug("consume from {}, message body: {}", BusAddress.TEST_SEND, body);
+    });
+    vertx.eventBus().<JsonObject>consumer(BusAddress.TEST_PUBLISH, msg -> {
+      JsonObject body = msg.body();
+      log.debug("consume from {}, message body: {}", BusAddress.TEST_PUBLISH, body);
+    });
+  }
+}
+```
+
+之所以说特定事件是由于服务消费者将事件发送到 EventBus 中的特定地址。
+
+```java
+public interface BusAddress {
+  String TEST_REQUEST = "test.request";
+
+  String TEST_SEND = "test.send";
+
+  String TEST_PUBLISH = "test.publish";
+}
+```
+
+然后是服务消费者，该 Verticle 作为 HTTP Server，同时演示了 request、send、publish 三种发送事件到 EventBus 方法。
+
+```java
+public class HttpServer extends AbstractVerticle {
+  private static final Logger log = LoggerFactory.getLogger(HttpServer.class);
+
+  @Override
+  public void start(Promise<Void> startPromise) throws Exception {
+    ConfigRetriever retriever = ConfigRetriever.create(vertx);
+    retriever.getConfig(json -> {
+      JsonObject config = json.result();
+      Integer port = config.getInteger("http.port", 8080);
+
+      Router router = Router.router(vertx);
+      router.get("/hello").handler(this::hello);
+      router.post().handler(BodyHandler.create());
+      router.post("/test/request").handler(this::testRequest);
+      router.post("/test/send").handler(this::testSend);
+      router.post("/test/publish").handler(this::testPublish);
+
+      vertx.createHttpServer()
+        .requestHandler(router)
+        .listen(port)
+        .onSuccess(server -> {
+            log.info("HTTP server started on port " + server.actualPort());
+            startPromise.complete();
+          }
+        ).onFailure(startPromise::fail);
+    });
+  }
+
+  private void testPublish(RoutingContext context) {
+    JsonObject reqBody = context.getBodyAsJson();
+    log.debug("request body: {}", reqBody);
+    vertx.eventBus().publish(BusAddress.TEST_PUBLISH, reqBody);
+    context.json(reqBody);
+  }
+
+  private void testSend(RoutingContext context) {
+    JsonObject reqBody = context.getBodyAsJson();
+    log.debug("request body: {}", reqBody);
+    vertx.eventBus().send(BusAddress.TEST_SEND, reqBody);
+    context.json(reqBody);
+  }
+
+  private void testRequest(RoutingContext context) {
+    JsonObject reqBody = context.getBodyAsJson();
+    log.debug("request body: {}", reqBody);
+    vertx.eventBus().<JsonObject>request(BusAddress.TEST_REQUEST, reqBody, response -> {
+      if (response.succeeded()) {
+        Message<JsonObject> msg = response.result();
+        JsonObject msgBody = msg.body();
+        log.debug("reply from {}, message body: {}", BusAddress.TEST_REQUEST, msgBody);
+        context.json(msgBody);
+      } else {
+        log.error("failed to test request", response.cause());
+      }
+    });
+  }
+
+  private void hello(RoutingContext context) {
+    String address = context.request().connection().remoteAddress().toString();
+    MultiMap queryParams = context.queryParams();
+    String name = queryParams.contains("name") ? queryParams.get("name") : "unknown";
+    context.json(
+      new JsonObject()
+        .put("name", name)
+        .put("address", address)
+        .put("message", "Hello " + name + " connected from " + address)
+    );
+  }
+}
+```
+
+最后，仍然是为了方便展示起见，提供一个简化的程序启动脚本。
+
+```bash
+#!/bin/bash
+
+bin_dir=$(dirname "$0")
+
+start() {
+  case $1 in
+  consumer)
+    java -jar "$bin_dir"/../consumer/target/consumer-1.0.0-SNAPSHOT-fat.jar -cluster
+    ;;
+  provider)
+    java -jar "$bin_dir"/../provider/target/provider-1.0.0-SNAPSHOT-fat.jar -cluster
+    ;;
+  *)
+    echo "Unknown module: $1"
+    exit 1
+    ;;
+  esac
+}
+
+stop() {
+  jcmd | grep "$1-1.0.0-SNAPSHOT-fat.jar" | awk '{print $1}' | xargs -I {} kill -9 {}
+}
+
+stopAll() {
+  stop consumer
+  stop provider
+}
+
+case $1 in
+start)
+  start "$2"
+  ;;
+stop)
+  stop "$2"
+  ;;
+restart)
+  stop "$2"
+  start "$2"
+  ;;
+down)
+  stopAll
+  ;;
+*)
+  echo "Usage: $0 {start <module>|stop <module>|restart <module>|down}"
+  ;;
+esac
+```
+
+假如先启动其中一个模块，比如启动服务生产者。
+
+```shell
+% ./dev.sh start provider
+```
+
+从它的日志会发现它已经成为 Hazelcast 集群的唯一成员：
+
+```shell
+Members {size:1, ver:1} [
+	Member [192.168.0.100]:5701 - 0d97d436-ab4f-432b-abb6-10975e224044 this
+]
+```
+
+紧接着启动服务消费者。
+
+```shell
+% ./dev.sh start consumer
+```
+
+服务消费者的视角：
+
+```shell
+Members {size:2, ver:2} [
+	Member [192.168.0.100]:5701 - 0d97d436-ab4f-432b-abb6-10975e224044 this
+	Member [192.168.0.100]:5702 - 12740655-5ee8-4228-a723-112c2992b290
+]
+```
+
+服务生产者的视角：
+
+```shell
+Members {size:2, ver:2} [
+	Member [192.168.0.100]:5701 - 0d97d436-ab4f-432b-abb6-10975e224044
+	Member [192.168.0.100]:5702 - 12740655-5ee8-4228-a723-112c2992b290 this
+]
+```
+
+两者相互发现了对方，但是，它们是否能正常通信？
+
+```shell
+% curl "localhost:8888/hello?name=huangh"                    
+{"name":"huangh","address":"0:0:0:0:0:0:0:1:51328","message":"Hello huangh connected from 0:0:0:0:0:0:0:1:51328"}
+
+% curl localhost:8888/test/request -d "{\"name\":\"huangh\"}"
+{"name":"huangh","consumed":true}
+```
+
+完整代码已发布，请参考 [vertx-hazelcast-exp](https://github.com/h2cone/vertx-hazelcast-exp)。
+
+## 写在最后
+
+[Hazelcast Management Center](https://docs.hazelcast.org/docs/management-center/latest/manual/html/index.html) 可用于**可视化**监控和管理 Vert.x 集群。
+
 > 本文首发于 https://h2cone.github.io
 
 ## 参考资料
@@ -145,7 +366,7 @@ hazelcast:
 
 - [Hazelcast IMDG Reference Manual # Appendix F: Frequently Asked Questions](https://docs.hazelcast.org/docs/latest/manual/html-single/#frequently-asked-questions)
 
-- [Hazelcast # Vert.x Cluster](https://hazelcast.com/blog/vert-x-cluster/)
+- ~~[Hazelcast # Vert.x Cluster](https://hazelcast.com/blog/vert-x-cluster/)~~
 
 - [etcd versus other key-value stores](https://etcd.io/docs/v3.4.0/learning/why/)
 
