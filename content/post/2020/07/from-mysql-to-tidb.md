@@ -118,7 +118,7 @@ BASE 模凌两可，太长或永远不一致的系统基本不可用。许多处
 
 ### 数据模型与查询语言
 
-NoSQL 数据库缺乏 JOIN 的能力，这是其文档模型的限制。关系数据库市场占有率一直居高不下，参考 [DB-Engines Ranking](https://db-engines.com/en/ranking)，原因之一是 [SQL](https://en.wikipedia.org/wiki/SQL)（DDL、DML、DQL、DCL） 是**声明式**语言的代表，它的简单与统一在于**指定结果所满足的模式**，在不改变语句的前提下，SQL 优化器或底层引擎的迭代更新就有可能显著提高性能。
+NoSQL 数据库缺乏 JOIN 的能力，这是其文档模型的限制。关系数据库市场占有率一直居高不下，参考 [DB-Engines Ranking](https://db-engines.com/en/ranking)，原因之一是 [SQL](https://en.wikipedia.org/wiki/SQL)（DDL、DML、DQL、DCL） 是**声明式**语言的代表，它的简单与统一在于**指定结果所满足的模式**，在不改变语句的前提下，查询优化器或底层引擎的迭代更新就有可能显著提高性能。
 
 SQL 的[关系模型](https://en.wikipedia.org/wiki/Relational_model)理论足够优雅：
 
