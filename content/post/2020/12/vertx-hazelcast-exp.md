@@ -379,3 +379,5 @@ Members {size:2, ver:2} [
 - [Advanced Vert.x Guide](http://www.julienviet.com/advanced-vertx-guide/)
 
 - [Vert.x Examples](https://github.com/vert-x3/vertx-examples)
+
+- [Building a Vert.x Native Image](https://how-to.vertx.io/graal-native-image-howto/)
