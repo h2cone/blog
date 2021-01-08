@@ -94,7 +94,7 @@ commit T[i]       //（3）
 
 在服务化架构中，组合使用 MySQL 和 [Elasticsearch](https://www.elastic.co/products/elasticsearch) 时常常要求将 MySQL 数据同步到 Elasticsearch；Elastic Stack 的解决方案是使用 [Logstash](https://www.elastic.co/logstash) 的插件：[Jdbc input plugin](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-jdbc.html)。
 
-![jdbc-input-plugin](/img/elastic-stack/jdbc-input-plugin.png)
+![logstash-plugin](/img/elastic-stack/logstash-plugin.png)
 
 Logstash 的 Jdbc input plugin 会根据配置文件定时/定期对 MySQL 进行轮询，可获取上一次询问之后插入或更改的记录。有人误以为 Jdbc input plugin 最快只能每分钟查询一次，实际上也能设置[秒级](https://github.com/logstash-plugins/logstash-input-jdbc/issues/265)。
 
