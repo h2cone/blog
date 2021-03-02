@@ -35,7 +35,7 @@ categories: []
 
 > All problems in computer science can be solved by another level of indirection.
 
-![Socket中间层](/img/network_nio/Socket中间层.png)
+![Socket中间层](/img/network/Socket中间层.png)
 
 - Socket 是进程与传输层的中间层。
 
@@ -45,7 +45,7 @@ categories: []
 
 Socket 隐藏了下层具体实现的复杂性，并给上层提供了简单或统一的 API。下图是 TCP Socket 基本流程，使用 [伯克利 Sockets](https://en.wikipedia.org/wiki/Berkeley_sockets) 描述。
 
-![InternetSocketBasicDiagram_zhtw](/img/network_nio/InternetSocketBasicDiagram_zhtw.png)
+![InternetSocketBasicDiagram_zhtw](/img/network/InternetSocketBasicDiagram_zhtw.png)
 
 Unix 的主题是“一切都是文件”。当进程申请访问 Socket 时，内核则提供相应的文件描述符（int 变量），进程发起系统调用并传递相应的文件描述符来读写 Socket。
 
@@ -57,11 +57,11 @@ Java 的 BIO 是指 blocking I/O，通常指 [java.io](https://docs.oracle.com/j
 
 #### 模型
 
-![javabio](/img/network_nio/javabio.webp)
+![javabio](/img/nio/javabio.webp)
 
 上图来自[服务化基石之远程通信系列三：I/O模型](https://mp.weixin.qq.com/s/uDgueoMIEjl-HCE_fcSmSw)。基于 Java BIO 的服务器端程序，通常一个客户端（Client）向服务器端（Server）发起的请求由一个线程处理，回想前文的 TCP Socket 基本流程图，那么线程与 Socket 的关系如下：
 
-![one-socket-per-thread](/img/network_nio/one-socket-per-thread.png)
+![one-socket-per-thread](/img/nio/one-socket-per-thread.png)
 
 处理请求，通常都可以分解为：
 
@@ -73,7 +73,7 @@ Java 的 BIO 是指 blocking I/O，通常指 [java.io](https://docs.oracle.com/j
 
 其中 1 和 5 必定是 I/O 操作，回想前文所说的 I/O 操作的本质，即字节序列的来向和去向，来向与去向在 java.io 中的常见类型是 [InputStream](https://docs.oracle.com/javase/8/docs/api/java/io/InputStream.html) 和 [OutputStream](https://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html)，I/O Stream 表示输入源或输出目的地。
 
-![byte[]-Stream](/img/network_nio/byte[]-Stream.png)
+![byte[]-Stream](/img/nio/byte[]-Stream.png)
 
 基于 Java BIO 的服务器端程序之所以使用线程池（ThreadPool），理由请参考[多线程·并发编程 # Java 多线程 # 线程池](https://h2cone.github.io/post/2020/02/thread_concurrent/#%E7%BA%BF%E7%A8%8B%E6%B1%A0)。
 
@@ -208,7 +208,7 @@ Java 的 NIO 是指 non-blocking I/O 或 New I/O，通常指 [java.nio](https://
 
 #### 模型
 
-![javanio](/img/network_nio/javanio.webp)
+![javanio](/img/nio/javanio.webp)
 
 上图来自[服务化基石之远程通信系列三：I/O模型](https://mp.weixin.qq.com/s/uDgueoMIEjl-HCE_fcSmSw)。Java NIO 致力于用比 Java BIO 更少的线程处理更多的连接。比如，一个不希望被老板开除的店小二将一位客人的订单交给后厨后，不会只等待后厨做好相应的菜然后上菜，而是立即去接待其它客人入座、点餐、结账等，若店小二观察到后厨做菜完成后则上菜或者后厨做菜完成后通知店小二上菜。
 
@@ -232,7 +232,7 @@ Java NIO 有三大核心组件：
 
 [Selector](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/Selector.html) 是线程和 Channel 的中间层，多个连接可由一个线程处理。
 
-![selector_mid_layer](/img/network_nio/selector_mid_layer.png)
+![selector_mid_layer](/img/nio/selector_mid_layer.png)
 
 [SelectionKey](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/SelectionKey.html) 定义了四种 I/O 事件： `OP_READ`、`OP_WRITE`、`OP_CONNECT`、`OP_ACCEPT`，均符合伯克利 Sockets 的语义，OP_CONNECT 为客户端专有，OP_ACCEPT 为服务器端专有。
 
@@ -246,7 +246,7 @@ Java NIO 有三大核心组件：
 
 Buffer 维护了 position、limit、capacity 变量，具有写模式和读模式。
 
-![Buffer](/img/network_nio/Buffer.webp)
+![Buffer](/img/nio/Buffer.webp)
 
 - 写模式。position 为 0，limit 等于 capacity，每插入一个元素，position 增加 1。
 
@@ -264,7 +264,7 @@ Buffer 维护了 position、limit、capacity 变量，具有写模式和读模�
 
 Channel 已提供直接从中读取 ByteBuffer 或直接写入其中的方法。
 
-![ByteBuffer-Channel](/img/network_nio/ByteBuffer-Channel.png)
+![ByteBuffer-Channel](/img/nio/ByteBuffer-Channel.png)
 
 值得一提的是，ByteBuffer 支持分配直接字节缓冲区，即堆外内存。
 
@@ -296,7 +296,7 @@ DirectByteBuffer 通常比 HeapByteBuffer 内存复制次数更少。以写 Sock
 
 ##### 单线程版
 
-![Basic-Reactor-Design](/img/network_nio/Basic-Reactor-Design.png)
+![Basic-Reactor-Design](/img/nio/Basic-Reactor-Design.png)
 
 若用 Java 语言来描述上图，基本的 Reactor 模式如下：
 
@@ -503,7 +503,7 @@ public static void main(String[] args) throws IOException {
 
 一图胜千言。
 
-![BasicReactor](/img/network_nio/BasicReactor.png)
+![BasicReactor](/img/nio/BasicReactor.png)
 
 与上文 BIO 客户端程序类似，也模拟多客户端。客户端先向服务器端发送“自我介绍”，然后尝试读取来自服务器端的消息：
 
@@ -544,7 +544,7 @@ public class Client {
 
 ##### 多线程版
 
-![Using-Worker-Thread-Pools](/img/network_nio/Using-Worker-Thread-Pools.png)
+![Using-Worker-Thread-Pools](/img/nio/Using-Worker-Thread-Pools.png)
 
 仔细审视单线程版可以发现，accept、read、process、write 都只由一个线程执行，但是应对高并发时单线程工作能力有限。如果它读完了一个 Channel 后在 process 中执行耗时任务，那么就没有空闲时间进行其它 Channel 的 accept、read、write 操作；因此，使用 Boss/Reactor 线程执行非阻塞的 accept、read、write 操作，命令工作线程执行耗时的 process 操作，充分消费多处理器来提高程序性能。
 
@@ -624,7 +624,7 @@ executorService.execute(new Reactor(port, Executors.newCachedThreadPool(), new D
 
 进一步扩展，甚至可以同时运行两个 Boss/Reactor 线程，主 Reactor 线程负责 accept，分派已接受的 Channel 给子 Reactor 线程 read 和 write，子 Reactor 线程命令工作线程 process。
 
-![Using-Multiple-Reactors](/img/network_nio/Using-Multiple-Reactors.png)
+![Using-Multiple-Reactors](/img/nio/Using-Multiple-Reactors.png)
 
 一般的开发人员直接使用 Java NIO 编写服务器端或客户端，既要保证可靠，又要保证高性能，实属不易，终于到了主角登场的时候。
 
@@ -632,7 +632,7 @@ executorService.execute(new Reactor(port, Executors.newCachedThreadPool(), new D
 
 [Netty](https://netty.io/) 是异步、事件驱动网络应用程序框架，用于快速开发可维护的高性能协议服务器端和客户端。
 
-![netty-components](/img/network_nio/netty-components.png)
+![netty-components](/img/netty/netty-components.png)
 
 如何使用 Netty，参考 [Netty # Wiki](https://github.com/netty/netty/wiki)、[netty/netty/tree/4.1/example](https://github.com/netty/netty/tree/4.1/example)、[normanmaurer/netty-in-action](https://github.com/normanmaurer/netty-in-action) 。下文则更关注如何理解 Netty 4.x 的核心（Core）。
 
@@ -655,17 +655,17 @@ executorService.execute(new Reactor(port, Executors.newCachedThreadPool(), new D
 
 EventLoop 类的族谱如下所示：
 
-![EventLoop-class-hierarchy](/img/network_nio/EventLoop-class-hierarchy.jpg)
+![EventLoop-class-hierarchy](/img/netty/EventLoop-class-hierarchy.jpg)
 
 由此可见，EventLoop 的本源是 Executor（请先阅读[多线程·并发编程 # Java 多线程 # 线程池](https://h2cone.github.io/post/2020/02/thread_concurrent/#%E7%BA%BF%E7%A8%8B%E6%B1%A0)），那么 EventLoop 处理 Channel 的事件转换为执行（execute）相应的任务，
 
-![EventLoop-execution-logic](/img/network_nio/EventLoop-execution-logic.jpg)
+![EventLoop-execution-logic](/img/netty/EventLoop-execution-logic.jpg)
 
 任务的基本实现是 [Runable](https://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html)，任务可能立即执行，也可能加入队列，取决于调用 execute 方法的线程是否是 EventLoop 绑定的线程。
 
 如下图所示，一个 [NioEventLoopGroup](https://netty.io/4.1/api/io/netty/channel/nio/NioEventLoopGroup.html) 通常维护多个 [NioEventLoop](https://netty.io/4.1/api/io/netty/channel/nio/NioEventLoop.html) 。
 
-![EventLoop-allocation-for-non-blocking-transports](/img/network_nio/EventLoop-allocation-for-non-blocking-transports.jpg)
+![EventLoop-allocation-for-non-blocking-transports](/img/netty/EventLoop-allocation-for-non-blocking-transports.jpg)
 
 当一个 Channel 注册到一个 NioEventLoopGroup，根据上文所说的 Java NIO 知识，该 Channel 注册到一个由某个 NioEventLoop 维护的 Selector，因此，NioEventLoop 通常将处理多个 Channel 的事件。
 
@@ -673,11 +673,11 @@ EventLoop 类的族谱如下所示：
 
 事件分为入站（inbound）事件和出站（outbound）事件。一个事件被 EventLoop 作为任务执行之前，它流经 [ChannelPipeline](https://netty.io/4.1/api/io/netty/channel/ChannelPipeline.html) 中已安装的一个或多个 [ChannelHandler](https://netty.io/4.1/api/io/netty/channel/ChannelHandler.html)。
 
-![ChannelPipeline](/img/network_nio/ChannelPipeline.png)
+![ChannelPipeline](/img/netty/ChannelPipeline.png)
 
 每个 Channel 都有各自的 ChannelPipeline，新建 Channel 时自动创建，使用 ChannelPipeline 添加或删除 ChannelHandler 是线程安全的。ChannelPipeline 的子接口有 [ChannelInboundHandler](https://netty.io/4.1/api/io/netty/channel/ChannelInboundHandler.html) 和 [ChannelOutboundHandler](https://netty.io/4.1/api/io/netty/channel/ChannelOutboundHandler.html)，分别用于 EventLoop 处理入站事件和出站事件。
 
-![ChannelHandlerAdapter-class-hierarchy](/img/network_nio/ChannelHandlerAdapter-class-hierarchy.jpg)
+![ChannelHandlerAdapter-class-hierarchy](/img/netty/ChannelHandlerAdapter-class-hierarchy.jpg)
 
 ChannelPipeline 实现了 [Intercepting Filter](http://www.oracle.com/technetwork/java/interceptingfilter-142169.html) 模式的高级形式，所谓 Filter 模式，常常被认为属于**责任链模式**，比如 [Servlet](https://en.wikipedia.org/wiki/Java_servlet) 的请求过滤器：
 
@@ -704,7 +704,7 @@ public class CustomFilter implements Filter {
 
 以 Channel 读就绪为例，它属于入站事件，输入的数据也在 ChannelPipeline 中流动。
 
-![Event-propagation-via-the-Channel-or-the-ChannelPipeline](/img/network_nio/Event-propagation-via-the-Channel-or-the-ChannelPipeline.jpg)
+![Event-propagation-via-the-Channel-or-the-ChannelPipeline](/img/netty/Event-propagation-via-the-Channel-or-the-ChannelPipeline.jpg)
 
 若以服务器端接受请求和发送响应为例，假设 RequestDecoder 和 BussinessHandler 都继承了 [ChannelInboundHandlerAdapter](https://netty.io/4.1/api/io/netty/channel/ChannelInboundHandlerAdapter.html)，ResponseEncoder 继承了 [ChannelOutboundHandlerAdapter](https://netty.io/4.1/api/io/netty/channel/ChannelOutboundHandlerAdapter.html)。
 
@@ -745,7 +745,7 @@ Netty 使用它自己的 [buffer](https://netty.io/4.1/api/io/netty/buffer/packa
 
 聚合缓冲区类型是指 [CompositeByteBuf](https://netty.io/4.1/api/io/netty/buffer/CompositeByteBuf.html)。
 
-![CompositeByteBuf-holding-a-header-and-body](/img/network_nio/CompositeByteBuf-holding-a-header-and-body.jpg)
+![CompositeByteBuf-holding-a-header-and-body](/img/netty/CompositeByteBuf-holding-a-header-and-body.jpg)
 
 假设有两个字节数组，header 和 body，在模块化系统中，这两个字节数组可以由不同的模块生产，然后在消息发送后聚合。如果用 Java NIO 的 ByteBuffer 来聚合两个字节数组，一般人可能考虑新建一个缓冲区数组并持有两个字节数组，或者新建一个缓冲区并插入两个字节数组。
 
@@ -807,7 +807,7 @@ ByteBuf sliced = buf.slice(0, 14);
 
 **S0** 优化业务逻辑。
 
-**S1** 避免阻塞 bossEventLoopGroup/parentGroup 和 workerEventLoopGroup/childGroup 中的线程。执行耗时任务（如访问数据库），考虑新建给定线程数的 EventLoopGroup 对象，添加它和业务逻辑的 ChannelHandler 到 ChannelPipeline。
+**S1** 避免阻塞 bossGroup/parentGroup 和 workerGroup/childGroup 中的线程。执行耗时任务（如访问数据库），考虑新建给定线程数的 EventLoopGroup 对象，添加它和业务逻辑的 ChannelHandler 到 ChannelPipeline。
 
 **S2** 复用 ByteBuf 对象，减少 GC 引起的延迟。
 
@@ -856,7 +856,7 @@ public void channelRead(ChannelHandlerContext ctx, Object msg) {
 ```java
 ServerBootstrap bootstrap = new ServerBootstrap()
         .channel(EpollServerSocketChannel.class)
-        .group(bossEventLoopGroup, workerEventLoopGroup)
+        .group(bossGroup, workerGroup)
         .handler(new LoggingHandler(LogLevel.INFO))
         .childHandler(new CustomChannelInitializer())
         .childOption(ChannelOption.SO_SNDBUF, 1024 * 1024)
@@ -899,7 +899,7 @@ ServerBootstrap bootstrap = new ServerBootstrap()
 
 最后以先读 Socket 后写 Socket 为例，下面这张来自 [Shawn Xu](https://medium.com/@xunnan.xu) 的文章（文末有链接）的图详细描述了 Java BIO 的底层行为。
 
-![java-bio-under-the-hood](/img/network_nio/java-bio-under-the-hood.png)
+![java-bio-under-the-hood](/img/nio/java-bio-under-the-hood.png)
 
 注意，JVM 发起 2 次系统调用，内核执行 2 次数据复制。
 

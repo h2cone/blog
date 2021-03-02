@@ -157,6 +157,8 @@ hello: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, 
 
 程序员们日常使用的各种库（Library）或框架（Framework）总是从编译时开始重用（Reuse），那时，彷佛站在了巨人的肩膀上。
 
+> 本文首发于 https://h2cone.github.io
+
 ## 参考资料
 
 - [Wiki # Ahead-of-time compilation](https://en.wikipedia.org/wiki/Ahead-of-time_compilation)
