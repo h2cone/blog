@@ -1087,9 +1087,51 @@ public class AtomicLinkedList<Item> {
 
 线程级的**生产者-消费者**问题的实质是分为生产者和消费者的两组线程共享同一个队列，消费者暂不能从队列拉取元素，除非队列非空，生产者暂不能推送元素到队列，除非队列非满。[BlockingQueue](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html) 既有基于数组的实现，也有基于链表的实现，可用来解决生产者-消费者问题（比如 [BlockingQueueDemo](https://github.com/h2cone/java-examples/blob/master/concurrent/src/main/java/io/h2cone/concurrent/BlockingQueueDemo.java)），当阻塞队列为空时，线程从阻塞队列拉取元素时会被阻塞或被迫等待，当阻塞队列已满时，线程推送元素到阻塞队列会被阻塞或被迫等待。
 
-[LinkedBlockingDeque](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/LinkedBlockingDeque.html) 和 [ArrayBlockingQueue](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ArrayBlockingQueue.html) 均使用了 [Condition](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/Condition.html)，维护了队列非满条件和队列非空条件，如下图所示，通知的实现基于上文 "通知" 中提到的 park/unpark。
+[LinkedBlockingDeque](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/LinkedBlockingDeque.html) 和 [ArrayBlockingQueue](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ArrayBlockingQueue.html) 均使用了 [Condition](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/Condition.html)，维护了队列非满条件变量和队列非空条件变量，如下图所示，通知的实现基于上文 "通知" 中提到的 park/unpark。
 
 ![生产者-消费者](/img/thread_concurrent/生产者-消费者.png)
+
+本质上，Condition 实例与 [Lock](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/Lock.html) 实例绑定，通过 Lock 实例的 [newCondition](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/Lock.html#newCondition) 方法可新建 Condition 实例。
+
+```java
+class BoundedBuffer {
+    final Lock lock = new ReentrantLock();
+    final Condition notFull = lock.newCondition();
+    final Condition notEmpty = lock.newCondition();
+
+    final Object[] items = new Object[100];
+    int putptr, takeptr, count;
+
+    public void put(Object x) throws InterruptedException {
+        lock.lock();
+        try {
+            while (count == items.length)
+                notFull.await();
+            items[putptr] = x;
+            if (++putptr == items.length) putptr = 0;
+            ++count;
+            notEmpty.signal();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public Object take() throws InterruptedException {
+        lock.lock();
+        try {
+            while (count == 0)
+                notEmpty.await();
+            Object x = items[takeptr];
+            if (++takeptr == items.length) takeptr = 0;
+            --count;
+            notFull.signal();
+            return x;
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+```
 
 #### ConcurrentMap
 

@@ -124,15 +124,13 @@ SQL 的[关系模型](https://en.wikipedia.org/wiki/Relational_model)理论足�
 
 - 关系是[笛卡尔积](https://en.wikipedia.org/wiki/Cartesian_product)的一个子集。
 
-- 关系（表）是元组（列）的集合。
+- 关系（表）是元组（行）的集合。
 
 - 关系（表）经过运算以后，如 SELECT、JOIN、WHERE、交、并、差（[关系代数](https://en.wikipedia.org/wiki/Relational_algebra)），结果还是一个关系（表）。
 
 ![1920px-Cartesian_Product_qtl1](/img/database-system/1920px-Cartesian_Product_qtl1.svg.png)
 
-如上图所示，A 和 B 的笛卡尔积是 A✖B，得到元组的集合：{(x, 1), (x, 2), ..., (z, 2), (z, 3)}，即列的集合；这里的集合是无序的，而元组是有序的，因为列可交换位置，而行不可交换位置。
-
-流行开源组件提供类 SQL 的趋势越来越明显，例如 [Spark SQL](https://spark.apache.org/sql/)、[KSQL](https://www.confluent.io/blog/ksql-streaming-sql-for-apache-kafka/)、[Flink SQL](https://ci.apache.org/projects/flink/flink-docs-stable/dev/table/sql/)、[ClickHouse SQL](https://clickhouse.tech/docs/en/sql-reference/)...
+近年来，流行开源组件提供类 SQL 的趋势越来越明显，例如 [Spark SQL](https://spark.apache.org/sql/)、[KSQL](https://www.confluent.io/blog/ksql-streaming-sql-for-apache-kafka/)、[Flink SQL](https://ci.apache.org/projects/flink/flink-docs-stable/dev/table/sql/)、[ClickHouse SQL](https://clickhouse.tech/docs/en/sql-reference/)...
 
 ## NewSQL 新在哪
 

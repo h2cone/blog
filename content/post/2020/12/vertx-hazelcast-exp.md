@@ -55,7 +55,7 @@ Vert.x 的事件模型延用 Netty 的 [Event Loop](https://h2cone.github.io/pos
 
 ## 什么是 Hazelcast IMDG
 
-[Hazelcast](https://hazelcast.org/) 有一个开源分布式内存对象存储（in-memory object store），名为 [Hazelcast IMDG](https://hazelcast.org/imdg/)，IMDG 是 In-Memory Data Grid 的缩写，IMDG 与[内存数据库](https://en.wikipedia.org/wiki/In-memory_database) 有所不同，后者通常需要用户处理对象到关系的映射（ORM），前者支持各种各样的内存数据结构，比如 Map、Set、List、MultiMap、RingBuffer、HyperLogLog 等。
+[Hazelcast](https://hazelcast.org/) 有一个开源分布式内存对象存储（in-memory object store），名为 [Hazelcast IMDG](https://hazelcast.org/imdg/)，IMDG 是 In-Memory Data Grid 的缩写，IMDG 与[内存数据库](https://en.wikipedia.org/wiki/In-memory_database)有所不同，后者通常需要用户处理对象到关系的映射（ORM），前者支持各种各样的内存数据结构，比如 Map、Set、List、MultiMap、RingBuffer、HyperLogLog 等。
 
 Hazelcast IMDG 的架构与分布式协调服务——[Zookeeper](https://zookeeper.apache.org/)、分布式 Key-Value 存储——[etcd](https://etcd.io/)、端到端服务发现解决方案——[Consul](https://github.com/hashicorp/consul) 截然不同，它的定位更接近[分布式缓存](https://h2cone.github.io/post/2020/03/distributed-cache/)，并且无需 Server 端，只需 Client 端的点到点通信（P2P）。
 
