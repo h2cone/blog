@@ -3,7 +3,7 @@ title: "初识 Bitmap"
 date: 2020-04-23T17:40:57+08:00
 draft: false
 description: ""
-tags: [bitmap, bitset, bitwise]
+tags: [data structure]
 categories: []
 ---
 

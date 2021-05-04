@@ -3,7 +3,7 @@ title: "RabbitMQ 的可靠性"
 date: 2020-05-04T11:54:46+08:00
 draft: false
 description: ""
-tags: [rabbitmq, message broker, cluster, distributed]
+tags: [rabbitmq]
 categories: []
 ---
 

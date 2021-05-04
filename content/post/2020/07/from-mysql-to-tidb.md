@@ -3,7 +3,7 @@ title: "从 MySQL 到 TiDB"
 date: 2020-07-11T11:21:03+08:00
 draft: false
 description: ""
-tags: [tidb, database, sql, distributed]
+tags: [mysql, tidb, distributed, database]
 categories: []
 ---
 

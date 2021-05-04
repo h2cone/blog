@@ -3,7 +3,7 @@ title: "Vert.x 与 Hazelcast"
 date: 2020-12-14T14:50:54+08:00
 draft: false
 description: ""
-tags: [vertx, reactive, hazelcast, cluster, distributed, cache, java, network, i/o, netty, thread, async, event-driven]
+tags: [java, vertx, reactive, event-driven, hazelcast, distributed]
 categories: []
 ---
 

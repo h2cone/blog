@@ -3,7 +3,7 @@ title: "多线程·并发编程"
 date: 2020-02-21T17:47:30+08:00
 draft: false
 description: ""
-tags: [java, thread, concurrent]
+tags: [java, concurrent]
 categories: []
 ---
 

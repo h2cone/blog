@@ -3,7 +3,7 @@ title: "Go 指针要点"
 date: 2020-06-21T11:11:59+08:00
 draft: false
 description: ""
-tags: [go, pointer, java]
+tags: [go, pointer]
 categories: []
 ---
 

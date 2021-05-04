@@ -3,7 +3,7 @@ title: "日志游记"
 date: 2020-08-30T15:21:41+08:00
 draft: false
 description: ""
-tags: [log, rdbms, mysql, elastic stack, distributed, kafka]
+tags: [log, mysql, elastic stack, distributed, kafka]
 categories: []
 ---
 

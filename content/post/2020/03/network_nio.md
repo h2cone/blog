@@ -3,7 +3,7 @@ title: "网络·NIO"
 date: 2020-03-08T11:07:41+08:00
 draft: false
 description: ""
-tags: [java, network, i/o, netty, thread, async, event-driven]
+tags: [java, network, i/o, netty, event-driven]
 categories: []
 ---
 
