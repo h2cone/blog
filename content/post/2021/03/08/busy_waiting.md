@@ -7,7 +7,7 @@ tags: [go, concurrent, event-driven]
 categories: []
 ---
 
-不如唤醒。
+不如被唤醒。
 
 <!--more-->
 
