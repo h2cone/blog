@@ -367,7 +367,7 @@ CMD ["./dagagent"]
 
 ## 插件发现
 
-当 Airflow 生态的现有的 Operators 不满足需求时，可以考虑[自定义 Operator](https://airflow.apache.org/docs/apache-airflow/stable/howto/custom-operator.html)，例如要实现一个[哨兵语句式的 HTTP Operator](https://github.com/h2cone/airflow-up/blob/main/plugins/operators/simple_http_sentinel.py)（与名为 `none_failed_or_skipped` 的[触发规则](https://airflow.apache.org/docs/apache-airflow/stable/concepts.html#trigger-rules)一起）。
+当 Airflow 生态的现有的 Operators 不满足需求时，可以考虑[自定义 Operator](https://airflow.apache.org/docs/apache-airflow/stable/howto/custom-operator.html)，例如要实现一个[哨兵语句式的 HTTP Operator](https://github.com/h2cone/airflow-up/blob/main/plugins/operators/simple_http_sentinel.py)（与名为 `none_failed_or_skipped` 的[触发规则](https://airflow.apache.org/docs/apache-airflow/stable/concepts.html#trigger-rules)一起）；例如要实现一个可以将额外配置参数或上游 Tasks 的返回值（传递机制是 [XComs](https://airflow.apache.org/docs/apache-airflow/stable/concepts/xcoms.html)）组装成复杂请求参数的[拓展 HTTP Operator](https://github.com/h2cone/airflow-up/blob/main/plugins/operators/extended_http_operator.py)。
 
 ```shell
 .
@@ -376,14 +376,18 @@ CMD ["./dagagent"]
 ├── plugins
 │   └── operators
 │       ├── __init__.py
+│       ├── extended_http_operator.py
+│       ├── extended_http_sentinel.py
 │       └── simple_http_sentinel.py
-└── docker-compose.yaml
+├── docker-compose.yaml
 ```
 
 实现了新的 Operator 之后，当前版本的 Airflow 能够发现类似上面 plugins/operators 目录下的自定义 Operator，技巧在于内容空白的 `__init__.py`，自定义 Operator 的导入语句如下：
 
 ```python
 from operators.simple_http_sentinel import SimpleHttpSentinel
+from operators.extended_http_sentinel import ExtendedHttpSentinel
+from operators.extended_http_operator import ExtendedHttpOperator
 ```
 
 ## 状态同步

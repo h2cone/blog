@@ -13,7 +13,7 @@ categories: []
 
 ## 什么是日志
 
-日志是**追加式**的，**按时间排序**的记录序列。
+日志是**追加式**的，**按时间排序**的记录（条目）序列。
 
 ![log(file).png](/img/log/log(file).png)
 
@@ -82,11 +82,13 @@ commit T[i]       //（3）
 
 在崩溃恢复期间，从数据库系统角度来看：
 
-- 若发现缺少（3），则将 X 的值设为 V[old]，因为 X 变更前的值是 V[old]，即使恢复过程中又发生崩溃，重复将 X 的值设为 V[old] 仍然**幂等**；直到恢复完成后，可以在（3）位置追加一条记录：rollback T[i]，下次恢复期间忽略。
+- 若发现 undo log 缺少（3），则无法确定 flush X 是否完成。决定将 X 的值设为 V[old] 后 flush X，因为 X 变更前的值是 V[old]，即使恢复过程中又发生崩溃，重复将 X 的值设为 V[old] 仍然**幂等**，直到恢复完成后，可以在（3）位置写一条记录：rollback T[i]，下次恢复期间忽略。
 
-- 若发现缺少（2），则 X 未 flush，无影响。
+- 若发现 redo log 缺少（3），则确定 flush X 未执行。决定将 X 的值设为 V[new]，重试 flush X。
 
-- 没有（1）也就无此事务。
+- 若发现缺少（2），则忽略此事务（无计可施）。
+
+- 若没有（1），则无此事务。
 
 ### 逻辑日志
 
@@ -99,6 +101,8 @@ commit T[i]       //（3）
 Logstash 的 Jdbc input plugin 会根据配置文件定时/定期对 MySQL 进行轮询，可获取上一次询问之后插入或更改的记录。有人误以为 Jdbc input plugin 最快只能每分钟查询一次，实际上也能设置[秒级](https://github.com/logstash-plugins/logstash-input-jdbc/issues/265)。
 
 监听 binlog 事件可以实现将 MySQL 数据同步到各种数据源，这种方案非常适合各种消息传递、数据流、实时数据处理。假设有一个中间件，根据 [MySQL 协议](https://dev.mysql.com/doc/internals/en/client-server-protocol.html)，它只要向 MySQL master 注册为 MySQL slave，持续接收并解析 binlog 事件，经过处理后又能作为消息传递给各种服务或组件以满足数据同步需求；比如 [alibaba/canal](https://github.com/alibaba/canal)，它是一个关于 MySQL binlog 增量订阅&消费的组件。
+
+诸如此类的设计模式被称为 [CDC（change data capture）](https://en.wikipedia.org/wiki/Change_data_capture)。
 
 ## 分布式系统日志
 

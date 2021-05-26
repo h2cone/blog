@@ -111,6 +111,8 @@ Java 8 以上的用户也许更倾向于使用匿名内部类实现 `java.lang.R
 
 如上图所示，即使运行一个简单的 "Hello World" 程序，也可能在 JVM 或操作系统创建十几个或更多线程。例如执行 `main` 方法的语句需要的主线程，主线程能启动子线程并执行后续语句，子线程也能启动其子线程并执行后续语句，而且还有其它由 HotSpot 为了内部目的而创建的线程，如 VM thread、Periodic task thread、GC threads、Compiler threads、Signal dispatcher thread。
 
+[主线程终止，其它线程还会运行吗？](https://juejin.cn/post/6844903893294383117)
+
 ### ThreadLocal
 
 前面提到了线程有若干的私有区域，其中之一能在 `java.lang.Thread` 中找到数据结构。`Thread` 维护了一个类型为 `java.lang.ThreadLocal.ThreadLocalMap` 的字段，`ThreadLocalMap` 是一个定制化的 HashMap，key 的类型是 `ThreadLocal`，value 指代线程本地变量的值。
@@ -157,7 +159,7 @@ public class TransactionId {
 
 #### wait/notify
 
-一个线程处于等待状态时，可以被另外一个线程通知，转为阻塞状态，再转为可运行状态。比如，一个线程用一个对象（的引用）调用 `Object#wait()`，另一个线程用同一个对象（的引用）调用 `Object#notify()` 或 `Object#notifyAll()`，前提是它们必须拥有该对象的内置锁；第一个线程调用 `Object#wait()` 时，它会释放该对象的内置锁并“暂停”，第二个线程获得该对象的内置锁成功之后，调用 `Object#notifyAll()` 通知所有曾经用同一个对象（的引用）调用了 `Object#wait()` 的线程有重要事情发生；在第二个线程释放了该对象的内置锁后的某个时刻，第一个线程重新获得了该对象的内置锁，并从 `Object#wait()` 返回而“恢复”。阻塞状态与内置锁或监视器锁息息相关，将在下文的"锁和同步"讨论。
+一个线程处于等待状态时，可以被另外一个线程通知，转为可运行状态。比如，一个线程用一个对象（的引用）调用 `Object#wait()`，另一个线程用同一个对象（的引用）调用 `Object#notify()` 或 `Object#notifyAll()`，前提是它们必须拥有该对象的内置锁；第一个线程调用 `Object#wait()` 时，它会释放该对象的内置锁并“暂停”，第二个线程获得该对象的内置锁成功之后，调用 `Object#notifyAll()` 通知所有曾经用同一个对象（的引用）调用了 `Object#wait()` 的线程有重要事情发生；在第二个线程释放了该对象的内置锁后的某个时刻，第一个线程重新获得了该对象的内置锁，并从 `Object#wait()` 返回而“恢复”。阻塞状态与内置锁或监视器锁息息相关，将在下文的"锁和同步"讨论。
 
 详情请见 [Object](https://docs.oracle.com/javase/8/docs/api/java/lang/Object.html)。
 
