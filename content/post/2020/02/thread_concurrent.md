@@ -63,7 +63,7 @@ categories: []
 
 ![计算机系统的分层](/img/csapp/计算机系统的分层.png)
 
-正在运行的 Java 程序就是 Java 虚拟机（JVM），而虚拟机是对整个操作系统的抽象，但对操作系统来说 JVM 仍然是进程。下面这张来自 [JVM Internals](http://blog.jamesdbloom.com/JVMInternals.html) 的图展示了 Java SE 7 虚拟机运行时的数据区域（Run-Time Data Areas）。图中的堆和栈类似于 Linux/Unix 操作系统进程的虚拟地址空间中的堆和栈，值得注意的是 Java 8 用元空间（Metaspace）代替了永久代（PermGen）。JVM 运行时的数据区域可分成两大类，一是 Java 线程共享区域，包括堆和方法区；二是 Java 线程私有区域，包括栈，详情请见 [The Java Virtual Machine Specification, Java SE 8 Edition # 2.5. Run-Time Data Areas](https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.5)。
+正在运行的 Java 程序就是 Java 虚拟机（JVM），而虚拟机是对整个操作系统的抽象，但对操作系统来说 JVM 仍然是进程。下面这张来自 [JVM Internals](http://blog.jamesdbloom.com/JVMInternals.html) 的图展示了 Java SE 7 虚拟机运行时的数据区域（Run-Time Data Areas）。图中的堆和栈类似于 Linux/Unix 操作系统进程的虚拟地址空间中的堆和栈，值得注意的是 Java 8 用**元空间（Metaspace）代替了永久代（PermGen）**。JVM 运行时的数据区域可分成两大类，一是 Java 线程共享区域，包括堆和方法区；二是 Java 线程私有区域，包括栈，详情请见 [The Java Virtual Machine Specification, Java SE 8 Edition # 2.5. Run-Time Data Areas](https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.5)。
 
 ![JVM_Internal_Architecture](/img/jvm/JVM_Internal_Architecture.png)
 
@@ -131,7 +131,7 @@ public class TransactionId {
 }
 ```
 
-如上所示，类型为 `ThreadLocal` 的字段初始化后，每个访问该字段（通过 get 或 set 方法）的线程访问的是各自 `ThreadLocalMap` 实例存储的 key/value，其中 key 相等，但 value 不一定相等。
+如上所示，类型为 `ThreadLocal` 的字段初始化后，每个访问该字段（通过 get 或 set 方法）的线程访问的是各自 `ThreadLocalMap` 实例存储的 key/value，其中类型是 `ThreadLocal` 的 key 相等，但 value 不一定相等。
 
 ### 线程状态
 
@@ -635,7 +635,7 @@ javap -v target/classes/io/h2cone/concurrent/Counter.class
 - 未锁定/已解锁（Unlocked）。没有线程拥有该对象的锁。
 - 轻量级已锁定（Light-weight locked）。某个线程拥有该对象的轻量级锁。
 - 重量级已锁定（Heavy-weight locked）。某个线程拥有该对象的重量级锁。
-- 有偏向/可偏向（Biased / biasable）。该对象已偏向或可偏向于某线程。
+- 有偏向/可偏向（Biased / Biasable）。该对象已偏向或可偏向于某线程。
 
 下图描述了对象同步状态的转换，也是锁状态的转换。
 

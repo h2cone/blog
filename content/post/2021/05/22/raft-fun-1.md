@@ -21,24 +21,26 @@ categories: []
 
 - Follower 何时转为 Candidate？
 
-- 允许 Candidates 并发请求投票？结点如何响应？
+- 结点之间如何通信？允许 Candidates 并发请求投票？结点如何响应？
 
 - Candidate 何时转为 Leader？
-
-- 如何防止脑裂？
 
 - 写请求仅由 Leader 处理？为什么 Leader 执行来自客户端的命令前先写日志？Leader/Follwer 何时提交日志条目？又何时应用数据变更（执行命令）？
 
 - 为什么需要复制日志？
 
-- 结点之间如何通信？
+- 如何防止脑裂？Leader 何时转为 Follower？
 
-- 基于 Raft 的系统如何保证可靠性？换言之，如何容错（可用性与一致性）？
+- 基于 Raft 的系统如何保证可靠性？换言之，如何容错（可用性与一致性）？例如结点故障、网络分区等。
 
 > 本文首发于 https://h2cone.github.io
 
 ## 参考资料
 
 - [Raft - Understandable Distributed Consensus](http://thesecretlivesofdata.com/raft/)
+
+- [The Raft Paper](https://raft.github.io/raft.pdf)
+
+- [Raft Web Site](https://raft.github.io/)
 
 - [Consensus (computer science)](https://en.wikipedia.org/wiki/Consensus_(computer_science))

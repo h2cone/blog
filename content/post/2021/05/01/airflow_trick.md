@@ -367,7 +367,7 @@ CMD ["./dagagent"]
 
 ## 插件发现
 
-当 Airflow 生态的现有的 Operators 不满足需求时，可以考虑[自定义 Operator](https://airflow.apache.org/docs/apache-airflow/stable/howto/custom-operator.html)，例如要实现一个[哨兵语句式的 HTTP Operator](https://github.com/h2cone/airflow-up/blob/main/plugins/operators/simple_http_sentinel.py)（与名为 `none_failed_or_skipped` 的[触发规则](https://airflow.apache.org/docs/apache-airflow/stable/concepts.html#trigger-rules)一起）；例如要实现一个可以将额外配置参数或上游 Tasks 的返回值（传递机制是 [XComs](https://airflow.apache.org/docs/apache-airflow/stable/concepts/xcoms.html)）组装成复杂请求参数的[拓展 HTTP Operator](https://github.com/h2cone/airflow-up/blob/main/plugins/operators/extended_http_operator.py)。
+当 Airflow 生态的现有的 Operators 不满足需求时，可以考虑[自定义 Operator](https://airflow.apache.org/docs/apache-airflow/stable/howto/custom-operator.html)，例如要实现一个[哨兵语句式的 HTTP Operator](https://github.com/h2cone/airflow-up/blob/main/plugins/operators/simple_http_sentinel.py)，又如要实现一个可以将额外配置参数或上游 Tasks 的返回值（传递机制是 [XComs](https://airflow.apache.org/docs/apache-airflow/stable/concepts/xcoms.html)）组装成复杂请求参数的[拓展 HTTP Operator](https://github.com/h2cone/airflow-up/blob/main/plugins/operators/extended_http_operator.py)。
 
 ```shell
 .
@@ -392,7 +392,7 @@ from operators.extended_http_operator import ExtendedHttpOperator
 
 ## 状态同步
 
-业务系统很可能需要知道一个 DAG 运行后的状态（成功或失败），[DAG](https://airflow.apache.org/docs/apache-airflow/stable/_api/airflow/models/dag/index.html) 构造器有成功/失败的回调函数类型的参数（`on_success_callback`/`on_failure_callback`），美中不足的是没有表示失败重试次数的参数，然而受到 [Python Requests 的高级使用 - 超时，重试，钩子](https://findwork.dev/blog/advanced-usage-python-requests-timeouts-retries-hooks/)的启发，于是编写了 [templates/dag_post_callback](https://github.com/h2cone/airflow-up/blob/main/templates/dag_post_callback) 来提高回调更新状态的成功率。
+业务系统很可能需要知道一个 DAG 运行后的状态（成功或失败），[DAG](https://airflow.apache.org/docs/apache-airflow/stable/_api/airflow/models/dag/index.html) 构造器有成功/失败的回调函数类型的参数（`on_success_callback`/`on_failure_callback`），美中不足的是没有表示失败重试次数的参数，然而受到 [Python Requests 的高级使用 - 超时，重试，钩子](https://findwork.dev/blog/advanced-usage-python-requests-timeouts-retries-hooks/)的启发，于是编写了 [templates/dag_callback](https://github.com/h2cone/airflow-up/blob/main/templates/deprecated/dag_callback) 来提高回调更新状态的成功率。
 
 ## 尾声
 
